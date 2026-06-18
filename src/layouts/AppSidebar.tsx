@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '@/core/supabase/client'
 import { useStore } from '@/store'
 import type { UserRole } from '@/store/authSlice'
+import { getInitials } from '@/core/utils/getInitials'
 
 // --- Icons (inline SVG) ---
 
@@ -107,17 +108,8 @@ function getNavItems(role: UserRole): NavItem[] {
     ...common,
     { label: 'Reportes', to: '/reports', icon: <IconChart /> },
     { label: 'Categorías', to: '/admin/categories', icon: <IconFolder /> },
-    { label: 'Usuarios', to: '/admin/users', icon: <IconUsers /> },
+    { label: 'Usuarios', to: '/admin/configuracion/usuarios', icon: <IconUsers /> },
   ]
-}
-
-function getInitials(fullName: string): string {
-  return fullName
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join('')
 }
 
 function getRoleLabel(role: UserRole): string {

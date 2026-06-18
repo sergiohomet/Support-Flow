@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '@/core/supabase/client'
 import type { TicketStatus } from '../schemas'
-import { parseRpcError } from '../utils/parseRpcError'
+import { parseRpcError } from '@/core/utils/parseRpcError'
 
 interface UseUpdateTicketStatusResult {
   execute: (ticketId: string, newStatus: TicketStatus) => Promise<boolean>
