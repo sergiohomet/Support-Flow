@@ -3,12 +3,14 @@ import { AuthProvider } from "@/core/auth/AuthProvider";
 import { PublicOnlyGuard } from "@/core/auth/guards/PublicOnlyGuard";
 import { RoleGuard } from "@/core/auth/guards/RoleGuard";
 import { AppShell } from "@/layouts/AppShell";
+import { SettingsLayout } from "@/layouts/SettingsLayout";
 import { LoginPage } from "@/modules/auth/pages/LoginPage";
 import { RegisterPage } from "@/modules/auth/pages/RegisterPage";
 import { ForgotPasswordPage } from "@/modules/auth/pages/ForgotPasswordPage";
 import { TicketListPage } from "@/modules/tickets/pages/TicketListPage";
 import { CreateTicketPage } from "@/modules/tickets/pages/CreateTicketPage";
 import { TicketDetailPage } from "@/modules/tickets/pages/TicketDetailPage";
+import { UsersPage } from "@/modules/users/pages/UsersPage";
 
 export default function App() {
   return (
@@ -85,14 +87,36 @@ export default function App() {
               }
             />
             <Route path="/admin/sla" element={<div>SLA Config — TODO</div>} />
+
+            {/* Legacy redirect — keep until all bookmarks/links are updated */}
             <Route
               path="/admin/users"
-              element={
-                <RoleGuard allowedRoles={['agent', 'admin']}>
-                  <div>Users — TODO</div>
-                </RoleGuard>
-              }
+              element={<Navigate to="/admin/configuracion/usuarios" replace />}
             />
+
+            {/* Settings section */}
+            <Route path="/admin/configuracion" element={<SettingsLayout />}>
+              <Route
+                path="general"
+                element={<div>General — próximamente</div>}
+              />
+              <Route
+                path="usuarios"
+                element={
+                  <RoleGuard allowedRoles={['admin']}>
+                    <UsersPage />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path="roles"
+                element={<div>Roles y Permisos — próximamente</div>}
+              />
+              <Route
+                path="integraciones"
+                element={<div>Integraciones — próximamente</div>}
+              />
+            </Route>
           </Route>
 
           <Route path="/" element={<Navigate to="/tickets" replace />} />
