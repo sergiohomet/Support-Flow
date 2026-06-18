@@ -1,0 +1,215 @@
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { TicketDetailPage } from '../TicketDetailPage'
+
+// --- react-router-dom mock (useParams) ---
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return { ...actual, useParams: () => ({ id: 'ticket-uuid-123' }) }
+})
+
+// --- hook mocks ---
+
+const mockFetchDetail = vi.fn()
+const mockAssignTicket = vi.fn()
+const mockUpdateStatus = vi.fn()
+const mockAddComment = vi.fn()
+const mockLoadAgents = vi.fn()
+
+vi.mock('@/modules/tickets/hooks/useTicketDetail', () => ({
+  useTicketDetail: vi.fn(),
+}))
+
+vi.mock('@/modules/tickets/hooks/useAssignTicket', () => ({
+  useAssignTicket: vi.fn(),
+}))
+
+vi.mock('@/modules/tickets/hooks/useUpdateTicketStatus', () => ({
+  useUpdateTicketStatus: vi.fn(),
+}))
+
+vi.mock('@/modules/tickets/hooks/useAddComment', () => ({
+  useAddComment: vi.fn(),
+}))
+
+vi.mock('@/modules/tickets/hooks/useTicketList', () => ({
+  useTicketList: vi.fn(),
+}))
+
+// --- store mock ---
+
+type MockState = {
+  user: { id: string; email: string; full_name: string; role: 'client' | 'agent' | 'admin' } | null
+  agents: unknown[]
+}
+
+let mockState: MockState = {
+  user: { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' },
+  agents: [],
+}
+
+vi.mock('@/store', () => ({
+  useStore: vi.fn((selector: (s: MockState) => unknown) => selector(mockState)),
+}))
+
+// --- imports after mocks ---
+
+import { useTicketDetail } from '@/modules/tickets/hooks/useTicketDetail'
+import { useAssignTicket } from '@/modules/tickets/hooks/useAssignTicket'
+import { useUpdateTicketStatus } from '@/modules/tickets/hooks/useUpdateTicketStatus'
+import { useAddComment } from '@/modules/tickets/hooks/useAddComment'
+import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
+import type { TicketDetail } from '@/modules/tickets/schemas'
+
+const fakeTicket: TicketDetail = {
+  id: 'ticket-uuid-123',
+  title: 'Mi ticket de prueba',
+  description: 'Descripción del ticket',
+  status: 'abierto',
+  priority: 'media',
+  categoryId: 'cat-1',
+  categoryName: 'Soporte técnico',
+  clientId: 'user-1',
+  clientFullName: 'Juan Pérez',
+  agentId: null,
+  agentFullName: null,
+  aiTriage: null,
+  createdAt: '2026-06-15T10:00:00Z',
+  updatedAt: '2026-06-15T10:00:00Z',
+}
+
+function makeDetailReturn(overrides: Partial<ReturnType<typeof useTicketDetail>> = {}): ReturnType<typeof useTicketDetail> {
+  return {
+    ticket: null,
+    comments: [],
+    statusLog: [],
+    isLoading: false,
+    error: null,
+    fetch: mockFetchDetail,
+    ...overrides,
+  }
+}
+
+function renderPage(): void {
+  render(
+    <MemoryRouter initialEntries={['/tickets/ticket-uuid-123']}>
+      <Routes>
+        <Route path="/tickets/:id" element={<TicketDetailPage />} />
+      </Routes>
+    </MemoryRouter>
+  )
+}
+
+describe('TicketDetailPage', () => {
+  beforeEach(() => {
+    mockFetchDetail.mockReset()
+    mockAssignTicket.mockReset()
+    mockUpdateStatus.mockReset()
+    mockAddComment.mockReset()
+    mockLoadAgents.mockReset()
+
+    mockFetchDetail.mockResolvedValue(undefined)
+    mockAssignTicket.mockResolvedValue(true)
+    mockUpdateStatus.mockResolvedValue(true)
+    mockAddComment.mockResolvedValue(null)
+    mockLoadAgents.mockResolvedValue(undefined)
+
+    mockState = {
+      user: { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' },
+      agents: [],
+    }
+
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn())
+    vi.mocked(useAssignTicket).mockReturnValue({ execute: mockAssignTicket, isLoading: false, error: null })
+    vi.mocked(useUpdateTicketStatus).mockReturnValue({ execute: mockUpdateStatus, isLoading: false, error: null })
+    vi.mocked(useAddComment).mockReturnValue({ execute: mockAddComment, isLoading: false, error: null })
+    vi.mocked(useTicketList).mockReturnValue({
+      isFetching: false,
+      isLoadingCategories: false,
+      isLoadingAgents: false,
+      error: null,
+      fetch: vi.fn(),
+      loadCategories: vi.fn(),
+      loadAgents: mockLoadAgents,
+    })
+  })
+
+  it('shows spinner while isLoading is true and ticket is null', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ isLoading: true, ticket: null }))
+    renderPage()
+    expect(screen.getByRole('status')).toBeInTheDocument()
+  })
+
+  it('does NOT show spinner when ticket is already loaded (background refetch)', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ isLoading: true, ticket: fakeTicket })
+    )
+    renderPage()
+    // spinner only shows when isLoading && !ticket
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.getByText('Mi ticket de prueba')).toBeInTheDocument()
+  })
+
+  it('shows error message when error is set and ticket is null', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ error: 'Ticket not found or access denied.', ticket: null })
+    )
+    renderPage()
+    expect(screen.getByText('Ticket not found or access denied.')).toBeInTheDocument()
+  })
+
+  it('renders ticket title when ticket data is available', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
+    renderPage()
+    expect(screen.getByRole('heading', { name: 'Mi ticket de prueba' })).toBeInTheDocument()
+  })
+
+  it('renders ticket status badge', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
+    renderPage()
+    expect(screen.getByText(/abierto/i)).toBeInTheDocument()
+  })
+
+  it('renders ticket priority badge', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
+    renderPage()
+    expect(screen.getByText(/media/i)).toBeInTheDocument()
+  })
+
+  it('renders category name', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
+    renderPage()
+    expect(screen.getByText('Soporte técnico')).toBeInTheDocument()
+  })
+
+  it('renders client name', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
+    renderPage()
+    expect(screen.getByText('Juan Pérez')).toBeInTheDocument()
+  })
+
+  it('calls fetch() with the ticket id on mount', () => {
+    renderPage()
+    expect(mockFetchDetail).toHaveBeenCalledWith('ticket-uuid-123')
+  })
+
+  it('calls loadAgents() on mount', () => {
+    renderPage()
+    expect(mockLoadAgents).toHaveBeenCalledTimes(1)
+  })
+
+  it('does NOT render AssignAgentPanel for client role', () => {
+    mockState.user = { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' }
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
+    renderPage()
+    // AssignAgentPanel only shows for agent/admin
+    expect(screen.queryByLabelText(/asignar agente/i)).not.toBeInTheDocument()
+  })
+
+  it('renders nothing ticket-specific when ticket is null and not loading and no error', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: null, isLoading: false, error: null }))
+    renderPage()
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument()
+  })
+})
