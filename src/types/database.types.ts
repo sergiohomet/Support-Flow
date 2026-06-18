@@ -444,6 +444,40 @@ export type Database = {
           updated_at: string
         }[]
       }
+      admin_list_users: {
+        Args: {
+          p_role?: Database["public"]["Enums"]["user_role"] | null
+          p_search?: string | null
+          p_is_active?: boolean | null
+          p_page?: number
+          p_page_size?: number
+        }
+        Returns: {
+          id: string
+          email: string
+          full_name: string
+          avatar_url: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          specialty: string | null
+          is_active: boolean
+          created_at: string
+          total_count: number
+        }[]
+      }
+      admin_update_user_role: {
+        Args: {
+          p_user_id: string
+          p_new_role: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: undefined
+      }
+      admin_toggle_user_status: {
+        Args: {
+          p_user_id: string
+          p_is_active: boolean
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       notification_type: "status_change" | "sla_escalation"
