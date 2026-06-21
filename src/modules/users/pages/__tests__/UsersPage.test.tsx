@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { UsersPage } from '../UsersPage'
@@ -274,16 +274,41 @@ describe('UsersPage', () => {
   })
 
   describe('role change confirm modal', () => {
-    it('opens ConfirmModal when edit role button is clicked', async () => {
+    it('opens RoleChangeModal when edit role button is clicked', async () => {
       const user = userEvent.setup()
       renderPage()
 
       const editButtons = screen.getAllByRole('button', { name: /edit role/i })
       await user.click(editButtons[0])
 
-      // ConfirmModal should open
+      // RoleChangeModal should open with "Cambiar rol" title
       await waitFor(() => {
-        expect(screen.getByRole('dialog')).toBeInTheDocument()
+        expect(screen.getByRole('heading', { name: /cambiar rol/i })).toBeInTheDocument()
+      })
+    })
+
+    it('calls updateRole with the role selected in RoleChangeModal', async () => {
+      const user = userEvent.setup()
+      mockUpdateRole.mockResolvedValue(true)
+      renderPage()
+
+      // Click edit role on Alice (role: 'agent')
+      const editButtons = screen.getAllByRole('button', { name: /edit role/i })
+      await user.click(editButtons[0])
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /cambiar rol/i })).toBeInTheDocument()
+      })
+
+      // Change select to 'admin' — scope to dialog to avoid ambiguity with UserFilters select
+      const dialog = screen.getByRole('dialog')
+      await user.selectOptions(within(dialog).getByRole('combobox'), 'admin')
+
+      // Click confirm — scoped to dialog
+      await user.click(within(dialog).getByRole('button', { name: /confirmar/i }))
+
+      await waitFor(() => {
+        expect(mockUpdateRole).toHaveBeenCalledWith('user-1', 'admin')
       })
     })
   })

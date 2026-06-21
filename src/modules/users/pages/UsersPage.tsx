@@ -8,6 +8,7 @@ import { UserFilters } from '@/modules/users/components/UserFilters'
 import { UserTable } from '@/modules/users/components/UserTable'
 import { CreateUserModal } from '@/modules/users/components/CreateUserModal'
 import { ConfirmModal } from '@/modules/users/components/ConfirmModal'
+import { RoleChangeModal } from '@/modules/users/components/RoleChangeModal'
 import type { CombinedFilter } from '@/modules/users/components/UserFilters'
 import type { AdminUser, UserRole, CreateUserInput } from '@/modules/users/schemas'
 
@@ -46,7 +47,7 @@ export function UsersPage(): React.JSX.Element {
 
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [pendingRoleChange, setPendingRoleChange] = useState<AdminUser | null>(null)
+  const [pendingRoleChange, setPendingRoleChange] = useState<{ user: AdminUser; selectedRole: 'agent' | 'admin' } | null>(null)
   const [pendingStatusToggle, setPendingStatusToggle] = useState<AdminUser | null>(null)
 
   // Derived filter params
@@ -104,14 +105,13 @@ export function UsersPage(): React.JSX.Element {
   // ---------------------------------------------------------------------------
 
   const handleRoleChange = (user: AdminUser): void => {
-    setPendingRoleChange(user)
+    const selectedRole: 'agent' | 'admin' = user.role === 'admin' ? 'admin' : 'agent'
+    setPendingRoleChange({ user, selectedRole })
   }
 
-  const handleConfirmRoleChange = async (): Promise<void> => {
+  const handleConfirmRoleChange = async (newRole: 'agent' | 'admin'): Promise<void> => {
     if (!pendingRoleChange) return
-    // For simplicity, cycle to next role: agent → admin → agent
-    const nextRole: UserRole = pendingRoleChange.role === 'admin' ? 'agent' : 'admin'
-    const ok = await updateRole(pendingRoleChange.id, nextRole)
+    const ok = await updateRole(pendingRoleChange.user.id, newRole as UserRole)
     if (ok) {
       setPendingRoleChange(null)
       void fetch({ search: null, role, isActive, page, pageSize: PAGE_SIZE })
@@ -198,17 +198,12 @@ export function UsersPage(): React.JSX.Element {
         onClose={() => setIsCreateModalOpen(false)}
       />
 
-      {/* Confirm role change modal */}
-      <ConfirmModal
+      {/* Role change modal */}
+      <RoleChangeModal
         isOpen={!!pendingRoleChange}
-        title="Cambiar rol"
-        description={
-          pendingRoleChange
-            ? `¿Cambiar el rol de ${pendingRoleChange.fullName}?`
-            : ''
-        }
-        confirmLabel="Confirmar"
+        user={pendingRoleChange ? { fullName: pendingRoleChange.user.fullName, role: pendingRoleChange.user.role } : null}
         isLoading={isUpdatingRole}
+        error={null}
         onConfirm={handleConfirmRoleChange}
         onClose={() => setPendingRoleChange(null)}
       />
