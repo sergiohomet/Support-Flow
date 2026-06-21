@@ -3,8 +3,8 @@ interface UserStatusBadgeProps {
 }
 
 const statusConfig = {
-  active:   { label: 'Active',   className: 'bg-green-100 text-green-800' },
-  inactive: { label: 'Inactive', className: 'bg-gray-100 text-gray-500' },
+  active:   { label: 'Activo',   className: 'bg-green-100 text-green-800' },
+  inactive: { label: 'Inactivo', className: 'bg-gray-100 text-gray-500' },
 }
 
 export function UserStatusBadge({ isActive }: UserStatusBadgeProps): React.JSX.Element {

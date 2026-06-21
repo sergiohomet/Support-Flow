@@ -60,6 +60,19 @@ describe('UserTable', () => {
     mockOnPageChange.mockReset()
   })
 
+  describe('column headers', () => {
+    it('renders all column headers in Spanish', () => {
+      renderTable()
+      expect(screen.getByText('Usuario')).toBeInTheDocument()
+      expect(screen.getByText('Email')).toBeInTheDocument()
+      expect(screen.getByText('Rol')).toBeInTheDocument()
+      expect(screen.getByText('Especialidad')).toBeInTheDocument()
+      expect(screen.getByText('Estado')).toBeInTheDocument()
+      expect(screen.getByText('Creado')).toBeInTheDocument()
+      expect(screen.getByText('Acciones')).toBeInTheDocument()
+    })
+  })
+
   describe('rows', () => {
     it('renders one row per user in the users array', () => {
       renderTable()
@@ -85,30 +98,66 @@ describe('UserTable', () => {
     it('renders em dash when specialty is null', () => {
       renderTable()
 
+      // bob has null specialty — should render —
       expect(screen.getByText('—')).toBeInTheDocument()
     })
 
-    it('renders formatted createdAt date for each user', () => {
+    it('renders formatted createdAt date using es-AR locale', () => {
       renderTable()
 
-      const date1 = new Date('2024-01-15T10:00:00Z').toLocaleDateString()
+      const date1 = new Date('2024-01-15T10:00:00Z').toLocaleDateString('es-AR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      })
       expect(screen.getByText(date1)).toBeInTheDocument()
     })
   })
 
   describe('role and status badges', () => {
-    it('renders UserRoleBadge for each row role', () => {
+    it('renders Spanish role badge "Admin" for admin role', () => {
       renderTable()
-
       expect(screen.getByText('Admin')).toBeInTheDocument()
-      expect(screen.getByText('Agent')).toBeInTheDocument()
     })
 
-    it('renders UserStatusBadge for each row isActive value', () => {
+    it('renders Spanish role badge "Agente" for agent role', () => {
       renderTable()
+      expect(screen.getByText('Agente')).toBeInTheDocument()
+    })
 
-      expect(screen.getByText('Active')).toBeInTheDocument()
-      expect(screen.getByText('Inactive')).toBeInTheDocument()
+    it('renders Spanish status badge "Activo" for active user', () => {
+      renderTable()
+      expect(screen.getByText('Activo')).toBeInTheDocument()
+    })
+
+    it('renders Spanish status badge "Inactivo" for inactive user', () => {
+      renderTable()
+      expect(screen.getByText('Inactivo')).toBeInTheDocument()
+    })
+  })
+
+  describe('action icons (Material Icons)', () => {
+    it('renders Material Icon "edit" span for edit button', () => {
+      renderTable()
+      const editIcons = screen.getAllByText('edit')
+      expect(editIcons.length).toBeGreaterThan(0)
+      editIcons.forEach((icon) => expect(icon.className).toMatch(/material-icons/))
+    })
+
+    it('shows "person_off" icon for active users (deactivate action)', () => {
+      renderTable()
+      // alice (user-1) is active — should show person_off
+      const personOffIcons = screen.getAllByText('person_off')
+      expect(personOffIcons.length).toBeGreaterThan(0)
+      personOffIcons.forEach((icon) => expect(icon.className).toMatch(/material-icons/))
+    })
+
+    it('shows "settings_backup_restore" icon for inactive users (reactivate action)', () => {
+      renderTable()
+      // bob (user-2) is inactive — should show settings_backup_restore
+      const restoreIcons = screen.getAllByText('settings_backup_restore')
+      expect(restoreIcons.length).toBeGreaterThan(0)
+      restoreIcons.forEach((icon) => expect(icon.className).toMatch(/material-icons/))
     })
   })
 
@@ -184,6 +233,12 @@ describe('UserTable', () => {
       renderTable({ totalCount: 5, pageSize: 20 })
 
       expect(screen.queryByRole('button', { name: /anterior/i })).not.toBeInTheDocument()
+    })
+
+    it('shows pagination text "Mostrando X-Y de Z usuarios"', () => {
+      renderTable({ totalCount: 50, pageSize: 10, currentPage: 1 })
+
+      expect(screen.getByText(/Mostrando 1-10 de 50 usuarios/)).toBeInTheDocument()
     })
   })
 })

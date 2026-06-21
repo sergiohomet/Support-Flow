@@ -5,8 +5,8 @@ interface UserRoleBadgeProps {
 }
 
 const roleConfig = {
-  client: { label: 'Client', className: 'bg-gray-100 text-gray-700' },
-  agent:  { label: 'Agent',  className: 'bg-blue-100 text-blue-800' },
+  client: { label: 'Cliente', className: 'bg-gray-100 text-gray-700' },
+  agent:  { label: 'Agente',  className: 'bg-blue-100 text-blue-800' },
   admin:  { label: 'Admin',  className: 'bg-purple-100 text-purple-800' },
 } as const
 

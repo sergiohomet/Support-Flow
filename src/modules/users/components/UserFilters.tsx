@@ -1,13 +1,11 @@
-import type { UserRole } from '@/modules/users/schemas'
+export type CombinedFilter = 'all' | 'admin' | 'agent' | 'client' | 'inactive'
 
 interface UserFiltersProps {
   search: string
-  role: UserRole | null
-  isActive: boolean | null
+  combinedFilter: CombinedFilter
   isLoading: boolean
   onSearchChange: (value: string) => void
-  onRoleChange: (value: UserRole | null) => void
-  onActiveChange: (value: boolean | null) => void
+  onFilterChange: (value: CombinedFilter) => void
   onReset: () => void
 }
 
@@ -16,75 +14,59 @@ const SELECT_CLASS =
 
 export function UserFilters({
   search,
-  role,
-  isActive,
+  combinedFilter,
   isLoading,
   onSearchChange,
-  onRoleChange,
-  onActiveChange,
+  onFilterChange,
   onReset,
 }: UserFiltersProps): React.JSX.Element {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     onSearchChange(e.target.value)
   }
 
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-    const val = e.target.value
-    onRoleChange(val === '' ? null : (val as UserRole))
-  }
-
-  const handleActiveChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-    const val = e.target.value
-    if (val === '') {
-      onActiveChange(null)
-    } else {
-      onActiveChange(val === 'true')
-    }
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+    onFilterChange(e.target.value as CombinedFilter)
   }
 
   return (
     <div className="flex flex-wrap gap-3 items-center py-3">
       {/* Search */}
-      <label className="sr-only" htmlFor="user-search">
-        Search users
-      </label>
-      <input
-        id="user-search"
-        type="search"
-        value={search}
-        onChange={handleSearchChange}
-        disabled={isLoading}
-        placeholder="Search users..."
-        className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-        aria-label="Search users"
-      />
+      <div className="relative flex items-center">
+        <span className="material-icons absolute left-2 text-gray-400 text-base pointer-events-none">
+          search
+        </span>
+        <label className="sr-only" htmlFor="user-search">
+          Buscar usuarios
+        </label>
+        <input
+          id="user-search"
+          type="search"
+          value={search}
+          onChange={handleSearchChange}
+          disabled={isLoading}
+          placeholder="Buscar usuarios..."
+          className="rounded-md border border-gray-300 pl-8 pr-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+          aria-label="Buscar usuarios"
+        />
+      </div>
 
-      {/* Role */}
-      <select
-        value={role ?? ''}
-        onChange={handleRoleChange}
-        disabled={isLoading}
-        aria-label="Filter by role"
-        className={SELECT_CLASS}
-      >
-        <option value="">All roles</option>
-        <option value="client">Client</option>
-        <option value="agent">Agent</option>
-        <option value="admin">Admin</option>
-      </select>
-
-      {/* Active status */}
-      <select
-        value={isActive === null ? '' : String(isActive)}
-        onChange={handleActiveChange}
-        disabled={isLoading}
-        aria-label="Filter by status"
-        className={SELECT_CLASS}
-      >
-        <option value="">All statuses</option>
-        <option value="true">Active</option>
-        <option value="false">Inactive</option>
-      </select>
+      {/* Combined filter */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-600 font-medium">Filtros:</span>
+        <select
+          value={combinedFilter}
+          onChange={handleFilterChange}
+          disabled={isLoading}
+          aria-label="Filtrar usuarios"
+          className={SELECT_CLASS}
+        >
+          <option value="all">Todos los usuarios</option>
+          <option value="admin">Administradores</option>
+          <option value="agent">Agentes</option>
+          <option value="client">Clientes</option>
+          <option value="inactive">Inactivos</option>
+        </select>
+      </div>
 
       {/* Reset */}
       <button

@@ -2,19 +2,19 @@ import { render, screen } from '@testing-library/react'
 import { UserRoleBadge } from '../UserRoleBadge'
 
 describe('UserRoleBadge', () => {
-  it('renders "Client" label with gray classes when role is client', () => {
+  it('renders "Cliente" label with gray classes when role is client', () => {
     const { container } = render(<UserRoleBadge role="client" />)
 
-    expect(screen.getByText('Client')).toBeInTheDocument()
+    expect(screen.getByText('Cliente')).toBeInTheDocument()
     const span = container.firstChild as HTMLElement
     expect(span.className).toMatch(/bg-gray-100/)
     expect(span.className).toMatch(/text-gray-700/)
   })
 
-  it('renders "Agent" label with blue classes when role is agent', () => {
+  it('renders "Agente" label with blue classes when role is agent', () => {
     const { container } = render(<UserRoleBadge role="agent" />)
 
-    expect(screen.getByText('Agent')).toBeInTheDocument()
+    expect(screen.getByText('Agente')).toBeInTheDocument()
     const span = container.firstChild as HTMLElement
     expect(span.className).toMatch(/bg-blue-100/)
     expect(span.className).toMatch(/text-blue-800/)

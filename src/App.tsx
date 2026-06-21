@@ -10,7 +10,7 @@ import { ForgotPasswordPage } from "@/modules/auth/pages/ForgotPasswordPage";
 import { TicketListPage } from "@/modules/tickets/pages/TicketListPage";
 import { CreateTicketPage } from "@/modules/tickets/pages/CreateTicketPage";
 import { TicketDetailPage } from "@/modules/tickets/pages/TicketDetailPage";
-import { UsersPage } from "@/modules/users/pages/UsersPage";
+import { UsersPage } from "@/modules/users";
 
 export default function App() {
   return (

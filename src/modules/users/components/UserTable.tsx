@@ -18,6 +18,14 @@ interface UserTableProps {
   onPageChange: (page: number) => void
 }
 
+function formatDate(isoString: string): string {
+  return new Date(isoString).toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
 export function UserTable({
   users,
   isLoading,
@@ -46,6 +54,9 @@ export function UserTable({
     )
   }
 
+  const from = (currentPage - 1) * pageSize + 1
+  const to = Math.min(currentPage * pageSize, totalCount)
+
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-x-auto rounded-md border border-gray-200">
@@ -56,7 +67,7 @@ export function UserTable({
                 scope="col"
                 className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Name
+                Usuario
               </th>
               <th
                 scope="col"
@@ -68,31 +79,31 @@ export function UserTable({
                 scope="col"
                 className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Role
+                Rol
               </th>
               <th
                 scope="col"
                 className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Specialty
+                Especialidad
               </th>
               <th
                 scope="col"
                 className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Status
+                Estado
               </th>
               <th
                 scope="col"
                 className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Created
+                Creado
               </th>
               <th
                 scope="col"
                 className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Actions
+                Acciones
               </th>
             </tr>
           </thead>
@@ -127,7 +138,7 @@ export function UserTable({
 
                   {/* Specialty */}
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                    {user.specialty ?? '—'}
+                    {user.specialty || '—'}
                   </td>
 
                   {/* Status */}
@@ -138,7 +149,7 @@ export function UserTable({
                   {/* Created */}
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                     <time dateTime={user.createdAt}>
-                      {new Date(user.createdAt).toLocaleDateString()}
+                      {formatDate(user.createdAt)}
                     </time>
                   </td>
 
@@ -153,65 +164,31 @@ export function UserTable({
                         aria-label="Edit role"
                         className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          aria-hidden="true"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15.232 5.232l3.536 3.536M9 11l6.464-6.464a2 2 0 112.828 2.828L11.828 13.828A2 2 0 0110 14.5H8v-2a2 2 0 01.586-1.414z"
-                          />
-                        </svg>
+                        <span className="material-icons text-base">edit</span>
                       </button>
 
                       {/* Toggle status button */}
-                      <button
-                        type="button"
-                        onClick={() => onStatusToggle(user)}
-                        disabled={isSelf}
-                        aria-label={user.isActive ? 'Deactivate user' : 'Activate user'}
-                        className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        {user.isActive ? (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            aria-hidden="true"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                            />
-                          </svg>
-                        ) : (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            aria-hidden="true"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                        )}
-                      </button>
+                      {user.isActive ? (
+                        <button
+                          type="button"
+                          onClick={() => onStatusToggle(user)}
+                          disabled={isSelf}
+                          aria-label="Deactivate user"
+                          className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <span className="material-icons text-base">person_off</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onStatusToggle(user)}
+                          disabled={isSelf}
+                          aria-label="Activate user"
+                          className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <span className="material-icons text-base">settings_backup_restore</span>
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -221,13 +198,19 @@ export function UserTable({
         </table>
       </div>
 
+      {/* Pagination text + controls */}
       {totalCount > pageSize && (
-        <Pagination
-          currentPage={currentPage}
-          totalCount={totalCount}
-          pageSize={pageSize}
-          onPageChange={onPageChange}
-        />
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">
+            Mostrando {from}-{to} de {totalCount} usuarios
+          </span>
+          <Pagination
+            currentPage={currentPage}
+            totalCount={totalCount}
+            pageSize={pageSize}
+            onPageChange={onPageChange}
+          />
+        </div>
       )}
     </div>
   )
