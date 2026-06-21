@@ -48,8 +48,8 @@ export function UserTable({
   if (users.length === 0) {
     return (
       <EmptyState
-        title="No users found"
-        description="No users match the current filters."
+        title="No hay usuarios"
+        description="Ningún usuario coincide con los filtros actuales."
       />
     )
   }

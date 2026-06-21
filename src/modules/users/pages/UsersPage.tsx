@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useDebounce } from '@/core/hooks/useDebounce'
 import { useStore } from '@/store'
 import { useListUsers } from '@/modules/users/hooks/useListUsers'
 import { useCreateUser } from '@/modules/users/hooks/useCreateUser'
@@ -53,23 +54,22 @@ export function UsersPage(): React.JSX.Element {
   // Derived filter params
   const { role, isActive } = filterToParams(combinedFilter)
 
+  // Debounced search value
+  const debouncedSearch = useDebounce(search, 300)
+
   // ---------------------------------------------------------------------------
   // Fetch effect
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void fetch({
-        search: search.trim() === '' ? null : search.trim(),
-        role,
-        isActive,
-        page,
-        pageSize: PAGE_SIZE,
-      })
-    }, 300)
-
-    return () => clearTimeout(timer)
-  }, [search, combinedFilter, page]) // eslint-disable-line react-hooks/exhaustive-deps
+    void fetch({
+      search: debouncedSearch.trim() === '' ? null : debouncedSearch.trim(),
+      role,
+      isActive,
+      page,
+      pageSize: PAGE_SIZE,
+    })
+  }, [debouncedSearch, combinedFilter, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset page when filters change (not when page itself changes)
   const handleFilterChange = (value: CombinedFilter): void => {

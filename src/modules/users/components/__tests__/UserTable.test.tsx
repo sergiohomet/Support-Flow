@@ -217,7 +217,7 @@ describe('UserTable', () => {
     it('shows empty state when users is empty and isLoading is false', () => {
       renderTable({ users: [], isLoading: false, totalCount: 0 })
 
-      expect(screen.getByText(/no users found/i)).toBeInTheDocument()
+      expect(screen.getByText(/no hay usuarios/i)).toBeInTheDocument()
       expect(screen.queryByRole('table')).not.toBeInTheDocument()
     })
   })

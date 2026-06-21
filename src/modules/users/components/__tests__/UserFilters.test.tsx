@@ -120,7 +120,7 @@ describe('UserFilters', () => {
       const user = userEvent.setup()
       renderFilters()
 
-      await user.click(screen.getByRole('button', { name: /reset/i }))
+      await user.click(screen.getByRole('button', { name: /restablecer/i }))
 
       expect(mockOnReset).toHaveBeenCalledOnce()
     })
@@ -139,7 +139,7 @@ describe('UserFilters', () => {
 
     it('disables reset button when isLoading is true', () => {
       renderFilters({ isLoading: true })
-      expect(screen.getByRole('button', { name: /reset/i })).toBeDisabled()
+      expect(screen.getByRole('button', { name: /restablecer/i })).toBeDisabled()
     })
   })
 })

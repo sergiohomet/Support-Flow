@@ -74,9 +74,9 @@ export function UserFilters({
         onClick={onReset}
         disabled={isLoading}
         className="text-sm text-blue-600 hover:underline disabled:opacity-50"
-        aria-label="Reset filters"
+        aria-label="Restablecer filtros"
       >
-        Reset
+        Restablecer
       </button>
     </div>
   )
