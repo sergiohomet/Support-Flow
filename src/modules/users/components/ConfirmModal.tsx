@@ -35,8 +35,7 @@ export function ConfirmModal({
   return (
     <dialog
       ref={dialogRef}
-      open={isOpen || undefined}
-      className="rounded-lg p-6 shadow-xl backdrop:bg-black/40 max-w-md w-full"
+      className="m-auto rounded-lg p-6 shadow-xl backdrop:bg-black/40 max-w-md w-full"
       onClose={onClose}
     >
       <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
@@ -48,7 +47,7 @@ export function ConfirmModal({
           onClick={onClose}
           className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
-          Cancel
+          Cancelar
         </button>
         <button
           type="button"

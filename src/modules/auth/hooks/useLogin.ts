@@ -35,11 +35,18 @@ export function useLogin(): UseLoginResult {
       const { data: profileData, error: rpcError } = await supabase.rpc('get_my_profile')
 
       if (rpcError || !profileData?.[0]) {
-        setError(mapAuthError(rpcError ?? new Error('Profile not found')))
+        setError(mapAuthError(rpcError ?? new Error('Perfil no encontrado.')))
         return
       }
 
-      const p = profileData[0] as AuthUser
+      const p = profileData[0] as AuthUser & { is_active: boolean }
+
+      if (p.is_active === false) {
+        await supabase.auth.signOut()
+        setError('Tu cuenta está desactivada. Contactá al administrador.')
+        return
+      }
+
       setUser({ id: p.id, email: p.email, full_name: p.full_name, role: p.role })
     } finally {
       setIsLoading(false)

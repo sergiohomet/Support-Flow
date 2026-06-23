@@ -3,10 +3,16 @@ import userEvent from '@testing-library/user-event'
 import type { CreateUserInput } from '@/modules/users/schemas'
 import { CreateUserModal } from '../CreateUserModal'
 
-// jsdom does not implement HTMLDialogElement methods
+// jsdom does not implement HTMLDialogElement methods.
+// Simulate open/close by toggling the `open` attribute so the
+// accessibility tree is exposed (role="dialog" + child roles).
 beforeAll(() => {
-  HTMLDialogElement.prototype.showModal = vi.fn()
-  HTMLDialogElement.prototype.close = vi.fn()
+  HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
+    this.setAttribute('open', '')
+  })
+  HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+    this.removeAttribute('open')
+  })
 })
 
 beforeEach(() => {
@@ -26,9 +32,9 @@ function renderModal(overrides: Partial<typeof defaultProps> = {}) {
 }
 
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText('Full name'), 'Jane Doe')
+  await user.type(screen.getByLabelText('Nombre completo'), 'Jane Doe')
   await user.type(screen.getByLabelText('Email'), 'jane@example.com')
-  await user.type(screen.getByLabelText('Temporary password'), 'secret123')
+  await user.type(screen.getByLabelText('Contraseña temporal'), 'secret123')
 }
 
 describe('CreateUserModal', () => {
@@ -38,8 +44,8 @@ describe('CreateUserModal', () => {
     renderModal({ onSubmit })
 
     await user.type(screen.getByLabelText('Email'), 'jane@example.com')
-    await user.type(screen.getByLabelText('Temporary password'), 'secret123')
-    await user.click(screen.getByRole('button', { name: 'Create user' }))
+    await user.type(screen.getByLabelText('Contraseña temporal'), 'secret123')
+    await user.click(screen.getByRole('button', { name: 'Crear usuario' }))
 
     expect(onSubmit).not.toHaveBeenCalled()
   })
@@ -49,10 +55,10 @@ describe('CreateUserModal', () => {
     const onSubmit = vi.fn()
     renderModal({ onSubmit })
 
-    await user.type(screen.getByLabelText('Full name'), 'Jane Doe')
+    await user.type(screen.getByLabelText('Nombre completo'), 'Jane Doe')
     await user.type(screen.getByLabelText('Email'), 'not-an-email')
-    await user.type(screen.getByLabelText('Temporary password'), 'secret123')
-    await user.click(screen.getByRole('button', { name: 'Create user' }))
+    await user.type(screen.getByLabelText('Contraseña temporal'), 'secret123')
+    await user.click(screen.getByRole('button', { name: 'Crear usuario' }))
 
     expect(onSubmit).not.toHaveBeenCalled()
   })
@@ -62,10 +68,10 @@ describe('CreateUserModal', () => {
     const onSubmit = vi.fn()
     renderModal({ onSubmit })
 
-    await user.type(screen.getByLabelText('Full name'), 'Jane Doe')
+    await user.type(screen.getByLabelText('Nombre completo'), 'Jane Doe')
     await user.type(screen.getByLabelText('Email'), 'jane@example.com')
-    await user.type(screen.getByLabelText('Temporary password'), 'short')
-    await user.click(screen.getByRole('button', { name: 'Create user' }))
+    await user.type(screen.getByLabelText('Contraseña temporal'), 'short')
+    await user.click(screen.getByRole('button', { name: 'Crear usuario' }))
 
     expect(onSubmit).not.toHaveBeenCalled()
   })
@@ -76,7 +82,7 @@ describe('CreateUserModal', () => {
     renderModal({ onSubmit })
 
     await fillValidForm(user)
-    await user.click(screen.getByRole('button', { name: 'Create user' }))
+    await user.click(screen.getByRole('button', { name: 'Crear usuario' }))
 
     const expected: CreateUserInput = {
       fullName: 'Jane Doe',
@@ -94,7 +100,7 @@ describe('CreateUserModal', () => {
     const onClose = vi.fn()
     renderModal({ onClose })
 
-    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
 
     expect(onClose).toHaveBeenCalledOnce()
   })
@@ -110,11 +116,11 @@ describe('CreateUserModal', () => {
     const onSubmit = vi.fn()
     renderModal({ onSubmit })
 
-    expect(screen.getByLabelText('Specialty')).toBeInTheDocument()
+    expect(screen.getByLabelText('Especialidad')).toBeInTheDocument()
 
     await fillValidForm(user)
-    await user.type(screen.getByLabelText('Specialty'), 'Billing')
-    await user.click(screen.getByRole('button', { name: 'Create user' }))
+    await user.type(screen.getByLabelText('Especialidad'), 'Billing')
+    await user.click(screen.getByRole('button', { name: 'Crear usuario' }))
 
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({ specialty: 'Billing' }),
@@ -124,6 +130,6 @@ describe('CreateUserModal', () => {
   it('disables submit button when isLoading is true', () => {
     renderModal({ isLoading: true })
 
-    expect(screen.getByRole('button', { name: 'Create user' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Crear usuario' })).toBeDisabled()
   })
 })

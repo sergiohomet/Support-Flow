@@ -35,8 +35,6 @@ describe('useListUsers', () => {
 
     expect(mockRpc).toHaveBeenCalledWith('admin_list_users', {
       p_search: null,
-      p_role: null,
-      p_is_active: null,
       p_page: 1,
       p_page_size: 10,
     })

@@ -40,8 +40,8 @@ export function TicketDetailPage(): React.ReactElement {
   }
 
   const handleStatusUpdate = async (newStatus: TicketStatus): Promise<void> => {
-    if (!id) return
-    const ok = await updateStatus(id, newStatus)
+    if (!id || !ticket) return
+    const ok = await updateStatus(id, ticket.status, newStatus)
     if (ok) void fetchDetail(id)
   }
 

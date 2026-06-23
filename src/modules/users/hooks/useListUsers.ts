@@ -32,10 +32,10 @@ export function useListUsers(): UseListUsersResult {
     try {
       const { data, error: rpcError } = await supabase.rpc('admin_list_users', {
         p_search: params.search ?? null,
-        p_role: params.role ?? null,
-        p_is_active: params.isActive ?? null,
         p_page: params.page ?? 1,
         p_page_size: params.pageSize ?? 10,
+        ...(params.role != null ? { p_role: params.role } : {}),
+        ...(params.isActive != null ? { p_is_active: params.isActive } : {}),
       })
 
       if (rpcError) {

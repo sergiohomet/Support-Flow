@@ -4,10 +4,16 @@ import { MemoryRouter } from 'react-router-dom'
 import { UsersPage } from '../UsersPage'
 import type { AdminUser } from '@/modules/users/schemas'
 
-// jsdom does not implement HTMLDialogElement methods
+// jsdom does not implement HTMLDialogElement methods.
+// Simulate open/close by toggling the `open` attribute so the
+// accessibility tree is exposed (role="dialog" + child roles).
 beforeAll(() => {
-  HTMLDialogElement.prototype.showModal = vi.fn()
-  HTMLDialogElement.prototype.close = vi.fn()
+  HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
+    this.setAttribute('open', '')
+  })
+  HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+    this.removeAttribute('open')
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -255,12 +261,12 @@ describe('UsersPage', () => {
       expect(screen.getByRole('dialog')).toBeInTheDocument()
 
       // Fill in the form
-      await user.type(screen.getByLabelText(/full name/i), 'New User')
+      await user.type(screen.getByLabelText(/nombre completo/i), 'New User')
       await user.type(screen.getByLabelText(/^email$/i), 'new@example.com')
-      await user.type(screen.getByLabelText(/temporary password/i), 'password123')
+      await user.type(screen.getByLabelText(/contraseña temporal/i), 'password123')
 
       // Submit
-      await user.click(screen.getByRole('button', { name: /create user/i }))
+      await user.click(screen.getByRole('button', { name: /crear usuario/i }))
 
       await waitFor(() => {
         expect(mockCreateUser).toHaveBeenCalled()

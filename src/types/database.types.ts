@@ -358,6 +358,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_active: boolean
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }

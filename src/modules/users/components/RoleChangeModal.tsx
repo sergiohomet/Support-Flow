@@ -42,8 +42,7 @@ export function RoleChangeModal({
   return (
     <dialog
       ref={dialogRef}
-      open={isOpen || undefined}
-      className="rounded-lg p-6 shadow-xl backdrop:bg-black/40 max-w-md w-full"
+      className="m-auto rounded-lg p-6 shadow-xl backdrop:bg-black/40 max-w-md w-full"
       onClose={onClose}
     >
       <h2 className="text-lg font-semibold text-gray-900">Cambiar rol</h2>

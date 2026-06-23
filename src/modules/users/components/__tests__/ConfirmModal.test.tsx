@@ -2,10 +2,16 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ConfirmModal } from '../ConfirmModal'
 
-// jsdom does not implement HTMLDialogElement methods
+// jsdom does not implement HTMLDialogElement methods.
+// Simulate open/close by toggling the `open` attribute so the
+// accessibility tree is exposed (role="dialog" + child roles).
 beforeAll(() => {
-  HTMLDialogElement.prototype.showModal = vi.fn()
-  HTMLDialogElement.prototype.close = vi.fn()
+  HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
+    this.setAttribute('open', '')
+  })
+  HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+    this.removeAttribute('open')
+  })
 })
 
 beforeEach(() => {
@@ -52,7 +58,7 @@ describe('ConfirmModal', () => {
     const onClose = vi.fn()
     renderModal({ isOpen: true, onClose })
 
-    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
 
     expect(onClose).toHaveBeenCalledOnce()
   })

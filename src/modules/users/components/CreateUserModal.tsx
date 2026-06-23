@@ -76,11 +76,10 @@ export function CreateUserModal({
   return (
     <dialog
       ref={dialogRef}
-      open={isOpen || undefined}
-      className="rounded-lg p-6 shadow-xl backdrop:bg-black/40 max-w-lg w-full"
+      className="m-auto rounded-lg p-6 shadow-xl backdrop:bg-black/40 max-w-lg w-full"
       onClose={onClose}
     >
-      <h2 className="text-lg font-semibold text-gray-900">Create user</h2>
+      <h2 className="text-lg font-semibold text-gray-900">Crear usuario</h2>
 
       {error && (
         <div role="alert" className="mt-3 rounded-md bg-red-50 p-3 text-sm text-red-700">
@@ -91,7 +90,7 @@ export function CreateUserModal({
       <form onSubmit={handleSubmit} className="mt-4 space-y-4" noValidate>
         <div>
           <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-            Full name
+            Nombre completo
           </label>
           <input
             id="fullName"
@@ -123,7 +122,7 @@ export function CreateUserModal({
 
         <div>
           <label htmlFor="temporaryPassword" className="block text-sm font-medium text-gray-700">
-            Temporary password
+            Contraseña temporal
           </label>
           <input
             id="temporaryPassword"
@@ -139,7 +138,7 @@ export function CreateUserModal({
 
         <div>
           <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-            Role
+            Rol
           </label>
           <select
             id="role"
@@ -147,14 +146,14 @@ export function CreateUserModal({
             onChange={(e) => setRole(e.target.value as 'agent' | 'admin')}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
           >
-            <option value="agent">Agent</option>
+            <option value="agent">Agente</option>
             <option value="admin">Admin</option>
           </select>
         </div>
 
         <div>
           <label htmlFor="specialty" className="block text-sm font-medium text-gray-700">
-            Specialty
+            Especialidad
           </label>
           <input
             id="specialty"
@@ -171,14 +170,14 @@ export function CreateUserModal({
             onClick={onClose}
             className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            Cancel
+            Cancelar
           </button>
           <button
             type="submit"
             disabled={isLoading}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Create user
+            Crear usuario
           </button>
         </div>
       </form>
