@@ -181,26 +181,36 @@ describe('UsersPage', () => {
     })
   })
 
-  describe('on mount', () => {
-    it('calls fetch with default params on mount', async () => {
+  describe('on mount (sin filtros)', () => {
+    it('does NOT call fetch on mount when no filters are active', () => {
       renderPage()
-      await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith({
-          search: null,
-          page: 1,
-          pageSize: 10,
-          role: null,
-          isActive: null,
-        })
-      })
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('shows empty-state message when no filters are active', () => {
+      renderPage()
+      expect(
+        screen.getByText(/usá el buscador o seleccioná un filtro para ver usuarios/i),
+      ).toBeInTheDocument()
+    })
+
+    it('does not render the user table when no filters are active', () => {
+      renderPage()
+      expect(screen.queryByText('alice@example.com')).not.toBeInTheDocument()
     })
   })
 
-  describe('user table', () => {
-    it('renders UserTable with the data from useListUsers', () => {
+  describe('user table (con filtro activo)', () => {
+    it('renders UserTable with the data from useListUsers after selecting a filter', async () => {
+      const user = userEvent.setup()
       renderPage()
-      expect(screen.getByText('alice@example.com')).toBeInTheDocument()
-      expect(screen.getByText('bob@example.com')).toBeInTheDocument()
+
+      await user.selectOptions(screen.getByRole('combobox'), 'admin')
+
+      await waitFor(() => {
+        expect(screen.getByText('alice@example.com')).toBeInTheDocument()
+        expect(screen.getByText('bob@example.com')).toBeInTheDocument()
+      })
     })
   })
 
@@ -256,6 +266,10 @@ describe('UsersPage', () => {
 
       renderPage()
 
+      // Activar filtro para que haya una primera llamada a fetch
+      await user.selectOptions(screen.getByRole('combobox'), 'admin')
+      await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1))
+
       // Open modal
       await user.click(screen.getByRole('button', { name: /nuevo usuario/i }))
       expect(screen.getByRole('dialog')).toBeInTheDocument()
@@ -272,7 +286,7 @@ describe('UsersPage', () => {
         expect(mockCreateUser).toHaveBeenCalled()
       })
 
-      // After success, fetch is called again
+      // After success, fetch is called again (2nd call)
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledTimes(2)
       })
@@ -283,6 +297,9 @@ describe('UsersPage', () => {
     it('opens RoleChangeModal when edit role button is clicked', async () => {
       const user = userEvent.setup()
       renderPage()
+
+      await user.selectOptions(screen.getByRole('combobox'), 'admin')
+      await waitFor(() => expect(screen.getByText('alice@example.com')).toBeInTheDocument())
 
       const editButtons = screen.getAllByRole('button', { name: /edit role/i })
       await user.click(editButtons[0])
@@ -297,6 +314,9 @@ describe('UsersPage', () => {
       const user = userEvent.setup()
       mockUpdateRole.mockResolvedValue(true)
       renderPage()
+
+      await user.selectOptions(screen.getByRole('combobox'), 'admin')
+      await waitFor(() => expect(screen.getByText('alice@example.com')).toBeInTheDocument())
 
       // Click edit role on Alice (role: 'agent')
       const editButtons = screen.getAllByRole('button', { name: /edit role/i })
@@ -324,6 +344,9 @@ describe('UsersPage', () => {
       const user = userEvent.setup()
       renderPage()
 
+      await user.selectOptions(screen.getByRole('combobox'), 'admin')
+      await waitFor(() => expect(screen.getByText('alice@example.com')).toBeInTheDocument())
+
       const deactivateButtons = screen.getAllByRole('button', { name: /deactivate/i })
       await user.click(deactivateButtons[0])
 
@@ -340,6 +363,9 @@ describe('UsersPage', () => {
       )
       const user = userEvent.setup()
       renderPage()
+
+      // Activar filtro para mostrar la tabla con paginación
+      await user.selectOptions(screen.getByRole('combobox'), 'admin')
 
       // Pagination renders when totalCount(50) > pageSize(10)
       const nextButton = await screen.findByRole('button', { name: /siguiente/i })

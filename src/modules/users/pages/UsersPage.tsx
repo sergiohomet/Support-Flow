@@ -22,7 +22,7 @@ function filterToParams(f: CombinedFilter): { role: UserRole | null; isActive: b
   if (f === 'agent') return { role: 'agent', isActive: null }
   if (f === 'client') return { role: 'client', isActive: null }
   if (f === 'inactive') return { role: null, isActive: false }
-  return { role: null, isActive: null }
+  return { role: null, isActive: null } // '' y 'all' → sin filtro de rol/estado
 }
 
 const PAGE_SIZE = 10
@@ -43,7 +43,7 @@ export function UsersPage(): React.JSX.Element {
 
   // Filter state
   const [search, setSearch] = useState('')
-  const [combinedFilter, setCombinedFilter] = useState<CombinedFilter>('all')
+  const [combinedFilter, setCombinedFilter] = useState<CombinedFilter>('')
   const [page, setPage] = useState(1)
 
   // Modal state
@@ -57,11 +57,15 @@ export function UsersPage(): React.JSX.Element {
   // Debounced search value
   const debouncedSearch = useDebounce(search, 300)
 
+  // Hay filtro activo cuando el usuario escribió algo o eligió una opción del dropdown
+  const hasActiveFilters = debouncedSearch.trim() !== '' || combinedFilter !== ''
+
   // ---------------------------------------------------------------------------
-  // Fetch effect
+  // Fetch effect — solo ejecuta cuando hay al menos un filtro activo
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
+    if (!hasActiveFilters) return
     void fetch({
       search: debouncedSearch.trim() === '' ? null : debouncedSearch.trim(),
       role,
@@ -84,7 +88,7 @@ export function UsersPage(): React.JSX.Element {
 
   const handleReset = (): void => {
     setSearch('')
-    setCombinedFilter('all')
+    setCombinedFilter('')
     setPage(1)
   }
 
@@ -171,23 +175,33 @@ export function UsersPage(): React.JSX.Element {
         search={search}
         combinedFilter={combinedFilter}
         isLoading={isFetching}
+        hasActiveFilters={hasActiveFilters}
         onSearchChange={handleSearchChange}
         onFilterChange={handleFilterChange}
         onReset={handleReset}
       />
 
-      {/* Table */}
-      <UserTable
-        users={users}
-        isLoading={isFetching}
-        totalCount={totalCount}
-        currentPage={page}
-        pageSize={PAGE_SIZE}
-        currentUserId={currentUserId}
-        onRoleChange={handleRoleChange}
-        onStatusToggle={handleStatusToggle}
-        onPageChange={setPage}
-      />
+      {/* Table o empty state */}
+      {hasActiveFilters ? (
+        <UserTable
+          users={users}
+          isLoading={isFetching}
+          totalCount={totalCount}
+          currentPage={page}
+          pageSize={PAGE_SIZE}
+          currentUserId={currentUserId}
+          onRoleChange={handleRoleChange}
+          onStatusToggle={handleStatusToggle}
+          onPageChange={setPage}
+        />
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <span className="material-icons text-4xl text-gray-300 mb-3">manage_accounts</span>
+          <p className="text-sm text-gray-500">
+            Usá el buscador o seleccioná un filtro para ver usuarios.
+          </p>
+        </div>
+      )}
 
       {/* Create user modal */}
       <CreateUserModal
