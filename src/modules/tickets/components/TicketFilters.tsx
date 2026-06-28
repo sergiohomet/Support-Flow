@@ -1,7 +1,7 @@
 import type { TicketStatus } from '@/modules/tickets/schemas'
 
 interface TicketFiltersProps {
-  statusTab: TicketStatus | ''
+  statusTab: TicketStatus | '' | null
   search: string
   isLoading: boolean
   hasActiveFilters: boolean

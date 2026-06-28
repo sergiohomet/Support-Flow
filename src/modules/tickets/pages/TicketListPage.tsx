@@ -17,11 +17,11 @@ export function TicketListPage(): React.JSX.Element {
   const resetFilters = useStore((s) => s.resetFilters)
   const user = useStore((s) => s.user)
 
-  const [statusTab, setStatusTab] = useState<TicketStatus | ''>('')
+  const [statusTab, setStatusTab] = useState<TicketStatus | '' | null>(null)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
 
-  const hasActiveFilters = statusTab !== '' || debouncedSearch.trim() !== ''
+  const hasActiveFilters = statusTab !== null || debouncedSearch.trim() !== ''
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const handleSearchChange = (value: string): void => {
@@ -38,7 +38,7 @@ export function TicketListPage(): React.JSX.Element {
   }
 
   const handleReset = (): void => {
-    setStatusTab('')
+    setStatusTab(null)
     setSearch('')
     setDebouncedSearch('')
     resetFilters()
