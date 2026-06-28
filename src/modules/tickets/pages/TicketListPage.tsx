@@ -1,51 +1,72 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/store'
 import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
 import { TicketTable } from '@/modules/tickets/components/TicketTable'
 import { TicketFilters } from '@/modules/tickets/components/TicketFilters'
+import type { TicketStatus } from '@/modules/tickets/schemas'
 
-export function TicketListPage(): React.ReactElement {
+export function TicketListPage(): React.JSX.Element {
   const navigate = useNavigate()
-  const { isFetching, isLoadingCategories, isLoadingAgents, fetch, loadCategories, loadAgents } = useTicketList()
+  const { isFetching, fetch } = useTicketList()
 
   const tickets = useStore((s) => s.tickets)
   const filters = useStore((s) => s.filters)
   const pagination = useStore((s) => s.pagination)
-  const categories = useStore((s) => s.categories)
-  const agents = useStore((s) => s.agents)
   const setFilters = useStore((s) => s.setFilters)
   const resetFilters = useStore((s) => s.resetFilters)
   const user = useStore((s) => s.user)
 
-  const isFirstRender = useRef(true)
+  const [statusTab, setStatusTab] = useState<TicketStatus | ''>('')
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
 
-  useEffect(() => {
-    void loadCategories()
-    void loadAgents()
-    void fetch()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const hasActiveFilters = statusTab !== '' || debouncedSearch.trim() !== ''
 
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
-      return
-    }
-    void fetch()
-  }, [filters]) // eslint-disable-line react-hooks/exhaustive-deps
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const handleSearchChange = (value: string): void => {
+    setSearch(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value)
+    }, 300)
+  }
 
-  const handleTicketClick = (id: string): void => {
-    navigate('/tickets/' + id)
+  const handleTabChange = (status: TicketStatus | ''): void => {
+    setStatusTab(status)
+    setFilters({ status: status === '' ? null : status })
+  }
+
+  const handleReset = (): void => {
+    setStatusTab('')
+    setSearch('')
+    setDebouncedSearch('')
+    resetFilters()
   }
 
   const handlePageChange = (page: number): void => {
     setFilters({ page })
   }
 
+  useEffect(() => {
+    if (!hasActiveFilters) return
+    void fetch()
+  }, [statusTab, debouncedSearch, filters.page]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const visibleTickets = useMemo(() => {
+    const term = debouncedSearch.trim().toLowerCase()
+    if (!term) return tickets
+    return tickets.filter((t) => t.title.toLowerCase().includes(term))
+  }, [tickets, debouncedSearch])
+
+  const handleTicketClick = (id: string): void => {
+    navigate('/tickets/' + id)
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold text-gray-900">Tickets</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Mis Tickets</h1>
         {user?.role === 'client' && (
           <button
             onClick={() => navigate('/tickets/new')}
@@ -55,23 +76,33 @@ export function TicketListPage(): React.ReactElement {
           </button>
         )}
       </div>
+
       <TicketFilters
-        filters={filters}
-        categories={categories}
-        agents={agents}
-        onChange={(partial) => setFilters(partial)}
-        onReset={resetFilters}
-        isLoading={isLoadingCategories || isLoadingAgents}
-      />
-      <TicketTable
-        tickets={tickets}
+        statusTab={statusTab}
+        search={search}
         isLoading={isFetching}
-        totalCount={pagination.totalCount}
-        currentPage={pagination.currentPage}
-        pageSize={filters.pageSize}
-        onTicketClick={handleTicketClick}
-        onPageChange={handlePageChange}
+        hasActiveFilters={hasActiveFilters}
+        onTabChange={handleTabChange}
+        onSearchChange={handleSearchChange}
+        onReset={handleReset}
       />
+
+      {!hasActiveFilters ? (
+        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <span className="material-icons text-5xl mb-3">confirmation_number</span>
+          <p className="text-sm">Seleccioná un estado o buscá para ver tickets.</p>
+        </div>
+      ) : (
+        <TicketTable
+          tickets={visibleTickets}
+          isLoading={isFetching}
+          totalCount={pagination.totalCount}
+          currentPage={pagination.currentPage}
+          pageSize={filters.pageSize}
+          onTicketClick={handleTicketClick}
+          onPageChange={handlePageChange}
+        />
+      )}
     </div>
   )
 }
