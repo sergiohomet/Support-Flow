@@ -108,6 +108,17 @@ export function TicketDetailPage(): React.ReactElement {
             </ol>
           </nav>
 
+          {/* Banner resuelto */}
+          {ticket.status === 'resuelto' && (
+            <div className="bg-green-50 border-l-4 border-green-500 px-4 py-3 rounded-lg mb-1 flex items-start gap-3">
+              <span className="material-icons text-green-700 mt-0.5 text-[20px]">check_circle</span>
+              <div>
+                <p className="text-sm font-semibold text-green-800">Este ticket fue resuelto.</p>
+                <p className="text-sm text-green-700 mt-0.5">¿El problema persiste? Podés reabrirlo.</p>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-6">
             {/* Main column — 65% */}
             <div className="flex-[0_0_65%] min-w-0 flex flex-col gap-5">
@@ -206,14 +217,24 @@ export function TicketDetailPage(): React.ReactElement {
                     </div>
                   </div>
 
-                  {/* SLA placeholder */}
-                  <div className="bg-gray-50 border border-gray-200 rounded p-3">
-                    <span className="block text-xs text-gray-400 mb-1">SLA Resolución</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="material-icons text-base text-gray-400">schedule</span>
-                      <span className="text-sm text-gray-500">No configurado</span>
+                  {/* SLA */}
+                  {ticket.status === 'resuelto' ? (
+                    <div className="bg-green-50 border border-green-200 rounded p-3">
+                      <span className="block text-xs text-gray-400 mb-1">SLA Resolución</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="material-icons text-base text-green-600">check_circle</span>
+                        <span className="text-sm text-green-700 font-medium">Resuelto dentro del SLA</span>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="bg-gray-50 border border-gray-200 rounded p-3">
+                      <span className="block text-xs text-gray-400 mb-1">SLA Resolución</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="material-icons text-base text-gray-400">schedule</span>
+                        <span className="text-sm text-gray-500">No configurado</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -273,8 +294,9 @@ export function TicketDetailPage(): React.ReactElement {
                         type="button"
                         onClick={() => void handleStatusUpdate('reabierto')}
                         disabled={statusLoading}
-                        className="w-full rounded-lg border border-gray-200 bg-transparent text-gray-600 px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full rounded-lg border border-green-300 bg-green-50 text-green-700 px-4 py-2.5 text-sm font-medium hover:bg-green-600 hover:text-white hover:border-green-600 transition-colors flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
+                        <span className="material-icons text-[18px]">refresh</span>
                         Reabrir Ticket
                       </button>
                     )
