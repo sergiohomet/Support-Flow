@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { supabase } from '@/core/supabase/client'
 import type { TicketComment } from '../schemas'
-import { parseRpcError } from '../utils/parseRpcError'
+import { AddCommentSchema } from '../schemas'
+import { parseRpcError } from '@/core/utils/parseRpcError'
 
 interface UseAddCommentResult {
   execute: (ticketId: string, content: string) => Promise<TicketComment | null>
@@ -14,6 +15,12 @@ export function useAddComment(): UseAddCommentResult {
   const [error, setError] = useState<string | null>(null)
 
   const execute = async (ticketId: string, content: string): Promise<TicketComment | null> => {
+    const validation = AddCommentSchema.safeParse({ content })
+    if (!validation.success) {
+      setError(validation.error.issues[0]?.message ?? 'Contenido inválido.')
+      return null
+    }
+
     setIsLoading(true)
     setError(null)
 

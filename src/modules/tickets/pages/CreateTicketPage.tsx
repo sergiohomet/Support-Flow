@@ -23,23 +23,35 @@ export function CreateTicketPage(): React.ReactElement {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-gray-500 hover:text-gray-700 text-sm"
-        >
-          ← Volver
-        </button>
-        <h1 className="text-2xl font-semibold text-gray-900">Nuevo ticket</h1>
+    <div className="max-w-[700px] w-full mx-auto py-8 px-6">
+      {/* Breadcrumb + título */}
+      <div className="mb-6">
+        <nav aria-label="Breadcrumb" className="flex text-xs text-gray-500 mb-2">
+          <ol className="inline-flex items-center gap-1">
+            <li>
+              <button onClick={() => navigate(-1)} className="hover:text-blue-600 transition-colors">
+                Mis Tickets
+              </button>
+            </li>
+            <li>
+              <span className="material-icons text-sm leading-none">chevron_right</span>
+            </li>
+            <li className="text-gray-800 font-medium">Crear</li>
+          </ol>
+        </nav>
+        <h1 className="text-2xl font-semibold text-gray-900">Crear Nuevo Ticket</h1>
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <CreateTicketForm
-          categories={categories}
-          onSubmit={handleSubmit}
-          isLoading={isLoading}
-          error={error}
-        />
+
+      <div className="bg-white rounded border border-gray-200 shadow-sm overflow-hidden">
+        <div className="p-6">
+          <CreateTicketForm
+            categories={categories}
+            onSubmit={handleSubmit}
+            onCancel={() => navigate(-1)}
+            isLoading={isLoading}
+            error={error}
+          />
+        </div>
       </div>
     </div>
   )

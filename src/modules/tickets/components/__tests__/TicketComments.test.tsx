@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import type { TicketComment, TicketStatus } from '@/modules/tickets/schemas'
+import type { TicketComment, StatusLogEntry, TicketStatus } from '@/modules/tickets/schemas'
 import { TicketComments } from '../TicketComments'
 
 const mockOnAddComment = vi.fn()
@@ -13,15 +13,44 @@ const fakeComments: TicketComment[] = [
     content: 'Hola, ¿alguna novedad?',
     createdAt: '2026-06-15T10:00:00Z',
   },
+  {
+    id: 'c-2',
+    ticketId: 'ticket-1',
+    userId: 'agent-42',
+    userFullName: 'Laura García',
+    content: 'Estamos revisando el caso.',
+    createdAt: '2026-06-15T11:00:00Z',
+  },
 ]
 
-function renderComments(
-  ticketStatus: TicketStatus,
-  overrides: { isLoading?: boolean; error?: string | null; comments?: TicketComment[] } = {},
-) {
+const fakeStatusLog: StatusLogEntry[] = [
+  {
+    id: 's-1',
+    ticketId: 'ticket-1',
+    fromStatus: 'abierto',
+    toStatus: 'en_proceso',
+    changedBy: 'agent-42',
+    changedByFullName: 'Laura García',
+    changedAt: '2026-06-15T10:30:00Z',
+  },
+]
+
+const CLIENT_ID = 'user-1'
+
+interface RenderOptions {
+  isLoading?: boolean
+  error?: string | null
+  comments?: TicketComment[]
+  statusLog?: StatusLogEntry[]
+  ticketClientId?: string
+}
+
+function renderComments(ticketStatus: TicketStatus, overrides: RenderOptions = {}) {
   return render(
     <TicketComments
       comments={overrides.comments ?? fakeComments}
+      statusLog={overrides.statusLog ?? fakeStatusLog}
+      ticketClientId={overrides.ticketClientId ?? CLIENT_ID}
       onAddComment={mockOnAddComment}
       isLoading={overrides.isLoading ?? false}
       error={overrides.error ?? null}
@@ -71,5 +100,54 @@ describe('TicketComments', () => {
     renderComments('resuelto')
     expect(screen.getByText('Juan Pérez')).toBeInTheDocument()
     expect(screen.getByText('Hola, ¿alguna novedad?')).toBeInTheDocument()
+  })
+
+  describe('role badges', () => {
+    it('shows "Cliente" badge for comment from the ticket client', () => {
+      renderComments('abierto', {
+        comments: [fakeComments[0]],
+        statusLog: [],
+        ticketClientId: CLIENT_ID,
+      })
+      // fakeComments[0].userId === CLIENT_ID
+      expect(screen.getByText('Cliente')).toBeInTheDocument()
+    })
+
+    it('shows "Agente" badge for comment from a non-client user', () => {
+      renderComments('abierto', {
+        comments: [fakeComments[1]],
+        statusLog: [],
+        ticketClientId: CLIENT_ID,
+      })
+      // fakeComments[1].userId !== CLIENT_ID
+      expect(screen.getByText('Agente')).toBeInTheDocument()
+    })
+
+    it('shows both badges when both client and agent have commented', () => {
+      renderComments('abierto', {
+        comments: fakeComments,
+        statusLog: [],
+        ticketClientId: CLIENT_ID,
+      })
+      expect(screen.getByText('Cliente')).toBeInTheDocument()
+      expect(screen.getByText('Agente')).toBeInTheDocument()
+    })
+  })
+
+  describe('status log entries in feed', () => {
+    it('renders a status change entry as a system message', () => {
+      renderComments('abierto', {
+        comments: [],
+        statusLog: fakeStatusLog,
+        ticketClientId: CLIENT_ID,
+      })
+      expect(screen.getByText(/Laura García/)).toBeInTheDocument()
+      expect(screen.getByText(/cambió el estado/)).toBeInTheDocument()
+    })
+
+    it('shows no activity message when both comments and statusLog are empty', () => {
+      renderComments('abierto', { comments: [], statusLog: [], ticketClientId: CLIENT_ID })
+      expect(screen.getByText('No hay actividad aún.')).toBeInTheDocument()
+    })
   })
 })

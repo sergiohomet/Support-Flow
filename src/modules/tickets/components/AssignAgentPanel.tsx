@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Agent } from '@/modules/tickets/schemas'
 
 interface AssignAgentPanelProps {
@@ -19,6 +19,10 @@ export function AssignAgentPanel({
   error,
 }: AssignAgentPanelProps): React.JSX.Element {
   const [selectedAgentId, setSelectedAgentId] = useState(currentAgentId ?? '')
+
+  useEffect(() => {
+    setSelectedAgentId(currentAgentId ?? '')
+  }, [currentAgentId])
 
   const selectedAgent = agents.find((a) => a.id === selectedAgentId) ?? null
   const isSameAgent = selectedAgentId !== '' && selectedAgentId === currentAgentId

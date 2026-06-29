@@ -1,8 +1,7 @@
 import type { TicketListItem } from '@/modules/tickets/schemas'
 import { Spinner } from '@/ui/Spinner'
-import { EmptyState } from '@/ui/EmptyState'
 import { Pagination } from '@/ui/Pagination'
-import { TicketListItem as TicketListItemComponent } from './TicketListItem'
+import { TicketCard } from './TicketCard'
 
 interface TicketTableProps {
   tickets: TicketListItem[]
@@ -33,24 +32,24 @@ export function TicketTable({
 
   if (tickets.length === 0) {
     return (
-      <EmptyState
-        title="No hay tickets"
-        description="No se encontraron tickets con los filtros aplicados."
-      />
+      <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+        <span className="material-icons text-5xl mb-3">inbox</span>
+        <p className="text-sm">No se encontraron tickets con los filtros aplicados.</p>
+      </div>
     )
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <ul className="rounded-md border border-gray-200 bg-white divide-y divide-gray-100">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {tickets.map((ticket) => (
-          <TicketListItemComponent
+          <TicketCard
             key={ticket.id}
             ticket={ticket}
             onClick={() => onTicketClick(ticket.id)}
           />
         ))}
-      </ul>
+      </div>
       <Pagination
         currentPage={currentPage}
         totalCount={totalCount}

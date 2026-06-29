@@ -8,6 +8,10 @@ async function loadProfile(): Promise<AuthUser | null> {
   const { data, error } = await supabase.rpc('get_my_profile')
   if (error || !data?.[0]) return null
   const p = data[0]
+  if (p.is_active === false) {
+    await supabase.auth.signOut()
+    return null
+  }
   return { id: p.id, email: p.email, full_name: p.full_name, role: p.role }
 }
 

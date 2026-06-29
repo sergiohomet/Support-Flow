@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '@/core/supabase/client'
-import { parseRpcError } from '../utils/parseRpcError'
+import { parseRpcError } from '@/core/utils/parseRpcError'
 
 interface UseAssignTicketResult {
   execute: (ticketId: string, agentId: string) => Promise<boolean>

@@ -1,12 +1,11 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, act } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { TicketListPage } from '../TicketListPage'
 
-// --- hook mocks ---
+// --- hook mock ---
 
 const mockFetch = vi.fn()
-const mockLoadCategories = vi.fn()
-const mockLoadAgents = vi.fn()
 
 vi.mock('@/modules/tickets/hooks/useTicketList', () => ({
   useTicketList: vi.fn(),
@@ -20,7 +19,7 @@ const mockResetFilters = vi.fn()
 type MockState = {
   tickets: unknown[]
   filters: {
-    status: null
+    status: string | null
     priority: null
     categoryId: null
     agentId: null
@@ -61,31 +60,42 @@ function makeHookReturn(overrides: Partial<ReturnType<typeof useTicketList>> = {
     isLoadingAgents: false,
     error: null,
     fetch: mockFetch,
-    loadCategories: mockLoadCategories,
-    loadAgents: mockLoadAgents,
+    loadCategories: vi.fn().mockResolvedValue(undefined),
+    loadAgents: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   }
+}
+
+const SAMPLE_TICKET = {
+  id: 'abcdef12-0000-0000-0000-000000000000',
+  title: 'Mi primer ticket',
+  status: 'abierto' as const,
+  priority: 'media' as const,
+  categoryId: 'cat-1',
+  categoryName: 'Soporte',
+  clientId: 'user-1',
+  clientFullName: 'Juan Pérez',
+  agentId: null,
+  agentFullName: null,
+  createdAt: '2026-06-15T10:00:00Z',
+  updatedAt: '2026-06-15T10:00:00Z',
+  commentCount: 0,
 }
 
 function renderPage(): void {
   render(
     <MemoryRouter>
       <TicketListPage />
-    </MemoryRouter>
+    </MemoryRouter>,
   )
 }
 
 describe('TicketListPage', () => {
   beforeEach(() => {
     mockFetch.mockReset()
-    mockLoadCategories.mockReset()
-    mockLoadAgents.mockReset()
     mockSetFilters.mockReset()
     mockResetFilters.mockReset()
-
     mockFetch.mockResolvedValue(undefined)
-    mockLoadCategories.mockResolvedValue(undefined)
-    mockLoadAgents.mockResolvedValue(undefined)
 
     mockState = {
       tickets: [],
@@ -101,65 +111,140 @@ describe('TicketListPage', () => {
     vi.mocked(useTicketList).mockReturnValue(makeHookReturn())
   })
 
-  it('shows spinner while isFetching is true', () => {
-    vi.mocked(useTicketList).mockReturnValue(makeHookReturn({ isFetching: true }))
-    renderPage()
-    expect(screen.getByRole('status')).toBeInTheDocument()
+  describe('initial render — no active filters', () => {
+    it('does NOT call fetch on mount', () => {
+      renderPage()
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('shows the empty-state prompt instead of the ticket table', () => {
+      renderPage()
+      expect(screen.getByText('Seleccioná un estado o buscá para ver tickets.')).toBeInTheDocument()
+    })
+
+    it('does NOT render any ticket cards', () => {
+      renderPage()
+      expect(screen.queryByText('Ver detalle →')).not.toBeInTheDocument()
+    })
+
+    it('renders the heading "Mis Tickets"', () => {
+      renderPage()
+      expect(screen.getByRole('heading', { name: 'Mis Tickets' })).toBeInTheDocument()
+    })
+
+    it('renders all status tabs', () => {
+      renderPage()
+      expect(screen.getByRole('tab', { name: 'Todos' })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: 'Abierto' })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: 'En Proceso' })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: 'Resuelto' })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: 'Reabierto' })).toBeInTheDocument()
+    })
   })
 
-  it('shows empty state when isFetching is false and tickets array is empty', () => {
-    mockState.tickets = []
-    vi.mocked(useTicketList).mockReturnValue(makeHookReturn({ isFetching: false }))
-    renderPage()
-    expect(screen.getByText(/no hay tickets/i)).toBeInTheDocument()
+  describe('tab interaction', () => {
+    it('calls fetch when a status tab is selected', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(screen.getByRole('tab', { name: 'Abierto' }))
+      expect(mockFetch).toHaveBeenCalledTimes(1)
+    })
+
+    it('calls setFilters with the correct status when a tab is selected', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(screen.getByRole('tab', { name: 'En Proceso' }))
+      expect(mockSetFilters).toHaveBeenCalledWith({ status: 'en_proceso' })
+    })
+
+    it('calls setFilters with null when "Todos" tab is clicked after active tab', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(screen.getByRole('tab', { name: 'Abierto' }))
+      await user.click(screen.getByRole('tab', { name: 'Todos' }))
+      expect(mockSetFilters).toHaveBeenLastCalledWith({ status: null })
+    })
+
+    it('shows empty-state prompt (not spinner) when isFetching without active filters', () => {
+      vi.mocked(useTicketList).mockReturnValue(makeHookReturn({ isFetching: true }))
+      renderPage()
+      expect(screen.getByText('Seleccioná un estado o buscá para ver tickets.')).toBeInTheDocument()
+      expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    })
+
+    it('renders ticket cards when fetch returns tickets', async () => {
+      mockState.tickets = [SAMPLE_TICKET]
+      mockState.pagination = { totalCount: 1, currentPage: 1 }
+      const user = userEvent.setup()
+      renderPage()
+      await act(async () => {
+        await user.click(screen.getByRole('tab', { name: 'Abierto' }))
+      })
+      expect(screen.getByText('Mi primer ticket')).toBeInTheDocument()
+    })
   })
 
-  it('renders ticket list when tickets are present', () => {
-    mockState.tickets = [
-      {
-        id: 'ticket-1',
-        title: 'Mi primer ticket',
-        status: 'abierto',
-        priority: 'media',
-        categoryId: 'cat-1',
-        categoryName: 'Soporte',
-        clientId: 'user-1',
-        clientFullName: 'Juan Pérez',
-        agentId: null,
-        agentFullName: null,
-        createdAt: '2026-06-15T10:00:00Z',
-        updatedAt: '2026-06-15T10:00:00Z',
-        commentCount: 0,
-      },
-    ]
-    mockState.pagination = { totalCount: 1, currentPage: 1 }
+  describe('search interaction', () => {
+    it('does NOT call fetch immediately on mount with empty search', () => {
+      renderPage()
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
 
-    vi.mocked(useTicketList).mockReturnValue(makeHookReturn({ isFetching: false }))
-    renderPage()
-    expect(screen.getByText('Mi primer ticket')).toBeInTheDocument()
+    it('calls fetch after debounce when text is typed in search box', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      const user = userEvent.setup({ delay: null })
+      renderPage()
+      await act(async () => {
+        await user.type(screen.getByRole('searchbox', { name: 'Buscar ticket' }), 'factura')
+      })
+      await act(async () => {
+        vi.advanceTimersByTime(400)
+      })
+      expect(mockFetch).toHaveBeenCalled()
+      vi.useRealTimers()
+    })
   })
 
-  it('calls fetch(), loadCategories() and loadAgents() on mount', () => {
-    renderPage()
-    expect(mockFetch).toHaveBeenCalledTimes(1)
-    expect(mockLoadCategories).toHaveBeenCalledTimes(1)
-    expect(mockLoadAgents).toHaveBeenCalledTimes(1)
+  describe('reset', () => {
+    it('returns to empty state when reset is triggered', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      // Activate a filter first
+      act(() => { screen.getByRole('tab', { name: 'Abierto' }).click() })
+      // Reset button should appear
+      const resetBtn = await screen.findByRole('button', { name: 'Limpiar filtros' })
+      await user.click(resetBtn)
+      // Empty state should be visible again
+      expect(screen.getByText('Seleccioná un estado o buscá para ver tickets.')).toBeInTheDocument()
+    })
+
+    it('calls resetFilters on the store when reset is triggered', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      act(() => { screen.getByRole('tab', { name: 'Abierto' }).click() })
+      const resetBtn = await screen.findByRole('button', { name: 'Limpiar filtros' })
+      await user.click(resetBtn)
+      expect(mockResetFilters).toHaveBeenCalledTimes(1)
+    })
   })
 
-  it('shows "Nuevo ticket" button for client role', () => {
-    mockState.user = { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' }
-    renderPage()
-    expect(screen.getByText('Nuevo ticket')).toBeInTheDocument()
-  })
+  describe('role visibility', () => {
+    it('shows "Nuevo ticket" button for client role', () => {
+      mockState.user = { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' }
+      renderPage()
+      expect(screen.getByText('Nuevo ticket')).toBeInTheDocument()
+    })
 
-  it('does NOT show "Nuevo ticket" button for agent role', () => {
-    mockState.user = { id: 'u2', email: 'agent@test.com', full_name: 'Agent User', role: 'agent' }
-    renderPage()
-    expect(screen.queryByText('Nuevo ticket')).not.toBeInTheDocument()
-  })
+    it('does NOT show "Nuevo ticket" button for agent role', () => {
+      mockState.user = { id: 'u2', email: 'agent@test.com', full_name: 'Agent User', role: 'agent' }
+      renderPage()
+      expect(screen.queryByText('Nuevo ticket')).not.toBeInTheDocument()
+    })
 
-  it('renders the page heading "Tickets"', () => {
-    renderPage()
-    expect(screen.getByRole('heading', { name: /^tickets$/i })).toBeInTheDocument()
+    it('does NOT show "Nuevo ticket" button for admin role', () => {
+      mockState.user = { id: 'u3', email: 'admin@test.com', full_name: 'Admin User', role: 'admin' }
+      renderPage()
+      expect(screen.queryByText('Nuevo ticket')).not.toBeInTheDocument()
+    })
   })
 })

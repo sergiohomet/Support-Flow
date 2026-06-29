@@ -89,4 +89,31 @@ describe('useAddComment', () => {
 
     expect(result.current.isLoading).toBe(false)
   })
+
+  it('empty content sets error and does NOT call the RPC', async () => {
+    const { result } = renderHook(() => useAddComment())
+
+    let returned: TicketComment | null = { id: 'sentinel' } as unknown as TicketComment
+    await act(async () => {
+      returned = await result.current.execute('ticket-1', '')
+    })
+
+    expect(returned).toBeNull()
+    expect(result.current.error).toBeTruthy()
+    expect(mockRpc).not.toHaveBeenCalled()
+  })
+
+  it('content over 2000 characters sets error and does NOT call the RPC', async () => {
+    const { result } = renderHook(() => useAddComment())
+
+    const longContent = 'a'.repeat(2001)
+    let returned: TicketComment | null = { id: 'sentinel' } as unknown as TicketComment
+    await act(async () => {
+      returned = await result.current.execute('ticket-1', longContent)
+    })
+
+    expect(returned).toBeNull()
+    expect(result.current.error).toBeTruthy()
+    expect(mockRpc).not.toHaveBeenCalled()
+  })
 })

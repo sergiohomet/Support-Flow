@@ -1,195 +1,121 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Category, Agent } from '@/modules/tickets/schemas'
-import type { TicketFilters } from '@/store/ticketsSlice'
-import { TicketFilters as TicketFiltersComponent } from '../TicketFilters'
+import { TicketFilters } from '../TicketFilters'
 
-const mockOnChange = vi.fn()
+const mockOnTabChange = vi.fn()
+const mockOnSearchChange = vi.fn()
 const mockOnReset = vi.fn()
-
-const CATEGORIES: Category[] = [
-  { id: 'cat-1', name: 'Facturación', description: null },
-  { id: 'cat-2', name: 'Soporte técnico', description: null },
-]
-
-const AGENTS: Agent[] = [
-  { id: 'agent-1', fullName: 'María López', specialty: null, activeTicketCount: 2 },
-  { id: 'agent-2', fullName: 'Juan Pérez', specialty: null, activeTicketCount: 1 },
-]
-
-const EMPTY_FILTERS: TicketFilters = {
-  status: null,
-  priority: null,
-  categoryId: null,
-  agentId: null,
-  page: 1,
-  pageSize: 20,
-}
 
 function renderFilters(
   overrides: {
-    filters?: Partial<TicketFilters>
-    categories?: Category[]
-    agents?: Agent[]
+    statusTab?: Parameters<typeof TicketFilters>[0]['statusTab']
+    search?: string
     isLoading?: boolean
+    hasActiveFilters?: boolean
   } = {},
 ) {
   return render(
-    <TicketFiltersComponent
-      filters={{ ...EMPTY_FILTERS, ...overrides.filters }}
-      categories={overrides.categories ?? CATEGORIES}
-      agents={overrides.agents ?? []}
-      onChange={mockOnChange}
-      onReset={mockOnReset}
+    <TicketFilters
+      statusTab={overrides.statusTab ?? ''}
+      search={overrides.search ?? ''}
       isLoading={overrides.isLoading ?? false}
+      hasActiveFilters={overrides.hasActiveFilters ?? false}
+      onTabChange={mockOnTabChange}
+      onSearchChange={mockOnSearchChange}
+      onReset={mockOnReset}
     />,
   )
 }
 
 describe('TicketFilters', () => {
   beforeEach(() => {
-    mockOnChange.mockReset()
+    mockOnTabChange.mockReset()
+    mockOnSearchChange.mockReset()
     mockOnReset.mockReset()
   })
 
-  describe('rendering', () => {
-    it('renders status, priority and category selects', () => {
+  describe('tabs', () => {
+    it('renders all status tabs', () => {
       renderFilters()
-
-      expect(screen.getByRole('combobox', { name: 'Filtrar por estado' })).toBeInTheDocument()
-      expect(screen.getByRole('combobox', { name: 'Filtrar por prioridad' })).toBeInTheDocument()
-      expect(screen.getByRole('combobox', { name: 'Filtrar por categoría' })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: 'Todos' })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: 'Abierto' })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: 'En Proceso' })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: 'Resuelto' })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: 'Reabierto' })).toBeInTheDocument()
     })
 
-    it('does not render agent select when agents array is empty', () => {
-      renderFilters({ agents: [] })
-
-      expect(
-        screen.queryByRole('combobox', { name: 'Filtrar por agente' }),
-      ).not.toBeInTheDocument()
+    it('marks the active tab with aria-selected="true"', () => {
+      renderFilters({ statusTab: 'abierto' })
+      expect(screen.getByRole('tab', { name: 'Abierto' })).toHaveAttribute('aria-selected', 'true')
+      expect(screen.getByRole('tab', { name: 'Todos' })).toHaveAttribute('aria-selected', 'false')
     })
 
-    it('renders agent select when agents are provided', () => {
-      renderFilters({ agents: AGENTS })
-
-      expect(screen.getByRole('combobox', { name: 'Filtrar por agente' })).toBeInTheDocument()
-    })
-
-    it('renders category options from prop', () => {
+    it('calls onTabChange with the correct value when a tab is clicked', async () => {
+      const user = userEvent.setup()
       renderFilters()
-
-      expect(screen.getByRole('option', { name: 'Facturación' })).toBeInTheDocument()
-      expect(screen.getByRole('option', { name: 'Soporte técnico' })).toBeInTheDocument()
+      await user.click(screen.getByRole('tab', { name: 'En Proceso' }))
+      expect(mockOnTabChange).toHaveBeenCalledOnce()
+      expect(mockOnTabChange).toHaveBeenCalledWith('en_proceso')
     })
 
-    it('renders agent options from prop', () => {
-      renderFilters({ agents: AGENTS })
-
-      expect(screen.getByRole('option', { name: /María López/ })).toBeInTheDocument()
-      expect(screen.getByRole('option', { name: /Juan Pérez/ })).toBeInTheDocument()
+    it('calls onTabChange with empty string when "Todos" tab is clicked', async () => {
+      const user = userEvent.setup()
+      renderFilters({ statusTab: 'abierto' })
+      await user.click(screen.getByRole('tab', { name: 'Todos' }))
+      expect(mockOnTabChange).toHaveBeenCalledWith('')
     })
 
-    it('does not render reset button when no filters are active', () => {
+    it('disables all tabs when isLoading is true', () => {
+      renderFilters({ isLoading: true })
+      const tabs = screen.getAllByRole('tab')
+      tabs.forEach((tab) => expect(tab).toBeDisabled())
+    })
+  })
+
+  describe('search input', () => {
+    it('renders search input', () => {
       renderFilters()
+      expect(screen.getByRole('searchbox', { name: 'Buscar ticket' })).toBeInTheDocument()
+    })
 
+    it('reflects the current search value', () => {
+      renderFilters({ search: 'factura' })
+      expect(screen.getByRole('searchbox', { name: 'Buscar ticket' })).toHaveValue('factura')
+    })
+
+    it('calls onSearchChange when input value changes', async () => {
+      const user = userEvent.setup()
+      renderFilters()
+      await user.type(screen.getByRole('searchbox', { name: 'Buscar ticket' }), 'problema')
+      expect(mockOnSearchChange).toHaveBeenCalled()
+    })
+
+    it('disables search input when isLoading is true', () => {
+      renderFilters({ isLoading: true })
+      expect(screen.getByRole('searchbox', { name: 'Buscar ticket' })).toBeDisabled()
+    })
+  })
+
+  describe('reset button', () => {
+    it('does not render reset button when hasActiveFilters is false', () => {
+      renderFilters({ hasActiveFilters: false })
       expect(screen.queryByRole('button', { name: 'Limpiar filtros' })).not.toBeInTheDocument()
     })
 
-    it('renders reset button when a filter is active', () => {
-      renderFilters({ filters: { status: 'abierto' } })
-
+    it('renders reset button when hasActiveFilters is true', () => {
+      renderFilters({ hasActiveFilters: true })
       expect(screen.getByRole('button', { name: 'Limpiar filtros' })).toBeInTheDocument()
     })
-  })
 
-  describe('onChange callbacks', () => {
-    it('calls onChange with status value when status select changes', async () => {
-      const user = userEvent.setup()
-      renderFilters()
-
-      await user.selectOptions(
-        screen.getByRole('combobox', { name: 'Filtrar por estado' }),
-        'abierto',
-      )
-
-      expect(mockOnChange).toHaveBeenCalledOnce()
-      expect(mockOnChange).toHaveBeenCalledWith({ status: 'abierto' })
-    })
-
-    it('calls onChange with null status when empty option is selected', async () => {
-      const user = userEvent.setup()
-      renderFilters({ filters: { status: 'abierto' } })
-
-      await user.selectOptions(
-        screen.getByRole('combobox', { name: 'Filtrar por estado' }),
-        '',
-      )
-
-      expect(mockOnChange).toHaveBeenCalledWith({ status: null })
-    })
-
-    it('calls onChange with priority value when priority select changes', async () => {
-      const user = userEvent.setup()
-      renderFilters()
-
-      await user.selectOptions(
-        screen.getByRole('combobox', { name: 'Filtrar por prioridad' }),
-        'alta',
-      )
-
-      expect(mockOnChange).toHaveBeenCalledOnce()
-      expect(mockOnChange).toHaveBeenCalledWith({ priority: 'alta' })
-    })
-
-    it('calls onChange with categoryId when category select changes', async () => {
-      const user = userEvent.setup()
-      renderFilters()
-
-      await user.selectOptions(
-        screen.getByRole('combobox', { name: 'Filtrar por categoría' }),
-        'cat-1',
-      )
-
-      expect(mockOnChange).toHaveBeenCalledOnce()
-      expect(mockOnChange).toHaveBeenCalledWith({ categoryId: 'cat-1' })
-    })
-
-    it('calls onChange with agentId when agent select changes', async () => {
-      const user = userEvent.setup()
-      renderFilters({ agents: AGENTS })
-
-      await user.selectOptions(
-        screen.getByRole('combobox', { name: 'Filtrar por agente' }),
-        'agent-2',
-      )
-
-      expect(mockOnChange).toHaveBeenCalledOnce()
-      expect(mockOnChange).toHaveBeenCalledWith({ agentId: 'agent-2' })
-    })
-  })
-
-  describe('reset', () => {
     it('calls onReset when reset button is clicked', async () => {
       const user = userEvent.setup()
-      renderFilters({ filters: { status: 'resuelto' } })
-
+      renderFilters({ hasActiveFilters: true })
       await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
-
       expect(mockOnReset).toHaveBeenCalledOnce()
-    })
-  })
-
-  describe('loading state', () => {
-    it('disables all selects when isLoading is true', () => {
-      renderFilters({ isLoading: true })
-
-      const selects = screen.getAllByRole('combobox')
-      selects.forEach((sel) => expect(sel).toBeDisabled())
     })
 
     it('disables reset button when isLoading is true', () => {
-      renderFilters({ filters: { status: 'abierto' }, isLoading: true })
-
+      renderFilters({ hasActiveFilters: true, isLoading: true })
       expect(screen.getByRole('button', { name: 'Limpiar filtros' })).toBeDisabled()
     })
   })

@@ -2,12 +2,14 @@ import { renderHook, act } from '@testing-library/react'
 import { useLogin } from '../useLogin'
 
 const mockSignInWithPassword = vi.fn()
+const mockSignOut = vi.fn()
 const mockRpc = vi.fn()
 
 vi.mock('@/core/supabase/client', () => ({
   supabase: {
     auth: {
       signInWithPassword: (...args: unknown[]) => mockSignInWithPassword(...args),
+      signOut: (...args: unknown[]) => mockSignOut(...args),
     },
     rpc: (...args: unknown[]) => mockRpc(...args),
   },
@@ -26,6 +28,7 @@ const fakeProfile = {
   email: 'user@example.com',
   full_name: 'Test User',
   role: 'client' as const,
+  is_active: true,
 }
 
 describe('useLogin', () => {
@@ -33,6 +36,8 @@ describe('useLogin', () => {
     mockSignInWithPassword.mockResolvedValue({ data: {}, error: null })
     mockRpc.mockResolvedValue({ data: [fakeProfile], error: null })
     mockSetUser.mockReset()
+    mockSignOut.mockReset()
+    mockSignOut.mockResolvedValue({ error: null })
   })
 
   it('happy path: calls signInWithPassword → rpc("get_my_profile") → setUser with profile', async () => {
@@ -123,5 +128,45 @@ describe('useLogin', () => {
     })
 
     expect(result.current.isLoading).toBe(false)
+  })
+
+  it('inactive user: signs out and sets deactivation error, does not call setUser', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{ ...fakeProfile, is_active: false }],
+      error: null,
+    })
+
+    const { result } = renderHook(() => useLogin())
+
+    await act(async () => {
+      await result.current.execute({ email: 'user@example.com', password: 'password123' })
+    })
+
+    expect(mockSignOut).toHaveBeenCalledTimes(1)
+    expect(result.current.error).toBe('Tu cuenta está desactivada. Contactá al administrador.')
+    expect(mockSetUser).not.toHaveBeenCalled()
+    expect(result.current.isLoading).toBe(false)
+  })
+
+  it('active user (is_active: true): proceeds normally and calls setUser', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{ ...fakeProfile, is_active: true }],
+      error: null,
+    })
+
+    const { result } = renderHook(() => useLogin())
+
+    await act(async () => {
+      await result.current.execute({ email: 'user@example.com', password: 'password123' })
+    })
+
+    expect(mockSignOut).not.toHaveBeenCalled()
+    expect(mockSetUser).toHaveBeenCalledWith({
+      id: fakeProfile.id,
+      email: fakeProfile.email,
+      full_name: fakeProfile.full_name,
+      role: fakeProfile.role,
+    })
+    expect(result.current.error).toBeNull()
   })
 })
