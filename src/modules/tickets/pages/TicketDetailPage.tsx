@@ -6,10 +6,11 @@ import { useAssignTicket } from '@/modules/tickets/hooks/useAssignTicket'
 import { useUpdateTicketStatus } from '@/modules/tickets/hooks/useUpdateTicketStatus'
 import { useAddComment } from '@/modules/tickets/hooks/useAddComment'
 import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
-import { TicketDetailHeader } from '@/modules/tickets/components/TicketDetailHeader'
 import { TicketComments } from '@/modules/tickets/components/TicketComments'
 import { TicketStatusLog } from '@/modules/tickets/components/TicketStatusLog'
 import { AssignAgentPanel } from '@/modules/tickets/components/AssignAgentPanel'
+import { StatusBadge } from '@/ui/StatusBadge'
+import { PriorityBadge } from '@/ui/PriorityBadge'
 import { Spinner } from '@/ui/Spinner'
 import type { TicketStatus } from '@/modules/tickets/schemas'
 
@@ -75,7 +76,7 @@ export function TicketDetailPage(): React.ReactElement {
   const isClient = user?.role === 'client'
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
+    <div className="max-w-[1280px] mx-auto px-6 py-6">
       {detailLoading && !ticket && (
         <div className="flex justify-center py-12">
           <Spinner size="lg" />
@@ -86,18 +87,55 @@ export function TicketDetailPage(): React.ReactElement {
       )}
       {ticket && (
         <>
-          <TicketDetailHeader ticket={ticket} onBack={() => navigate(-1)} />
+          {/* Breadcrumb */}
+          <nav aria-label="Breadcrumb" className="flex text-xs text-gray-500 mb-5">
+            <ol className="inline-flex items-center gap-1">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="hover:text-blue-600 transition-colors"
+                >
+                  Mis Tickets
+                </button>
+              </li>
+              <li>
+                <span className="material-icons text-sm leading-none">chevron_right</span>
+              </li>
+              <li className="text-gray-800 font-medium">#{ticket.id.slice(0, 8)}</li>
+            </ol>
+          </nav>
 
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Main column — 2/3 */}
-            <div className="md:col-span-2 flex flex-col gap-6">
-              {/* Descripción */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <h2 className="text-sm font-semibold text-gray-700 mb-2">Descripción</h2>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{ticket.description}</p>
+          <div className="flex gap-6">
+            {/* Main column — 65% */}
+            <div className="flex-[0_0_65%] min-w-0 flex flex-col gap-5">
+              {/* Header + Descripción — un solo card */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <span className="font-mono text-xs text-gray-400 shrink-0">
+                      #{ticket.id.slice(0, 8)}
+                    </span>
+                    <h2 className="text-lg font-semibold text-gray-900 leading-tight">
+                      {ticket.title}
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 ml-4">
+                    <StatusBadge status={ticket.status} />
+                    {ticket.categoryName && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-medium">
+                        {ticket.categoryName}
+                      </span>
+                    )}
+                    <PriorityBadge priority={ticket.priority} />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
+                  {ticket.description}
+                </p>
               </div>
 
-              {/* Activity feed unificado */}
+              {/* Activity feed */}
               <TicketComments
                 comments={comments}
                 statusLog={statusLog}
@@ -109,62 +147,80 @@ export function TicketDetailPage(): React.ReactElement {
               />
             </div>
 
-            {/* Sidebar — 1/3 */}
-            <div className="flex flex-col gap-6">
-              {/* Sección Detalles */}
-              <div className="flex flex-col gap-3">
-                <div>
-                  <h2 className="text-base font-semibold text-gray-900">Detalles</h2>
-                  <hr className="mt-1 border-gray-200" />
-                </div>
-                <dl className="flex flex-col gap-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <dt className="text-gray-500 w-24 shrink-0">Agente</dt>
-                    <dd className="flex items-center gap-1">
-                      <span className="text-gray-900">{ticket.agentFullName ?? 'Sin asignar'}</span>
-                      {ticket.agentFullName && (
-                        <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-green-50 text-green-700">
-                          Agente
-                        </span>
-                      )}
-                    </dd>
+            {/* Sidebar — 35% */}
+            <div className="flex-[0_0_35%] min-w-0 flex flex-col gap-5">
+              {/* Detalles */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Detalles</h3>
+                <div className="flex flex-col gap-4">
+                  {/* Asignado a */}
+                  <div>
+                    <span className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                      Asignado a
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-sm font-medium shrink-0">
+                        {ticket.agentFullName ? ticket.agentFullName.charAt(0).toUpperCase() : '?'}
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {ticket.agentFullName ?? 'Sin asignar'}
+                        </div>
+                        {ticket.agentFullName && (
+                          <div className="text-xs text-gray-500">Agente de soporte</div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <dt className="text-gray-500 w-24 shrink-0">Cliente</dt>
-                    <dd className="flex items-center gap-1">
-                      <span className="text-gray-900">{ticket.clientFullName}</span>
-                      <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700">
-                        Cliente
-                      </span>
-                    </dd>
+
+                  {/* Cliente */}
+                  <div>
+                    <span className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                      Cliente
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-medium shrink-0">
+                        {ticket.clientFullName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {ticket.clientFullName}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <dt className="text-gray-500 w-24 shrink-0">Creado</dt>
-                    <dd className="text-gray-900">{formatDate(ticket.createdAt)}</dd>
+
+                  <hr className="border-gray-100" />
+
+                  {/* Fechas */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="block text-xs text-gray-400 mb-0.5">Creado</span>
+                      <span className="text-sm text-gray-900">{formatDate(ticket.createdAt)}</span>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-gray-400 mb-0.5">Actualizado</span>
+                      <span className="text-sm text-gray-900">{formatDate(ticket.updatedAt)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <dt className="text-gray-500 w-24 shrink-0">Actualizado</dt>
-                    <dd className="text-gray-900">{formatDate(ticket.updatedAt)}</dd>
+
+                  {/* SLA placeholder */}
+                  <div className="bg-gray-50 border border-gray-200 rounded p-3">
+                    <span className="block text-xs text-gray-400 mb-1">SLA Resolución</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="material-icons text-base text-gray-400">schedule</span>
+                      <span className="text-sm text-gray-500">No configurado</span>
+                    </div>
                   </div>
-                </dl>
-                {/* SLA placeholder estático */}
-                <div className="bg-orange-50 border border-orange-200 rounded p-2 flex items-center gap-1.5">
-                  <span className="material-icons text-orange-500 text-base">schedule</span>
-                  <span className="text-xs text-orange-700">SLA no configurado</span>
                 </div>
               </div>
 
-              {/* Sección Acciones */}
-              <div className="flex flex-col gap-3">
-                <div>
-                  <h2 className="text-base font-semibold text-gray-900">Acciones</h2>
-                  <hr className="mt-1 border-gray-200" />
-                </div>
+              {/* Acciones */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Acciones</h3>
 
                 {statusError && (
                   <div
                     role="alert"
-                    className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700"
+                    className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700 mb-3"
                   >
                     {statusError}
                   </div>
@@ -183,8 +239,9 @@ export function TicketDetailPage(): React.ReactElement {
                           type="button"
                           onClick={() => void handleStatusUpdate('resuelto')}
                           disabled={statusLoading}
-                          className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full rounded-lg bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2.5 text-sm font-medium hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
+                          <span className="material-icons text-[18px]">check_circle</span>
                           Resolver Ticket
                         </button>
                       )
@@ -197,7 +254,7 @@ export function TicketDetailPage(): React.ReactElement {
                           type="button"
                           onClick={() => void handleReturnToPool()}
                           disabled={statusLoading}
-                          className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full rounded-lg border border-gray-200 bg-transparent text-gray-600 px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Devolver al pool
                         </button>
@@ -212,7 +269,7 @@ export function TicketDetailPage(): React.ReactElement {
                         type="button"
                         onClick={() => void handleStatusUpdate('reabierto')}
                         disabled={statusLoading}
-                        className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full rounded-lg border border-gray-200 bg-transparent text-gray-600 px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Reabrir Ticket
                       </button>
@@ -220,14 +277,14 @@ export function TicketDetailPage(): React.ReactElement {
                   }
 
                   if (actions.length === 0) {
-                    return <p className="text-sm text-gray-500">Sin acciones disponibles.</p>
+                    return <p className="text-sm text-gray-400">Sin acciones disponibles.</p>
                   }
 
                   return <div className="flex flex-col gap-2">{actions}</div>
                 })()}
               </div>
 
-              {/* AssignAgentPanel — agent/admin only */}
+              {/* Asignar agente — agent/admin only */}
               {isAgentOrAdmin && (
                 <AssignAgentPanel
                   agents={agents}
@@ -238,12 +295,9 @@ export function TicketDetailPage(): React.ReactElement {
                 />
               )}
 
-              {/* Sección Registro de Estado */}
-              <div className="flex flex-col gap-3">
-                <div>
-                  <h2 className="text-base font-semibold text-gray-900">Registro de Estado</h2>
-                  <hr className="mt-1 border-gray-200" />
-                </div>
+              {/* Registro de Estado */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Registro de Estado</h3>
                 <TicketStatusLog statusLog={statusLog} />
               </div>
             </div>
