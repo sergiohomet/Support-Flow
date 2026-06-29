@@ -73,7 +73,7 @@ export function LoginForm({
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             disabled={isLoading}
-            placeholder="agente@empresa.com"
+            placeholder="tu@email.com"
             aria-invalid={!!fieldErrors.email}
             aria-describedby={fieldErrors.email ? 'email-error' : undefined}
             className={[
@@ -102,6 +102,7 @@ export function LoginForm({
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
           disabled={isLoading}
           autoComplete="current-password"
+          placeholder="Tu contraseña"
           error={fieldErrors.password}
         />
       </div>

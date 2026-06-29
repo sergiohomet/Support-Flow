@@ -64,6 +64,7 @@ export function ForgotPasswordForm({
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             disabled={isLoading}
+            placeholder="tu@email.com"
             aria-invalid={!!emailError}
             aria-describedby={emailError ? 'email-error' : undefined}
             className={[
@@ -138,6 +139,7 @@ export function ForgotPasswordForm({
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
           disabled={isLoading}
           autoComplete="new-password"
+          placeholder="Mínimo 8 caracteres"
           error={resetErrors.password}
         />
       </div>
@@ -153,6 +155,7 @@ export function ForgotPasswordForm({
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
           disabled={isLoading}
           autoComplete="new-password"
+          placeholder="Repetí tu contraseña"
           error={resetErrors.confirm_password}
         />
       </div>

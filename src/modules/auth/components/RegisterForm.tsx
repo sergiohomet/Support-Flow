@@ -100,6 +100,7 @@ export function RegisterForm({
           value={fullName}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
           disabled={isLoading}
+          placeholder="Juan Pérez"
           aria-invalid={!!fieldErrors.full_name}
           aria-describedby={fieldErrors.full_name ? 'full_name-error' : undefined}
           className={[
@@ -127,6 +128,7 @@ export function RegisterForm({
           value={email}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
           disabled={isLoading}
+          placeholder="tu@email.com"
           aria-invalid={!!fieldErrors.email}
           aria-describedby={fieldErrors.email ? 'email-error' : undefined}
           className={[
@@ -154,6 +156,7 @@ export function RegisterForm({
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
           disabled={isLoading}
           autoComplete="new-password"
+          placeholder="Mínimo 8 caracteres"
           error={fieldErrors.password}
         />
       </div>
@@ -169,6 +172,7 @@ export function RegisterForm({
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
           disabled={isLoading}
           autoComplete="new-password"
+          placeholder="Repetí tu contraseña"
           error={fieldErrors.confirm_password}
         />
       </div>

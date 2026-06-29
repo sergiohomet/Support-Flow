@@ -56,7 +56,7 @@ export function TicketFilters({
           </span>
           <input
             type="search"
-            placeholder="Buscar ticket..."
+            placeholder="Buscar por título o ID..."
             value={search}
             disabled={isLoading}
             onChange={(e) => onSearchChange(e.target.value)}
