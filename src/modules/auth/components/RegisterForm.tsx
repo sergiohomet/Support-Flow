@@ -182,9 +182,9 @@ export function RegisterForm({
       <button
         type="submit"
         disabled={isLoading}
-        className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full h-12 rounded bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-1"
       >
-        {isLoading ? 'Registrando...' : 'Registrarse'}
+        {isLoading ? 'Registrando...' : 'Crear cuenta'}
       </button>
 
       <p className="text-sm text-center text-gray-600">

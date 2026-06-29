@@ -40,8 +40,8 @@ export function TicketFilters({
             onClick={() => onTabChange(tab.value)}
             className={
               statusTab === tab.value
-                ? 'bg-blue-600 text-white rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-50'
-                : 'text-gray-600 hover:bg-gray-100 rounded-md px-3 py-1.5 text-sm disabled:opacity-50'
+                ? 'bg-blue-600 text-white rounded-full px-4 py-1.5 text-sm font-medium disabled:opacity-50'
+                : 'text-gray-600 bg-gray-100 border border-gray-200 hover:bg-gray-200 rounded-full px-4 py-1.5 text-sm disabled:opacity-50 transition-colors'
             }
           >
             {tab.label}

@@ -10,9 +10,13 @@ export function LoginPage(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Iniciar sesión</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="w-full max-w-[480px] bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+        {/* Brand */}
+        <div className="flex flex-col items-center mb-8 text-center">
+          <h1 className="text-2xl font-bold text-blue-600 mb-1">SupportFlow</h1>
+          <p className="text-sm text-gray-500">Enterprise Support Desk</p>
+        </div>
         <LoginForm
           onSubmit={handleSubmit}
           isLoading={isLoading}

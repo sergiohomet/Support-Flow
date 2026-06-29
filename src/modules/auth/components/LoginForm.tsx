@@ -62,22 +62,28 @@ export function LoginForm({
         <label htmlFor="email" className="text-sm font-medium text-gray-700">
           Email
         </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          value={email}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-          disabled={isLoading}
-          aria-invalid={!!fieldErrors.email}
-          aria-describedby={fieldErrors.email ? 'email-error' : undefined}
-          className={[
-            'rounded-md border px-3 py-2 text-sm outline-none',
-            'focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-            'disabled:opacity-50',
-            fieldErrors.email ? 'border-red-500' : 'border-gray-300',
-          ].join(' ')}
-        />
+        <div className="relative">
+          <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px] pointer-events-none">
+            mail
+          </span>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            value={email}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+            disabled={isLoading}
+            placeholder="agente@empresa.com"
+            aria-invalid={!!fieldErrors.email}
+            aria-describedby={fieldErrors.email ? 'email-error' : undefined}
+            className={[
+              'w-full h-12 pl-10 pr-3 rounded border text-sm outline-none',
+              'focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+              'disabled:opacity-50',
+              fieldErrors.email ? 'border-red-500' : 'border-gray-300',
+            ].join(' ')}
+          />
+        </div>
         {fieldErrors.email && (
           <p id="email-error" className="text-sm text-red-600">
             {fieldErrors.email}
@@ -109,7 +115,7 @@ export function LoginForm({
       <button
         type="submit"
         disabled={isLoading}
-        className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full h-12 rounded bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 mt-1"
       >
         {isLoading ? 'Ingresando...' : 'Iniciar sesión'}
       </button>
