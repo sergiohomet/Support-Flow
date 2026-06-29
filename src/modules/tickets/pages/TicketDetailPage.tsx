@@ -12,6 +12,7 @@ import { AssignAgentPanel } from '@/modules/tickets/components/AssignAgentPanel'
 import { StatusBadge } from '@/ui/StatusBadge'
 import { PriorityBadge } from '@/ui/PriorityBadge'
 import { Spinner } from '@/ui/Spinner'
+import { useUnassignTicket } from '@/modules/tickets/hooks/useUnassignTicket'
 import type { TicketStatus } from '@/modules/tickets/schemas'
 
 function formatDate(iso: string): string {
@@ -36,6 +37,7 @@ export function TicketDetailPage(): React.ReactElement {
   const { ticket, comments, statusLog, isLoading: detailLoading, error: detailError, fetch: fetchDetail } = useTicketDetail()
   const { execute: assignTicket, isLoading: assignLoading, error: assignError } = useAssignTicket()
   const { execute: updateStatus, isLoading: statusLoading, error: statusError } = useUpdateTicketStatus()
+  const { execute: unassignTicket, isLoading: unassignLoading, error: unassignError } = useUnassignTicket()
   const { execute: addComment, isLoading: commentLoading, error: commentError } = useAddComment()
   const { loadAgents } = useTicketList()
 
@@ -61,8 +63,8 @@ export function TicketDetailPage(): React.ReactElement {
   }
 
   const handleReturnToPool = async (): Promise<void> => {
-    if (!id || !ticket) return
-    const ok = await updateStatus(id, ticket.status, 'abierto')
+    if (!id) return
+    const ok = await unassignTicket(id)
     if (ok) void fetchDetail(id)
   }
 
@@ -140,6 +142,8 @@ export function TicketDetailPage(): React.ReactElement {
                 comments={comments}
                 statusLog={statusLog}
                 ticketClientId={ticket.clientId}
+                ticketAgentId={ticket.agentId}
+                currentUserId={user?.id ?? null}
                 onAddComment={handleAddComment}
                 isLoading={commentLoading}
                 error={commentError}
@@ -217,12 +221,12 @@ export function TicketDetailPage(): React.ReactElement {
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <h3 className="text-base font-semibold text-gray-900 mb-4">Acciones</h3>
 
-                {statusError && (
+                {(statusError ?? unassignError) && (
                   <div
                     role="alert"
                     className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700 mb-3"
                   >
-                    {statusError}
+                    {statusError ?? unassignError}
                   </div>
                 )}
 
@@ -253,10 +257,10 @@ export function TicketDetailPage(): React.ReactElement {
                           key="pool"
                           type="button"
                           onClick={() => void handleReturnToPool()}
-                          disabled={statusLoading}
+                          disabled={unassignLoading}
                           className="w-full rounded-lg border border-gray-200 bg-transparent text-gray-600 px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Devolver al pool
+                          {unassignLoading ? 'Devolviendo...' : 'Devolver al pool'}
                         </button>
                       )
                     }

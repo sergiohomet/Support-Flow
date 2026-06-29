@@ -6,6 +6,8 @@ interface TicketCommentsProps {
   comments: TicketComment[]
   statusLog: StatusLogEntry[]
   ticketClientId: string
+  ticketAgentId: string | null
+  currentUserId: string | null
   onAddComment: (content: string) => void
   isLoading: boolean
   error: string | null
@@ -32,6 +34,8 @@ export function TicketComments({
   comments,
   statusLog,
   ticketClientId,
+  ticketAgentId,
+  currentUserId,
   onAddComment,
   isLoading,
   error,
@@ -39,6 +43,9 @@ export function TicketComments({
 }: TicketCommentsProps): React.JSX.Element {
   const [content, setContent] = useState('')
   const isResolved = ticketStatus === 'resuelto'
+  const canComment =
+    currentUserId !== null &&
+    (currentUserId === ticketClientId || currentUserId === ticketAgentId)
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
@@ -166,6 +173,10 @@ export function TicketComments({
         {isResolved ? (
           <div className="rounded-md bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-700">
             Este ticket está resuelto. Reabrilo para poder comentar.
+          </div>
+        ) : !canComment ? (
+          <div className="rounded-md bg-gray-100 border border-gray-200 px-4 py-3 text-sm text-gray-500">
+            Solo el agente asignado y el cliente del ticket pueden comentar.
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-2">
