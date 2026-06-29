@@ -60,12 +60,12 @@ import { useAssignTicket } from '@/modules/tickets/hooks/useAssignTicket'
 import { useUpdateTicketStatus } from '@/modules/tickets/hooks/useUpdateTicketStatus'
 import { useAddComment } from '@/modules/tickets/hooks/useAddComment'
 import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
-import type { TicketDetail } from '@/modules/tickets/schemas'
+import type { TicketDetail, StatusLogEntry } from '@/modules/tickets/schemas'
 
 const fakeTicket: TicketDetail = {
   id: 'ticket-uuid-123',
   title: 'Mi ticket de prueba',
-  description: 'Descripción del ticket',
+  description: 'Descripción del ticket de prueba',
   status: 'abierto',
   priority: 'media',
   categoryId: 'cat-1',
@@ -78,6 +78,25 @@ const fakeTicket: TicketDetail = {
   createdAt: '2026-06-15T10:00:00Z',
   updatedAt: '2026-06-15T10:00:00Z',
 }
+
+const fakeTicketWithAgent: TicketDetail = {
+  ...fakeTicket,
+  agentId: 'agent-42',
+  agentFullName: 'Laura García',
+  status: 'en_proceso',
+}
+
+const fakeStatusLog: StatusLogEntry[] = [
+  {
+    id: 's-1',
+    ticketId: 'ticket-uuid-123',
+    fromStatus: 'abierto',
+    toStatus: 'en_proceso',
+    changedBy: 'agent-42',
+    changedByFullName: 'Laura García',
+    changedAt: '2026-06-15T10:30:00Z',
+  },
+]
 
 function makeDetailReturn(overrides: Partial<ReturnType<typeof useTicketDetail>> = {}): ReturnType<typeof useTicketDetail> {
   return {
@@ -146,7 +165,6 @@ describe('TicketDetailPage', () => {
       makeDetailReturn({ isLoading: true, ticket: fakeTicket })
     )
     renderPage()
-    // spinner only shows when isLoading && !ticket
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
     expect(screen.getByText('Mi ticket de prueba')).toBeInTheDocument()
   })
@@ -186,7 +204,8 @@ describe('TicketDetailPage', () => {
   it('renders client name', () => {
     vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
     renderPage()
-    expect(screen.getByText('Juan Pérez')).toBeInTheDocument()
+    // Juan Pérez appears in both header and sidebar details
+    expect(screen.getAllByText('Juan Pérez').length).toBeGreaterThanOrEqual(1)
   })
 
   it('calls fetch() with the ticket id on mount', () => {
@@ -203,13 +222,84 @@ describe('TicketDetailPage', () => {
     mockState.user = { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' }
     vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
     renderPage()
-    // AssignAgentPanel only shows for agent/admin
-    expect(screen.queryByLabelText(/asignar agente/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/seleccionar agente/i)).not.toBeInTheDocument()
   })
 
   it('renders nothing ticket-specific when ticket is null and not loading and no error', () => {
     vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: null, isLoading: false, error: null }))
     renderPage()
     expect(screen.queryByRole('heading')).not.toBeInTheDocument()
+  })
+
+  // --- P08 new tests ---
+
+  it('shows ticket description in the main column', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
+    renderPage()
+    expect(screen.getByText('Descripción del ticket de prueba')).toBeInTheDocument()
+  })
+
+  it('shows SLA placeholder in the sidebar', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
+    renderPage()
+    expect(screen.getByText('SLA no configurado')).toBeInTheDocument()
+  })
+
+  it('shows "Sin acciones disponibles." for client with open ticket', () => {
+    mockState.user = { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' }
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
+    renderPage()
+    expect(screen.getByText('Sin acciones disponibles.')).toBeInTheDocument()
+  })
+
+  it('shows "Reabrir Ticket" button for client when ticket is resuelto', () => {
+    mockState.user = { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' }
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ ticket: { ...fakeTicket, status: 'resuelto' } })
+    )
+    renderPage()
+    expect(screen.getByRole('button', { name: 'Reabrir Ticket' })).toBeInTheDocument()
+  })
+
+  it('shows "Resolver Ticket" button for agent when ticket is en_proceso', () => {
+    mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ ticket: fakeTicketWithAgent })
+    )
+    renderPage()
+    expect(screen.getByRole('button', { name: 'Resolver Ticket' })).toBeInTheDocument()
+  })
+
+  it('shows "Devolver al pool" button for agent when ticket has an assigned agent', () => {
+    mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ ticket: fakeTicketWithAgent })
+    )
+    renderPage()
+    expect(screen.getByRole('button', { name: 'Devolver al pool' })).toBeInTheDocument()
+  })
+
+  it('does NOT show "Devolver al pool" when no agent is assigned', () => {
+    mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ ticket: { ...fakeTicket, status: 'abierto', agentId: null } })
+    )
+    renderPage()
+    expect(screen.queryByRole('button', { name: 'Devolver al pool' })).not.toBeInTheDocument()
+  })
+
+  it('renders status log entries inside the feed (activity section)', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ ticket: fakeTicket, statusLog: fakeStatusLog })
+    )
+    renderPage()
+    // "cambió el estado" appears in both the feed and the TicketStatusLog sidebar section
+    expect(screen.getAllByText(/cambió el estado/).length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('shows "Registro de Estado" section in the sidebar', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
+    renderPage()
+    expect(screen.getByText('Registro de Estado')).toBeInTheDocument()
   })
 })
