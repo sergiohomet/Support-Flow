@@ -1,14 +1,13 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useStore } from '@/store'
 import { useTicketDetail } from '@/modules/tickets/hooks/useTicketDetail'
-import { useAssignTicket } from '@/modules/tickets/hooks/useAssignTicket'
 import { useUpdateTicketStatus } from '@/modules/tickets/hooks/useUpdateTicketStatus'
 import { useAddComment } from '@/modules/tickets/hooks/useAddComment'
 import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
 import { TicketComments } from '@/modules/tickets/components/TicketComments'
 import { TicketStatusLog } from '@/modules/tickets/components/TicketStatusLog'
-import { AssignAgentPanel } from '@/modules/tickets/components/AssignAgentPanel'
+import { ReassignTicketModal } from '@/modules/tickets/components/ReassignTicketModal'
 import { StatusBadge } from '@/ui/StatusBadge'
 import { PriorityBadge } from '@/ui/PriorityBadge'
 import { Spinner } from '@/ui/Spinner'
@@ -34,8 +33,9 @@ export function TicketDetailPage(): React.ReactElement {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
 
+  const [isReassignOpen, setIsReassignOpen] = useState(false)
+
   const { ticket, comments, statusLog, isLoading: detailLoading, error: detailError, fetch: fetchDetail } = useTicketDetail()
-  const { execute: assignTicket, isLoading: assignLoading, error: assignError } = useAssignTicket()
   const { execute: updateStatus, isLoading: statusLoading, error: statusError } = useUpdateTicketStatus()
   const { execute: unassignTicket, isLoading: unassignLoading, error: unassignError } = useUnassignTicket()
   const { execute: addComment, isLoading: commentLoading, error: commentError } = useAddComment()
@@ -49,12 +49,6 @@ export function TicketDetailPage(): React.ReactElement {
     void fetchDetail(id)
     void loadAgents()
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleAssign = async (agentId: string): Promise<void> => {
-    if (!id) return
-    const ok = await assignTicket(id, agentId)
-    if (ok) void fetchDetail(id)
-  }
 
   const handleStatusUpdate = async (newStatus: TicketStatus): Promise<void> => {
     if (!id || !ticket) return
@@ -310,15 +304,31 @@ export function TicketDetailPage(): React.ReactElement {
                 })()}
               </div>
 
-              {/* Asignar agente — agent/admin only */}
-              {isAgentOrAdmin && (
-                <AssignAgentPanel
-                  agents={agents}
-                  currentAgentId={ticket.agentId}
-                  onAssign={handleAssign}
-                  isLoading={assignLoading}
-                  error={assignError}
-                />
+              {/* Reasignar agente — admin only */}
+              {user?.role === 'admin' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsReassignOpen(true)}
+                    className="w-full rounded-lg border border-gray-200 bg-white text-gray-700 px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="material-icons text-[18px]">swap_horiz</span>
+                    Reasignar Ticket
+                  </button>
+                  {isReassignOpen && (
+                    <ReassignTicketModal
+                      ticketId={ticket.id}
+                      ticketShortId={ticket.id.slice(0, 8)}
+                      currentAgentId={ticket.agentId}
+                      currentAgentName={ticket.agentFullName ?? null}
+                      onClose={() => setIsReassignOpen(false)}
+                      onSuccess={() => {
+                        setIsReassignOpen(false)
+                        if (id) void fetchDetail(id)
+                      }}
+                    />
+                  )}
+                </>
               )}
 
               {/* Registro de Estado */}

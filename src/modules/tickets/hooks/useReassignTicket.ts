@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { supabase } from '@/core/supabase/client'
 import { parseRpcError } from '@/core/utils/parseRpcError'
 
-interface UseAssignTicketResult {
+interface UseReassignTicketResult {
   execute: (ticketId: string, agentId: string) => Promise<boolean>
   isLoading: boolean
   error: string | null
 }
 
-export function useAssignTicket(): UseAssignTicketResult {
+export function useReassignTicket(): UseReassignTicketResult {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
