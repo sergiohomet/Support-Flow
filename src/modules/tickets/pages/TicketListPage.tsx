@@ -56,7 +56,11 @@ export function TicketListPage(): React.JSX.Element {
   const visibleTickets = useMemo(() => {
     const term = debouncedSearch.trim().toLowerCase()
     if (!term) return tickets
-    return tickets.filter((t) => t.title.toLowerCase().includes(term))
+    return tickets.filter(
+      (t) =>
+        t.title.toLowerCase().includes(term) ||
+        t.id.slice(0, 8).toLowerCase().includes(term.replace(/^#/, ''))
+    )
   }, [tickets, debouncedSearch])
 
   const handleTicketClick = (id: string): void => {
