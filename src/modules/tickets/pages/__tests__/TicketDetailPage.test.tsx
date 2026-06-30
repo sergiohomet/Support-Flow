@@ -21,8 +21,8 @@ vi.mock('@/modules/tickets/hooks/useTicketDetail', () => ({
   useTicketDetail: vi.fn(),
 }))
 
-vi.mock('@/modules/tickets/hooks/useAssignTicket', () => ({
-  useAssignTicket: vi.fn(),
+vi.mock('@/modules/tickets/hooks/useUnassignTicket', () => ({
+  useUnassignTicket: vi.fn(),
 }))
 
 vi.mock('@/modules/tickets/hooks/useUpdateTicketStatus', () => ({
@@ -56,7 +56,7 @@ vi.mock('@/store', () => ({
 // --- imports after mocks ---
 
 import { useTicketDetail } from '@/modules/tickets/hooks/useTicketDetail'
-import { useAssignTicket } from '@/modules/tickets/hooks/useAssignTicket'
+import { useUnassignTicket } from '@/modules/tickets/hooks/useUnassignTicket'
 import { useUpdateTicketStatus } from '@/modules/tickets/hooks/useUpdateTicketStatus'
 import { useAddComment } from '@/modules/tickets/hooks/useAddComment'
 import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
@@ -70,6 +70,7 @@ const fakeTicket: TicketDetail = {
   priority: 'media',
   categoryId: 'cat-1',
   categoryName: 'Soporte técnico',
+  categoryIsActive: true,
   clientId: 'user-1',
   clientFullName: 'Juan Pérez',
   agentId: null,
@@ -140,7 +141,7 @@ describe('TicketDetailPage', () => {
     }
 
     vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn())
-    vi.mocked(useAssignTicket).mockReturnValue({ execute: mockAssignTicket, isLoading: false, error: null })
+    vi.mocked(useUnassignTicket).mockReturnValue({ execute: mockAssignTicket, isLoading: false, error: null })
     vi.mocked(useUpdateTicketStatus).mockReturnValue({ execute: mockUpdateStatus, isLoading: false, error: null })
     vi.mocked(useAddComment).mockReturnValue({ execute: mockAddComment, isLoading: false, error: null })
     vi.mocked(useTicketList).mockReturnValue({
@@ -242,7 +243,7 @@ describe('TicketDetailPage', () => {
   it('shows SLA placeholder in the sidebar', () => {
     vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
     renderPage()
-    expect(screen.getByText('SLA no configurado')).toBeInTheDocument()
+    expect(screen.getByText('No configurado')).toBeInTheDocument()
   })
 
   it('shows "Sin acciones disponibles." for client with open ticket', () => {
@@ -258,7 +259,7 @@ describe('TicketDetailPage', () => {
       makeDetailReturn({ ticket: { ...fakeTicket, status: 'resuelto' } })
     )
     renderPage()
-    expect(screen.getByRole('button', { name: 'Reabrir Ticket' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /reabrir ticket/i })).toBeInTheDocument()
   })
 
   it('shows "Resolver Ticket" button for agent when ticket is en_proceso', () => {
@@ -267,7 +268,7 @@ describe('TicketDetailPage', () => {
       makeDetailReturn({ ticket: fakeTicketWithAgent })
     )
     renderPage()
-    expect(screen.getByRole('button', { name: 'Resolver Ticket' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /resolver ticket/i })).toBeInTheDocument()
   })
 
   it('shows "Devolver al pool" button for agent when ticket has an assigned agent', () => {
@@ -301,5 +302,36 @@ describe('TicketDetailPage', () => {
     vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
     renderPage()
     expect(screen.getByText('Registro de Estado')).toBeInTheDocument()
+  })
+
+  // --- Reopen gate tests (TASK-22) ---
+
+  it('blocks reopen when category is inactive — does NOT show reopen button', () => {
+    mockState.user = { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' }
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ ticket: { ...fakeTicket, status: 'resuelto', categoryIsActive: false } })
+    )
+    renderPage()
+    expect(screen.queryByRole('button', { name: /reabrir ticket/i })).not.toBeInTheDocument()
+  })
+
+  it('blocks reopen when category is inactive — shows disabled category message', () => {
+    mockState.user = { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' }
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ ticket: { ...fakeTicket, status: 'resuelto', categoryIsActive: false } })
+    )
+    renderPage()
+    expect(
+      screen.getByText('Esta categoría fue deshabilitada. Creá un nuevo ticket con una categoría activa.')
+    ).toBeInTheDocument()
+  })
+
+  it('allows reopen when category is active — shows reopen button', () => {
+    mockState.user = { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' }
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ ticket: { ...fakeTicket, status: 'resuelto', categoryIsActive: true } })
+    )
+    renderPage()
+    expect(screen.getByRole('button', { name: /reabrir ticket/i })).toBeInTheDocument()
   })
 })
