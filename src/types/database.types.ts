@@ -19,18 +19,21 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_active: boolean
           name: string
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
+          is_active?: boolean
           name: string
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
+          is_active?: boolean
           name?: string
         }
         Relationships: []
@@ -108,6 +111,62 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: true
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_assignment_log: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          from_agent_id: string | null
+          id: string
+          ticket_id: string
+          to_agent_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          from_agent_id?: string | null
+          id?: string
+          ticket_id: string
+          to_agent_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          from_agent_id?: string | null
+          id?: string
+          ticket_id?: string
+          to_agent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_assignment_log_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_assignment_log_from_agent_id_fkey"
+            columns: ["from_agent_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_assignment_log_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_assignment_log_to_agent_id_fkey"
+            columns: ["to_agent_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -312,6 +371,76 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_create_category: {
+        Args: { p_description?: string; p_name: string }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          max_resolution_hours: number
+          name: string
+        }[]
+      }
+      admin_list_categories: {
+        Args: never
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          max_resolution_hours: number
+          name: string
+        }[]
+      }
+      admin_list_users: {
+        Args: {
+          p_is_active?: boolean
+          p_page?: number
+          p_page_size?: number
+          p_role?: Database["public"]["Enums"]["user_role"]
+          p_search?: string
+        }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["user_role"]
+          specialty: string
+          total_count: number
+        }[]
+      }
+      admin_toggle_category_status: {
+        Args: { p_id: string }
+        Returns: {
+          is_active: boolean
+        }[]
+      }
+      admin_toggle_user_status: {
+        Args: { p_is_active: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      admin_update_category: {
+        Args: { p_description?: string; p_id: string; p_name: string }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          max_resolution_hours: number
+          name: string
+        }[]
+      }
+      admin_update_user_role: {
+        Args: {
+          p_new_role: Database["public"]["Enums"]["user_role"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       assign_ticket: {
         Args: { p_agent_id: string; p_ticket_id: string }
         Returns: {
@@ -384,6 +513,7 @@ export type Database = {
           agent_id: string
           ai_triage: Json
           category_id: string
+          category_is_active: boolean
           category_name: string
           client_full_name: string
           client_id: string
@@ -421,6 +551,7 @@ export type Database = {
           agent_full_name: string
           agent_id: string
           category_id: string
+          category_is_active: boolean
           category_name: string
           client_full_name: string
           client_id: string
@@ -434,6 +565,15 @@ export type Database = {
           updated_at: string
         }[]
       }
+      unassign_ticket: {
+        Args: { p_ticket_id: string }
+        Returns: {
+          agent_id: string
+          id: string
+          status: Database["public"]["Enums"]["ticket_status"]
+          updated_at: string
+        }[]
+      }
       update_ticket_status: {
         Args: {
           p_new_status: Database["public"]["Enums"]["ticket_status"]
@@ -444,40 +584,6 @@ export type Database = {
           status: Database["public"]["Enums"]["ticket_status"]
           updated_at: string
         }[]
-      }
-      admin_list_users: {
-        Args: {
-          p_role?: Database["public"]["Enums"]["user_role"] | null
-          p_search?: string | null
-          p_is_active?: boolean | null
-          p_page?: number
-          p_page_size?: number
-        }
-        Returns: {
-          id: string
-          email: string
-          full_name: string
-          avatar_url: string | null
-          role: Database["public"]["Enums"]["user_role"]
-          specialty: string | null
-          is_active: boolean
-          created_at: string
-          total_count: number
-        }[]
-      }
-      admin_update_user_role: {
-        Args: {
-          p_user_id: string
-          p_new_role: Database["public"]["Enums"]["user_role"]
-        }
-        Returns: undefined
-      }
-      admin_toggle_user_status: {
-        Args: {
-          p_user_id: string
-          p_is_active: boolean
-        }
-        Returns: undefined
       }
     }
     Enums: {
