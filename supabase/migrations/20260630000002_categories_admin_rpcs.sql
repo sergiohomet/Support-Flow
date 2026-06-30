@@ -57,7 +57,7 @@ GRANT EXECUTE ON FUNCTION public.get_categories() TO authenticated;
 
 -- ============================================================
 -- 3. admin_list_categories — all rows (active + inactive)
---    Admin-only via JWT role claim check.
+--    Admin-only via users table role check (matches project convention).
 --    Returns SLA max_resolution_hours via LEFT JOIN.
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.admin_list_categories()
@@ -73,8 +73,10 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE v_role public.user_role;
 BEGIN
-  IF (auth.jwt() ->> 'role') != 'admin' THEN
+  SELECT u.role INTO v_role FROM public.users u WHERE u.id = auth.uid();
+  IF v_role IS DISTINCT FROM 'admin' THEN
     RAISE EXCEPTION 'unauthorized: Solo admins pueden listar todas las categorías';
   END IF;
 
@@ -119,9 +121,11 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
+  v_role   public.user_role;
   v_new_id UUID;
 BEGIN
-  IF (auth.jwt() ->> 'role') != 'admin' THEN
+  SELECT u.role INTO v_role FROM public.users u WHERE u.id = auth.uid();
+  IF v_role IS DISTINCT FROM 'admin' THEN
     RAISE EXCEPTION 'unauthorized: Solo admins pueden crear categorías';
   END IF;
 
@@ -177,8 +181,10 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE v_role public.user_role;
 BEGIN
-  IF (auth.jwt() ->> 'role') != 'admin' THEN
+  SELECT u.role INTO v_role FROM public.users u WHERE u.id = auth.uid();
+  IF v_role IS DISTINCT FROM 'admin' THEN
     RAISE EXCEPTION 'unauthorized: Solo admins pueden actualizar categorías';
   END IF;
 
@@ -228,8 +234,10 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE v_role public.user_role;
 BEGIN
-  IF (auth.jwt() ->> 'role') != 'admin' THEN
+  SELECT u.role INTO v_role FROM public.users u WHERE u.id = auth.uid();
+  IF v_role IS DISTINCT FROM 'admin' THEN
     RAISE EXCEPTION 'unauthorized: Solo admins pueden cambiar el estado de categorías';
   END IF;
 
