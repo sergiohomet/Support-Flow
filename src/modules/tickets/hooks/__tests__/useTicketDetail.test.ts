@@ -28,6 +28,7 @@ const fakeDetail = {
   priority: 'media',
   category_id: 'cat-1',
   category_name: 'Soporte',
+  category_is_active: true,
   client_id: 'user-1',
   client_full_name: 'Juan',
   agent_id: null,
@@ -95,6 +96,34 @@ describe('useTicketDetail', () => {
       categoryId: 'cat-1',
       agentId: null,
     })
+  })
+
+  it('fetch() maps category_is_active: true → categoryIsActive: true', async () => {
+    const { result } = renderHook(() => useTicketDetail())
+
+    await act(async () => {
+      await result.current.fetch('ticket-1')
+    })
+
+    expect(result.current.ticket?.categoryIsActive).toBe(true)
+  })
+
+  it('fetch() maps category_is_active: false → categoryIsActive: false', async () => {
+    mockRpc.mockImplementation((rpcName: string) => {
+      if (rpcName === 'get_ticket_detail')
+        return Promise.resolve({ data: [{ ...fakeDetail, category_is_active: false }], error: null })
+      if (rpcName === 'get_ticket_comments') return Promise.resolve({ data: [fakeComment], error: null })
+      if (rpcName === 'get_ticket_status_log') return Promise.resolve({ data: [fakeLog], error: null })
+      return Promise.resolve({ data: [], error: null })
+    })
+
+    const { result } = renderHook(() => useTicketDetail())
+
+    await act(async () => {
+      await result.current.fetch('ticket-1')
+    })
+
+    expect(result.current.ticket?.categoryIsActive).toBe(false)
   })
 
   it('fetch("ticket-1") sets comments with camelCase mapping', async () => {

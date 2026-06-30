@@ -32,6 +32,7 @@ const fakeTicketRow = {
   priority: 'media',
   category_id: 'cat-1',
   category_name: 'Soporte',
+  category_is_active: true,
   client_id: 'user-1',
   client_full_name: 'Juan Pérez',
   agent_id: null,
@@ -96,6 +97,7 @@ describe('useTicketList', () => {
           priority: 'media',
           categoryId: 'cat-1',
           categoryName: 'Soporte',
+          categoryIsActive: true,
           clientId: 'user-1',
           clientFullName: 'Juan Pérez',
           agentId: null,
@@ -107,6 +109,22 @@ describe('useTicketList', () => {
       ],
       1
     )
+  })
+
+  it('fetch() maps category_is_active: false → categoryIsActive: false', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{ ...fakeTicketRow, category_is_active: false }],
+      error: null,
+    })
+
+    const { result } = renderHook(() => useTicketList())
+
+    await act(async () => {
+      await result.current.fetch()
+    })
+
+    const [mappedTickets] = mockSetTickets.mock.calls[0] as [Array<{ categoryIsActive: boolean }>]
+    expect(mappedTickets[0].categoryIsActive).toBe(false)
   })
 
   it('fetch() sets error when rpc returns an error and does NOT call setTickets', async () => {

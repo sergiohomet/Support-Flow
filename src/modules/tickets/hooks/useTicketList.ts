@@ -49,6 +49,7 @@ export function useTicketList(): UseTicketListResult {
         priority: row.priority,
         categoryId: row.category_id,
         categoryName: row.category_name,
+        categoryIsActive: row.category_is_active,
         clientId: row.client_id,
         clientFullName: row.client_full_name,
         agentId: row.agent_id ?? null,
