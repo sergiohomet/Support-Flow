@@ -51,7 +51,7 @@ describe('RegisterForm', () => {
     await user.type(passwordInputs[0], 'password123')
     await user.type(passwordInputs[1], 'differentpass')
 
-    await user.click(screen.getByRole('button', { name: 'Registrarse' }))
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
 
     expect(screen.getByText('Las contraseñas no coinciden.')).toBeInTheDocument()
     expect(defaultProps.onSubmit).not.toHaveBeenCalled()
@@ -68,7 +68,7 @@ describe('RegisterForm', () => {
     await user.type(passwordInputs[0], 'password123')
     await user.type(passwordInputs[1], 'password123')
 
-    await user.click(screen.getByRole('button', { name: 'Registrarse' }))
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
 
     expect(screen.getByText('Ingresá un email válido.')).toBeInTheDocument()
     expect(defaultProps.onSubmit).not.toHaveBeenCalled()
@@ -78,7 +78,7 @@ describe('RegisterForm', () => {
     const user = userEvent.setup()
     renderForm()
 
-    await user.click(screen.getByRole('button', { name: 'Registrarse' }))
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
 
     expect(defaultProps.onSubmit).not.toHaveBeenCalled()
   })
@@ -94,7 +94,7 @@ describe('RegisterForm', () => {
     await user.type(passwordInputs[0], 'password123')
     await user.type(passwordInputs[1], 'password123')
 
-    await user.click(screen.getByRole('button', { name: 'Registrarse' }))
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
 
     expect(defaultProps.onSubmit).toHaveBeenCalledOnce()
     expect(defaultProps.onSubmit).toHaveBeenCalledWith({

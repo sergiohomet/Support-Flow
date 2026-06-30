@@ -32,7 +32,7 @@ describe('LoginPage', () => {
 
   it('renders LoginForm with correct title', () => {
     renderPage()
-    expect(screen.getByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'SupportFlow' })).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: /email/i })).toBeInTheDocument()
     expect(document.querySelector('input[type="password"]')).toBeInTheDocument()
   })

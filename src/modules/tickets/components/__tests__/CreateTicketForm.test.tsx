@@ -29,10 +29,10 @@ describe('CreateTicketForm', () => {
   it('renders title, description, category select and priority select', () => {
     renderForm()
 
-    expect(screen.getByLabelText('Título')).toBeInTheDocument()
-    expect(screen.getByLabelText('Descripción')).toBeInTheDocument()
-    expect(screen.getByLabelText('Categoría')).toBeInTheDocument()
-    expect(screen.getByLabelText('Prioridad')).toBeInTheDocument()
+    expect(screen.getByLabelText(/título/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/descripción/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/categoría/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/prioridad/i)).toBeInTheDocument()
   })
 
   it('renders category options from prop', () => {
@@ -46,12 +46,12 @@ describe('CreateTicketForm', () => {
     const user = userEvent.setup()
     renderForm()
 
-    await user.type(screen.getByLabelText('Título'), 'Título de prueba')
-    await user.type(screen.getByLabelText('Descripción'), 'Descripción suficientemente larga')
-    await user.selectOptions(screen.getByLabelText('Categoría'), 'cat-1')
-    await user.selectOptions(screen.getByLabelText('Prioridad'), 'alta')
+    await user.type(screen.getByLabelText(/título/i), 'Título de prueba')
+    await user.type(screen.getByLabelText(/descripción/i), 'Descripción suficientemente larga')
+    await user.selectOptions(screen.getByLabelText(/categoría/i), 'cat-1')
+    await user.click(screen.getByLabelText('Alta'))
 
-    await user.click(screen.getByRole('button', { name: 'Crear ticket' }))
+    await user.click(screen.getByRole('button', { name: /crear ticket/i }))
 
     expect(mockOnSubmit).toHaveBeenCalledOnce()
     expect(mockOnSubmit).toHaveBeenCalledWith({
@@ -66,11 +66,11 @@ describe('CreateTicketForm', () => {
     const user = userEvent.setup()
     renderForm()
 
-    await user.type(screen.getByLabelText('Título'), 'Hi')
-    await user.type(screen.getByLabelText('Descripción'), 'Descripción suficientemente larga')
-    await user.selectOptions(screen.getByLabelText('Categoría'), 'cat-1')
+    await user.type(screen.getByLabelText(/título/i), 'Hi')
+    await user.type(screen.getByLabelText(/descripción/i), 'Descripción suficientemente larga')
+    await user.selectOptions(screen.getByLabelText(/categoría/i), 'cat-1')
 
-    await user.click(screen.getByRole('button', { name: 'Crear ticket' }))
+    await user.click(screen.getByRole('button', { name: /crear ticket/i }))
 
     expect(mockOnSubmit).not.toHaveBeenCalled()
     expect(
@@ -82,11 +82,11 @@ describe('CreateTicketForm', () => {
     const user = userEvent.setup()
     renderForm()
 
-    await user.type(screen.getByLabelText('Título'), 'Título válido')
-    await user.type(screen.getByLabelText('Descripción'), 'Corta')
-    await user.selectOptions(screen.getByLabelText('Categoría'), 'cat-1')
+    await user.type(screen.getByLabelText(/título/i), 'Título válido')
+    await user.type(screen.getByLabelText(/descripción/i), 'Corta')
+    await user.selectOptions(screen.getByLabelText(/categoría/i), 'cat-1')
 
-    await user.click(screen.getByRole('button', { name: 'Crear ticket' }))
+    await user.click(screen.getByRole('button', { name: /crear ticket/i }))
 
     expect(mockOnSubmit).not.toHaveBeenCalled()
     expect(
@@ -98,10 +98,10 @@ describe('CreateTicketForm', () => {
     const user = userEvent.setup()
     renderForm()
 
-    await user.type(screen.getByLabelText('Título'), 'Título válido')
-    await user.type(screen.getByLabelText('Descripción'), 'Descripción suficientemente larga')
+    await user.type(screen.getByLabelText(/título/i), 'Título válido')
+    await user.type(screen.getByLabelText(/descripción/i), 'Descripción suficientemente larga')
 
-    await user.click(screen.getByRole('button', { name: 'Crear ticket' }))
+    await user.click(screen.getByRole('button', { name: /crear ticket/i }))
 
     expect(mockOnSubmit).not.toHaveBeenCalled()
     expect(screen.getByText('Seleccioná una categoría.')).toBeInTheDocument()
@@ -111,8 +111,8 @@ describe('CreateTicketForm', () => {
     renderForm({ isLoading: true })
 
     expect(screen.getByRole('button', { name: 'Creando...' })).toBeDisabled()
-    expect(screen.getByLabelText('Título')).toBeDisabled()
-    expect(screen.getByLabelText('Descripción')).toBeDisabled()
+    expect(screen.getByLabelText(/título/i)).toBeDisabled()
+    expect(screen.getByLabelText(/descripción/i)).toBeDisabled()
   })
 
   it('renders error prop in an alert when provided', () => {

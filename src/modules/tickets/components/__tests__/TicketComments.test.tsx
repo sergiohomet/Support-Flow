@@ -68,7 +68,7 @@ describe('TicketComments', () => {
     it('renders the comment form', () => {
       renderComments(status)
       expect(screen.getByLabelText('Nuevo comentario')).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: 'Comentar' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Enviar' })).toBeInTheDocument()
     })
 
     it('does not show the resolved-ticket notice', () => {
@@ -81,7 +81,7 @@ describe('TicketComments', () => {
     it('hides the comment form', () => {
       renderComments('resuelto')
       expect(screen.queryByLabelText('Nuevo comentario')).not.toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: 'Comentar' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Enviar' })).not.toBeInTheDocument()
     })
 
     it('shows the resolved-ticket notice', () => {

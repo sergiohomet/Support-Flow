@@ -48,7 +48,7 @@ describe('RegisterPage', () => {
     fireEvent.change(passwordInputs[0], { target: { value: 'password123' } })
     fireEvent.change(passwordInputs[1], { target: { value: 'password123' } })
 
-    fireEvent.click(screen.getByRole('button', { name: /registrarse/i }))
+    fireEvent.click(screen.getByRole('button', { name: /crear cuenta/i }))
 
     await waitFor(() => {
       expect(mockExecute).toHaveBeenCalledWith({
@@ -76,7 +76,7 @@ describe('RegisterPage', () => {
     fireEvent.change(passwordInputs[0], { target: { value: 'password123' } })
     fireEvent.change(passwordInputs[1], { target: { value: 'different456' } })
 
-    fireEvent.click(screen.getByRole('button', { name: /registrarse/i }))
+    fireEvent.click(screen.getByRole('button', { name: /crear cuenta/i }))
 
     await waitFor(() => {
       expect(screen.getByText(/contraseñas no coinciden/i)).toBeInTheDocument()

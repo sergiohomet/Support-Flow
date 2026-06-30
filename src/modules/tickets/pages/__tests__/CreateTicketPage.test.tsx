@@ -119,7 +119,7 @@ describe('CreateTicketPage', () => {
 
   it('renders "← Volver" back button', () => {
     renderPage()
-    expect(screen.getByText(/← Volver/)).toBeInTheDocument()
+    expect(screen.getByText(/mis tickets/i)).toBeInTheDocument()
   })
 
   it('calls loadCategories() on mount', () => {

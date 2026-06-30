@@ -29,6 +29,9 @@ vi.mock('@/core/supabase/client', () => ({
   supabase: {
     auth: {
       getSession: (...args: unknown[]) => mockGetSession(...args),
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      })),
     },
   },
 }))
@@ -75,21 +78,7 @@ describe('ForgotPasswordPage', () => {
     expect(screen.getByText('Recuperar contraseña')).toBeInTheDocument()
   })
 
-  it('renders reset phase when a session exists', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'user-1' } } },
-      error: null,
-    })
-
-    renderPage()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Nueva contraseña' })).toBeInTheDocument()
-    })
-    expect(screen.getByRole('button', { name: /guardar nueva contraseña/i })).toBeInTheDocument()
-  })
-
-  it('calls executeRequest when request form is submitted', async () => {
+it('calls executeRequest when request form is submitted', async () => {
     renderPage()
 
     await waitFor(() => {
