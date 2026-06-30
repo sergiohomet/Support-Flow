@@ -11,6 +11,7 @@ import { TicketListPage } from "@/modules/tickets/pages/TicketListPage";
 import { CreateTicketPage } from "@/modules/tickets/pages/CreateTicketPage";
 import { TicketDetailPage } from "@/modules/tickets/pages/TicketDetailPage";
 import { UsersPage } from "@/modules/users";
+import { CategoriesPage } from "@/modules/categories";
 
 export default function App() {
   return (
@@ -81,8 +82,8 @@ export default function App() {
             <Route
               path="/admin/categories"
               element={
-                <RoleGuard allowedRoles={['agent', 'admin']}>
-                  <div>Categories — TODO</div>
+                <RoleGuard allowedRoles={['admin']}>
+                  <CategoriesPage />
                 </RoleGuard>
               }
             />
