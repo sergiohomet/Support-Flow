@@ -104,7 +104,7 @@ export function ReassignTicketModal({
                   value={agent.id}
                   disabled={agent.id === currentAgentId}
                 >
-                  {agent.fullName} — {agent.activeTicketCount}/4 tickets
+                  {agent.fullName} — {agent.activeTicketCount}/5 tickets
                   {agent.id === currentAgentId ? ' (actual)' : ''}
                 </option>
               ))}
@@ -123,7 +123,7 @@ export function ReassignTicketModal({
               <div>
                 <h3 className="text-sm font-bold text-red-800">Agente al límite de capacidad</h3>
                 <p className="text-sm text-red-700 mt-0.5">
-                  Este agente tiene 4 tickets activos. Asignarle este ticket podría afectar los tiempos de resolución.
+                  Este agente tiene 4/5 tickets activos. Asignarle este ticket lo llevaría al límite de capacidad (5).
                 </p>
               </div>
             </div>

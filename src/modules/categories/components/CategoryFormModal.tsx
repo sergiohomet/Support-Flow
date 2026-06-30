@@ -97,7 +97,7 @@ export function CategoryFormModal({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            maxLength={51}
+            maxLength={50}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
           />
           {fieldErrors.name && (
