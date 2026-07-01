@@ -260,8 +260,10 @@ export type Database = {
           client_id: string
           created_at: string
           description: string
+          escalated_at: string | null
           id: string
           priority: Database["public"]["Enums"]["ticket_priority"]
+          sla_hours_snapshot: number | null
           status: Database["public"]["Enums"]["ticket_status"]
           title: string
           updated_at: string
@@ -273,8 +275,10 @@ export type Database = {
           client_id: string
           created_at?: string
           description: string
+          escalated_at?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
+          sla_hours_snapshot?: number | null
           status?: Database["public"]["Enums"]["ticket_status"]
           title: string
           updated_at?: string
@@ -286,8 +290,10 @@ export type Database = {
           client_id?: string
           created_at?: string
           description?: string
+          escalated_at?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
+          sla_hours_snapshot?: number | null
           status?: Database["public"]["Enums"]["ticket_status"]
           title?: string
           updated_at?: string
@@ -382,6 +388,16 @@ export type Database = {
           name: string
         }[]
       }
+      admin_get_sla_config: {
+        Args: never
+        Returns: {
+          category_id: string
+          category_name: string
+          escalation_enabled: boolean
+          max_resolution_hours: number
+          updated_at: string
+        }[]
+      }
       admin_list_categories: {
         Args: never
         Returns: {
@@ -432,6 +448,20 @@ export type Database = {
           is_active: boolean
           max_resolution_hours: number
           name: string
+        }[]
+      }
+      admin_update_sla_config: {
+        Args: {
+          p_category_id: string
+          p_escalation_enabled: boolean
+          p_max_resolution_hours: number
+        }
+        Returns: {
+          category_id: string
+          category_name: string
+          escalation_enabled: boolean
+          max_resolution_hours: number
+          updated_at: string
         }[]
       }
       admin_update_user_role: {
