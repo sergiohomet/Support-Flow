@@ -388,6 +388,27 @@ export type Database = {
           name: string
         }[]
       }
+      admin_get_sla_at_risk_tickets: {
+        Args: { p_limit?: number }
+        Returns: {
+          agent_full_name: string
+          category_name: string
+          id: string
+          minutes_remaining: number
+          title: string
+        }[]
+      }
+      admin_get_sla_compliance_by_category: {
+        Args: { p_date_from?: string; p_date_to?: string }
+        Returns: {
+          category_id: string
+          category_name: string
+          compliance_pct: number
+          max_resolution_hours: number
+          resolved_count: number
+          total_count: number
+        }[]
+      }
       admin_get_sla_config: {
         Args: never
         Returns: {
@@ -396,6 +417,14 @@ export type Database = {
           escalation_enabled: boolean
           max_resolution_hours: number
           updated_at: string
+        }[]
+      }
+      admin_get_sla_dashboard: {
+        Args: { p_date_from?: string; p_date_to?: string }
+        Returns: {
+          escalated_count: number
+          resolved_in_sla: number
+          total_tickets: number
         }[]
       }
       admin_list_categories: {
@@ -593,6 +622,13 @@ export type Database = {
           title: string
           total_count: number
           updated_at: string
+        }[]
+      }
+      run_sla_escalation_check: {
+        Args: never
+        Returns: {
+          escalated_count: number
+          escalated_ticket_id: string
         }[]
       }
       unassign_ticket: {
