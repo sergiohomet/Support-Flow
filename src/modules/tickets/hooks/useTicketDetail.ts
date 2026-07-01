@@ -70,6 +70,8 @@ export function useTicketDetail(): UseTicketDetailResult {
         aiTriage: row.ai_triage ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
+        escalatedAt: row.escalated_at ?? null,
+        slaHours: row.sla_hours ?? null,
       })
 
       setComments(
