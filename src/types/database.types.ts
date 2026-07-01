@@ -582,8 +582,10 @@ export type Database = {
           client_id: string
           created_at: string
           description: string
+          escalated_at: string | null
           id: string
           priority: Database["public"]["Enums"]["ticket_priority"]
+          sla_hours: number | null
           status: Database["public"]["Enums"]["ticket_status"]
           title: string
           updated_at: string

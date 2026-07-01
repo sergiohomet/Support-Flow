@@ -22,6 +22,79 @@ function formatDate(iso: string): string {
   })
 }
 
+interface SlaStatus {
+  label: string
+  detail?: string
+  boxClass: string
+  iconClass: string
+  textClass: string
+  icon: string
+}
+
+function getSlaStatus(ticket: {
+  status: TicketStatus
+  escalatedAt: string | null
+  slaHours: number | null
+  createdAt: string
+}): SlaStatus {
+  if (ticket.escalatedAt) {
+    return {
+      label: 'SLA incumplido',
+      detail: `Escalado el ${formatDate(ticket.escalatedAt)}`,
+      boxClass: 'bg-red-50 border-red-200',
+      iconClass: 'text-red-600',
+      textClass: 'text-red-700',
+      icon: 'error',
+    }
+  }
+
+  if (ticket.status === 'resuelto') {
+    return {
+      label: 'Resuelto dentro del SLA',
+      boxClass: 'bg-green-50 border-green-200',
+      iconClass: 'text-green-600',
+      textClass: 'text-green-700',
+      icon: 'check_circle',
+    }
+  }
+
+  if (ticket.slaHours == null) {
+    return {
+      label: 'No configurado',
+      boxClass: 'bg-gray-50 border-gray-200',
+      iconClass: 'text-gray-400',
+      textClass: 'text-gray-500',
+      icon: 'schedule',
+    }
+  }
+
+  const deadline = new Date(ticket.createdAt).getTime() + ticket.slaHours * 60 * 60 * 1000
+  const minutesRemaining = Math.round((deadline - Date.now()) / 60000)
+
+  if (minutesRemaining <= 0) {
+    return {
+      label: 'Vencido — pendiente de escalar',
+      boxClass: 'bg-red-50 border-red-200',
+      iconClass: 'text-red-600',
+      textClass: 'text-red-700',
+      icon: 'error',
+    }
+  }
+
+  const hours = Math.floor(minutesRemaining / 60)
+  const minutes = minutesRemaining % 60
+  const remaining = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+  const isUrgent = minutesRemaining < 120
+
+  return {
+    label: `Vence en ${remaining}`,
+    boxClass: isUrgent ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200',
+    iconClass: isUrgent ? 'text-amber-600' : 'text-blue-600',
+    textClass: isUrgent ? 'text-amber-700' : 'text-blue-700',
+    icon: 'schedule',
+  }
+}
+
 const AGENT_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   abierto: ['en_proceso', 'resuelto'],
   en_proceso: ['resuelto', 'abierto'],
@@ -212,23 +285,21 @@ export function TicketDetailPage(): React.ReactElement {
                   </div>
 
                   {/* SLA */}
-                  {ticket.status === 'resuelto' ? (
-                    <div className="bg-green-50 border border-green-200 rounded p-3">
-                      <span className="block text-xs text-gray-400 mb-1">SLA Resolución</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="material-icons text-base text-green-600">check_circle</span>
-                        <span className="text-sm text-green-700 font-medium">Resuelto dentro del SLA</span>
+                  {(() => {
+                    const sla = getSlaStatus(ticket)
+                    return (
+                      <div className={`${sla.boxClass} border rounded p-3`}>
+                        <span className="block text-xs text-gray-400 mb-1">SLA Resolución</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`material-icons text-base ${sla.iconClass}`}>{sla.icon}</span>
+                          <span className={`text-sm font-medium ${sla.textClass}`}>{sla.label}</span>
+                        </div>
+                        {sla.detail && (
+                          <span className="block text-xs text-gray-500 mt-1">{sla.detail}</span>
+                        )}
                       </div>
-                    </div>
-                  ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded p-3">
-                      <span className="block text-xs text-gray-400 mb-1">SLA Resolución</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="material-icons text-base text-gray-400">schedule</span>
-                        <span className="text-sm text-gray-500">No configurado</span>
-                      </div>
-                    </div>
-                  )}
+                    )
+                  })()}
                 </div>
               </div>
 

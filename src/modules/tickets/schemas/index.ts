@@ -39,6 +39,8 @@ export const ticketDetailSchema = z.object({
   aiTriage: z.unknown().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  escalatedAt: z.string().nullable(),
+  slaHours: z.number().nullable(),
 })
 
 // Comment (maps get_ticket_comments row)

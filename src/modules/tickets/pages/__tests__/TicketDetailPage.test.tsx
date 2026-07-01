@@ -78,6 +78,8 @@ const fakeTicket: TicketDetail = {
   aiTriage: null,
   createdAt: '2026-06-15T10:00:00Z',
   updatedAt: '2026-06-15T10:00:00Z',
+  escalatedAt: null,
+  slaHours: 24,
 }
 
 const fakeTicketWithAgent: TicketDetail = {
@@ -240,10 +242,45 @@ describe('TicketDetailPage', () => {
     expect(screen.getByText('Descripción del ticket de prueba')).toBeInTheDocument()
   })
 
-  it('shows SLA placeholder in the sidebar', () => {
-    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
+  it('shows SLA not-configured state when the category has no SLA hours', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ ticket: { ...fakeTicket, slaHours: null } })
+    )
     renderPage()
     expect(screen.getByText('No configurado')).toBeInTheDocument()
+  })
+
+  it('shows overdue state for an open ticket past its SLA deadline, not yet escalated', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn({ ticket: fakeTicket }))
+    renderPage()
+    expect(screen.getByText('Vencido — pendiente de escalar')).toBeInTheDocument()
+  })
+
+  it('shows escalated state with the escalation date when the ticket was escalated', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ ticket: { ...fakeTicket, escalatedAt: '2026-06-16T08:00:00Z' } })
+    )
+    renderPage()
+    expect(screen.getByText('SLA incumplido')).toBeInTheDocument()
+    expect(screen.getByText(/Escalado el/)).toBeInTheDocument()
+  })
+
+  it('shows resolved-in-SLA state for a resolved, non-escalated ticket', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({ ticket: { ...fakeTicket, status: 'resuelto', escalatedAt: null } })
+    )
+    renderPage()
+    expect(screen.getByText('Resuelto dentro del SLA')).toBeInTheDocument()
+  })
+
+  it('shows a live countdown for an open ticket still within its SLA window', () => {
+    vi.mocked(useTicketDetail).mockReturnValue(
+      makeDetailReturn({
+        ticket: { ...fakeTicket, createdAt: new Date().toISOString(), slaHours: 24 },
+      })
+    )
+    renderPage()
+    expect(screen.getByText(/Vence en/)).toBeInTheDocument()
   })
 
   it('shows "Sin acciones disponibles." for client with open ticket', () => {
