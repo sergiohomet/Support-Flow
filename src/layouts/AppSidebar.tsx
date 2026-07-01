@@ -88,12 +88,12 @@ export function AppSidebar() {
             {({ isActive }) => (
               <>
                 <span
-                  className="material-icons text-[20px]"
+                  className="material-icons text-[20px] shrink-0"
                   style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
                 >
                   {item.icon}
                 </span>
-                {item.label}
+                <span className="whitespace-nowrap">{item.label}</span>
               </>
             )}
           </NavLink>
