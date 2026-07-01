@@ -12,6 +12,7 @@ import { CreateTicketPage } from "@/modules/tickets/pages/CreateTicketPage";
 import { TicketDetailPage } from "@/modules/tickets/pages/TicketDetailPage";
 import { UsersPage } from "@/modules/users";
 import { CategoriesPage } from "@/modules/categories";
+import { SlaConfigPage } from "@/modules/sla";
 
 export default function App() {
   return (
@@ -87,7 +88,14 @@ export default function App() {
                 </RoleGuard>
               }
             />
-            <Route path="/admin/sla" element={<div>SLA Config — TODO</div>} />
+            <Route
+              path="/admin/sla"
+              element={
+                <RoleGuard allowedRoles={['admin']}>
+                  <SlaConfigPage />
+                </RoleGuard>
+              }
+            />
 
             {/* Legacy redirect — keep until all bookmarks/links are updated */}
             <Route
