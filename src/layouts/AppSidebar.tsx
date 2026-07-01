@@ -37,7 +37,7 @@ function getNavItems(role: UserRole): NavItem[] {
     { label: 'Reportes', to: '/reports', icon: 'bar_chart' },
     { label: 'Categorías', to: '/admin/categories', icon: 'folder' },
     { label: 'Configuración SLA', to: '/admin/sla', icon: 'schedule' },
-    { label: 'Dashboard SLA', to: '/admin/sla/dashboard', icon: 'monitoring' },
+    { label: 'Dashboard SLA', to: '/admin/sla/dashboard', icon: 'dashboard' },
     { label: 'Usuarios', to: '/admin/configuracion/usuarios', icon: 'group' },
   ]
 }
