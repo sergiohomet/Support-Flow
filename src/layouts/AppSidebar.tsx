@@ -36,6 +36,8 @@ function getNavItems(role: UserRole): NavItem[] {
     ...common,
     { label: 'Reportes', to: '/reports', icon: 'bar_chart' },
     { label: 'Categorías', to: '/admin/categories', icon: 'folder' },
+    { label: 'Configuración SLA', to: '/admin/sla', icon: 'schedule' },
+    { label: 'Dashboard SLA', to: '/admin/sla/dashboard', icon: 'dashboard' },
     { label: 'Usuarios', to: '/admin/configuracion/usuarios', icon: 'group' },
   ]
 }
@@ -86,12 +88,12 @@ export function AppSidebar() {
             {({ isActive }) => (
               <>
                 <span
-                  className="material-icons text-[20px]"
+                  className="material-icons text-[20px] shrink-0"
                   style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
                 >
                   {item.icon}
                 </span>
-                {item.label}
+                <span className="whitespace-nowrap">{item.label}</span>
               </>
             )}
           </NavLink>

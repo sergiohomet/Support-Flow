@@ -12,7 +12,7 @@ import { CreateTicketPage } from "@/modules/tickets/pages/CreateTicketPage";
 import { TicketDetailPage } from "@/modules/tickets/pages/TicketDetailPage";
 import { UsersPage } from "@/modules/users";
 import { CategoriesPage } from "@/modules/categories";
-import { SlaConfigPage } from "@/modules/sla";
+import { SlaConfigPage, SlaDashboardPage } from "@/modules/sla";
 
 export default function App() {
   return (
@@ -93,6 +93,14 @@ export default function App() {
               element={
                 <RoleGuard allowedRoles={['admin']}>
                   <SlaConfigPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/admin/sla/dashboard"
+              element={
+                <RoleGuard allowedRoles={['admin']}>
+                  <SlaDashboardPage />
                 </RoleGuard>
               }
             />

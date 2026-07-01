@@ -403,7 +403,11 @@ export type Database = {
         Returns: {
           category_id: string
           category_name: string
-          compliance_pct: number
+          // Nullable: the SQL uses NULLIF(COUNT(t.id), 0) so this is NULL
+          // when a category has zero tickets in the selected date range —
+          // the Supabase type generator doesn't detect NULLIF-based
+          // nullability, so this is hand-corrected here.
+          compliance_pct: number | null
           max_resolution_hours: number
           resolved_count: number
           total_count: number
