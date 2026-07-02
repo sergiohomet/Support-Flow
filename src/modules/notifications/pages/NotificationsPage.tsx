@@ -8,7 +8,7 @@ import { NotificationList } from '@/modules/notifications/components/Notificatio
 import type { NotificationFilter, NotificationRow } from '@/modules/notifications/schemas'
 
 export function NotificationsPage(): React.JSX.Element {
-  const [filter, setFilter] = useState<NotificationFilter>('all')
+  const [filter, setFilter] = useState<NotificationFilter>('unread')
   // Tracks ids marked read during this session so the card can flip to "read"
   // immediately on click, without waiting for a refetch — the list is only
   // refetched explicitly (e.g. after "Marcar todas como leídas"), so this
