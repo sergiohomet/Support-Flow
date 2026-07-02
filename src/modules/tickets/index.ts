@@ -7,7 +7,7 @@ export { TicketDetailPage } from './pages/TicketDetailPage'
 export { useTicketList } from './hooks/useTicketList'
 export { useTicketDetail } from './hooks/useTicketDetail'
 export { useCreateTicket } from './hooks/useCreateTicket'
-export { useAssignTicket } from './hooks/useAssignTicket'
+export { useReassignTicket } from './hooks/useReassignTicket'
 export { useUpdateTicketStatus } from './hooks/useUpdateTicketStatus'
 export { useAddComment } from './hooks/useAddComment'
 
