@@ -10,6 +10,7 @@ export interface TicketListItem {
   priority: TicketPriority
   categoryId: string
   categoryName: string
+  categoryIsActive: boolean
   clientId: string
   clientFullName: string
   agentId: string | null

@@ -115,7 +115,6 @@ export function TicketDetailPage(): React.ReactElement {
   const { loadAgents } = useTicketList()
 
   const user = useStore((s) => s.user)
-  const agents = useStore((s) => s.agents)
 
   useEffect(() => {
     if (!id) return

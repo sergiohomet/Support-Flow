@@ -6,12 +6,6 @@ interface CategoryComplianceDonutProps {
 
 type ComplianceTier = 'green' | 'amber' | 'red'
 
-const TIER_COLOR: Record<ComplianceTier, string> = {
-  green: '#16a34a',
-  amber: '#d97706',
-  red: '', // uses Tailwind red-600 class directly to stay consistent with this app's existing red
-}
-
 const TIER_TEXT_CLASS: Record<ComplianceTier, string> = {
   green: 'text-[#16a34a]',
   amber: 'text-[#d97706]',

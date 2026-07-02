@@ -403,9 +403,7 @@ export type Database = {
         Returns: {
           category_id: string
           category_name: string
-          // Nullable: the SQL uses NULLIF(COUNT(t.id), 0) so this is NULL
-          // when a category has zero tickets in the selected date range —
-          // the Supabase type generator doesn't detect NULLIF-based
+          // NOTE: the Supabase type generator doesn't detect NULLIF-based
           // nullability, so this is hand-corrected here.
           compliance_pct: number | null
           max_resolution_hours: number
@@ -558,6 +556,17 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_notifications: {
+        Args: { p_filter?: string }
+        Returns: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          ticket_id: string
+          type: Database["public"]["Enums"]["notification_type"]
+        }[]
+      }
       get_ticket_comments: {
         Args: { p_ticket_id: string }
         Returns: {
@@ -582,10 +591,10 @@ export type Database = {
           client_id: string
           created_at: string
           description: string
-          escalated_at: string | null
+          escalated_at: string
           id: string
           priority: Database["public"]["Enums"]["ticket_priority"]
-          sla_hours: number | null
+          sla_hours: number
           status: Database["public"]["Enums"]["ticket_status"]
           title: string
           updated_at: string
@@ -630,6 +639,23 @@ export type Database = {
           updated_at: string
         }[]
       }
+      internal_sync_sla_service_role_secret: {
+        Args: { p_value: string }
+        Returns: undefined
+      }
+      mark_all_notifications_read: {
+        Args: never
+        Returns: {
+          updated_count: number
+        }[]
+      }
+      mark_notification_read: {
+        Args: { p_notification_id: string }
+        Returns: {
+          id: string
+          is_read: boolean
+        }[]
+      }
       run_sla_escalation_check: {
         Args: never
         Returns: {
@@ -659,7 +685,11 @@ export type Database = {
       }
     }
     Enums: {
-      notification_type: "status_change" | "sla_escalation"
+      notification_type:
+        | "status_change"
+        | "sla_escalation"
+        | "reassignment"
+        | "new_comment"
       ticket_priority: "baja" | "media" | "alta" | "critica"
       ticket_status: "abierto" | "en_proceso" | "resuelto" | "reabierto"
       user_role: "client" | "agent" | "admin"
@@ -790,7 +820,12 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      notification_type: ["status_change", "sla_escalation"],
+      notification_type: [
+        "status_change",
+        "sla_escalation",
+        "reassignment",
+        "new_comment",
+      ],
       ticket_priority: ["baja", "media", "alta", "critica"],
       ticket_status: ["abierto", "en_proceso", "resuelto", "reabierto"],
       user_role: ["client", "agent", "admin"],
