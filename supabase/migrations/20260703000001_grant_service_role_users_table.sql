@@ -1,0 +1,25 @@
+-- ============================================================
+-- MIGRATION 20260703000001 — Grant service_role privileges on public.users
+-- SupportFlow Helpdesk
+--
+-- Root cause of a real production bug: the "Crear usuario" flow (the
+-- create-user Edge Function) always returned 403 "Forbidden: caller is
+-- not an admin" even for a confirmed real admin caller. The actual
+-- error, surfaced via a temporary diagnostic build, was
+-- "permission denied for table users" (Postgres code 42501) —
+-- service_role had never been granted SELECT/INSERT/UPDATE/DELETE on
+-- public.users (only REFERENCES/TRIGGER/TRUNCATE, the schema-level
+-- defaults). service_role's RLS bypass (BYPASSRLS) does not substitute
+-- for actual table GRANTs — both are required independently in
+-- Postgres.
+--
+-- This is not a new capability for service_role — it is Supabase's
+-- highest-trust role, already fully able to read/write this table via
+-- any SECURITY DEFINER RPC (get_my_profile, admin_update_user_role,
+-- etc.). This migration just gives it the same access directly, which
+-- create-user's Edge Function needs since it (correctly) uses the
+-- Auth admin API + a service-role REST client rather than routing
+-- through a JWT-bound RPC.
+-- ============================================================
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.users TO service_role;
