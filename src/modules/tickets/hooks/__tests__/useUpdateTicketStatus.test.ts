@@ -12,11 +12,11 @@ describe('useUpdateTicketStatus', () => {
     mockRpc.mockResolvedValue({ data: null, error: null })
   })
 
-  it('execute(ticketId, currentStatus, newStatus) calls rpc("update_ticket_status") with correct params', async () => {
+  it('execute(ticketId, newStatus) calls rpc("update_ticket_status") with correct params', async () => {
     const { result } = renderHook(() => useUpdateTicketStatus())
 
     await act(async () => {
-      await result.current.execute('ticket-1', 'abierto', 'en_proceso')
+      await result.current.execute('ticket-1', 'en_proceso')
     })
 
     expect(mockRpc).toHaveBeenCalledWith('update_ticket_status', {
@@ -30,7 +30,7 @@ describe('useUpdateTicketStatus', () => {
 
     let returned: boolean | null = null
     await act(async () => {
-      returned = await result.current.execute('ticket-1', 'abierto', 'en_proceso')
+      returned = await result.current.execute('ticket-1', 'en_proceso')
     })
 
     expect(returned).toBe(true)
@@ -44,7 +44,7 @@ describe('useUpdateTicketStatus', () => {
 
     let returned: boolean | null = null
     await act(async () => {
-      returned = await result.current.execute('ticket-1', 'en_proceso', 'resuelto')
+      returned = await result.current.execute('ticket-1', 'resuelto')
     })
 
     expect(returned).toBe(false)
@@ -60,7 +60,7 @@ describe('useUpdateTicketStatus', () => {
     const { result } = renderHook(() => useUpdateTicketStatus())
 
     await act(async () => {
-      await result.current.execute('ticket-1', 'abierto', 'en_proceso')
+      await result.current.execute('ticket-1', 'reabierto')
     })
 
     expect(result.current.error).toBe('Transición abierto → reabierto no permitida')
@@ -70,7 +70,7 @@ describe('useUpdateTicketStatus', () => {
     const { result } = renderHook(() => useUpdateTicketStatus())
 
     await act(async () => {
-      await result.current.execute('ticket-1', 'abierto', 'en_proceso')
+      await result.current.execute('ticket-1', 'en_proceso')
     })
 
     expect(result.current.isLoading).toBe(false)
@@ -82,23 +82,24 @@ describe('useUpdateTicketStatus', () => {
     const { result } = renderHook(() => useUpdateTicketStatus())
 
     await act(async () => {
-      await result.current.execute('ticket-1', 'en_proceso', 'resuelto')
+      await result.current.execute('ticket-1', 'resuelto')
     })
 
     expect(result.current.isLoading).toBe(false)
   })
 
-  it('invalid transition sets error and does NOT call the RPC', async () => {
+  it('always calls the RPC and lets the backend be the sole transition-validity authority (e.g. direct abierto -> resuelto)', async () => {
     const { result } = renderHook(() => useUpdateTicketStatus())
 
     let returned: boolean | null = null
     await act(async () => {
-      // abierto → resuelto is not a valid transition
-      returned = await result.current.execute('ticket-1', 'abierto', 'resuelto')
+      returned = await result.current.execute('ticket-1', 'resuelto')
     })
 
-    expect(returned).toBe(false)
-    expect(result.current.error).toBe('Transición de estado no permitida.')
-    expect(mockRpc).not.toHaveBeenCalled()
+    expect(returned).toBe(true)
+    expect(mockRpc).toHaveBeenCalledWith('update_ticket_status', {
+      p_ticket_id: 'ticket-1',
+      p_new_status: 'resuelto',
+    })
   })
 })
