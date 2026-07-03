@@ -189,30 +189,7 @@ export function TicketComments({
               aria-label="Nuevo comentario"
               className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 resize-none"
             />
-            <div className="flex justify-between items-center">
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  aria-label="Adjuntar archivo"
-                  className="p-1.5 text-gray-400 hover:bg-gray-200 rounded transition-colors"
-                >
-                  <span className="material-icons text-[20px]">attach_file</span>
-                </button>
-                <button
-                  type="button"
-                  aria-label="Negrita"
-                  className="p-1.5 text-gray-400 hover:bg-gray-200 rounded transition-colors"
-                >
-                  <span className="material-icons text-[20px]">format_bold</span>
-                </button>
-                <button
-                  type="button"
-                  aria-label="Código"
-                  className="p-1.5 text-gray-400 hover:bg-gray-200 rounded transition-colors"
-                >
-                  <span className="material-icons text-[20px]">code</span>
-                </button>
-              </div>
+            <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={isLoading || content.trim().length === 0}
