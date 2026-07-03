@@ -151,6 +151,32 @@ describe('CreateUserModal', () => {
     )
   })
 
+  it('hides the specialty field when role is admin (specialty only applies to agents)', async () => {
+    const user = userEvent.setup()
+    renderModal()
+
+    expect(screen.getByLabelText('Especialidad')).toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Rol'), 'admin')
+
+    expect(screen.queryByLabelText('Especialidad')).not.toBeInTheDocument()
+  })
+
+  it('submits specialty: null when role is admin, even if a specialty was picked before switching', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    renderModal({ onSubmit })
+
+    await fillValidForm(user)
+    await user.selectOptions(screen.getByLabelText('Especialidad'), 'Hardware')
+    await user.selectOptions(screen.getByLabelText('Rol'), 'admin')
+    await user.click(screen.getByRole('button', { name: 'Crear usuario' }))
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'admin', specialty: null }),
+    )
+  })
+
   it('disables submit button when isLoading is true', () => {
     renderModal({ isLoading: true })
 

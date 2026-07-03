@@ -169,10 +169,11 @@ export function UserTable({
                         <span className="material-icons text-base">edit</span>
                       </button>
 
-                      {/* Edit specialty button */}
+                      {/* Edit specialty button — specialty only applies to agents */}
                       <button
                         type="button"
                         onClick={() => onSpecialtyChange(user)}
+                        disabled={user.role !== 'agent'}
                         aria-label="Edit specialty"
                         className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
                       >

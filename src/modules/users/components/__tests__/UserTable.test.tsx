@@ -197,23 +197,35 @@ describe('UserTable', () => {
       expect(within(firstDataRow).getByLabelText('Deactivate user')).toBeDisabled()
     })
 
-    it('does NOT disable the specialty button for the current user (no security implication)', () => {
-      renderTable({ currentUserId: 'user-1' })
+    it('does NOT disable the specialty button for the current user when they are an agent (no security implication)', () => {
+      // USERS[1] (Bob) is role: 'agent' — the only role specialty applies to
+      renderTable({ currentUserId: 'user-2' })
+
+      const rows = screen.getAllByRole('row')
+      const secondDataRow = rows[2]
+      expect(within(secondDataRow).getByLabelText('Edit specialty')).not.toBeDisabled()
+    })
+
+    it('disables the specialty button for non-agent users regardless of currentUserId', () => {
+      // USERS[0] (Alice) is role: 'admin' — specialty never applies
+      renderTable({ currentUserId: 'someone-else' })
 
       const rows = screen.getAllByRole('row')
       const firstDataRow = rows[1]
-      expect(within(firstDataRow).getByLabelText('Edit specialty')).not.toBeDisabled()
+      expect(within(firstDataRow).getByLabelText('Edit specialty')).toBeDisabled()
     })
 
     it('calls onSpecialtyChange with the correct user when specialty button is clicked', async () => {
       const user = userEvent.setup()
       renderTable()
 
-      const specialtyButtons = screen.getAllByRole('button', { name: /edit specialty/i })
-      await user.click(specialtyButtons[0])
+      // USERS[0] is admin (specialty button disabled) — target USERS[1] (agent) instead
+      const rows = screen.getAllByRole('row')
+      const secondDataRow = rows[2]
+      await user.click(within(secondDataRow).getByLabelText('Edit specialty'))
 
       expect(mockOnSpecialtyChange).toHaveBeenCalledOnce()
-      expect(mockOnSpecialtyChange).toHaveBeenCalledWith(USERS[0])
+      expect(mockOnSpecialtyChange).toHaveBeenCalledWith(USERS[1])
     })
 
     it('does not disable action buttons for rows where user.id !== currentUserId', () => {
