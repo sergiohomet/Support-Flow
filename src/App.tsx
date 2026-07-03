@@ -13,6 +13,7 @@ import { TicketDetailPage } from "@/modules/tickets/pages/TicketDetailPage";
 import { UsersPage } from "@/modules/users";
 import { CategoriesPage } from "@/modules/categories";
 import { SlaConfigPage, SlaDashboardPage } from "@/modules/sla";
+import { NotificationsPage } from "@/modules/notifications";
 
 export default function App() {
   return (
@@ -68,7 +69,7 @@ export default function App() {
               path="/notifications"
               element={
                 <RoleGuard allowedRoles={['client', 'agent', 'admin']}>
-                  <div>Notifications — TODO</div>
+                  <NotificationsPage />
                 </RoleGuard>
               }
             />
