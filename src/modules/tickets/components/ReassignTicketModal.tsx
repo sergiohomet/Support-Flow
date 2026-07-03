@@ -5,6 +5,7 @@ import { useReassignTicket } from '@/modules/tickets/hooks/useReassignTicket'
 interface ReassignTicketModalProps {
   ticketId: string
   ticketShortId: string
+  ticketCategoryId: string
   currentAgentId: string | null
   currentAgentName: string | null
   onClose: () => void
@@ -14,6 +15,7 @@ interface ReassignTicketModalProps {
 export function ReassignTicketModal({
   ticketId,
   ticketShortId,
+  ticketCategoryId,
   currentAgentId,
   currentAgentName,
   onClose,
@@ -26,7 +28,7 @@ export function ReassignTicketModal({
   const [selectedAgentId, setSelectedAgentId] = useState('')
   const firstFocusRef = useRef<HTMLButtonElement>(null)
 
-  const eligibleAgents = agents.filter((a) => a.activeTicketCount <= 4)
+  const eligibleAgents = agents.filter((a) => a.categoryId === ticketCategoryId && a.activeTicketCount <= 4)
   const selectedAgent = eligibleAgents.find((a) => a.id === selectedAgentId) ?? null
   const isAtLimit = selectedAgent?.activeTicketCount === 4
   const isDisabled = selectedAgentId === '' || selectedAgentId === currentAgentId || isLoading

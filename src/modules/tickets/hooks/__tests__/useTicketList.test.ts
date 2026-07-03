@@ -44,7 +44,7 @@ const fakeTicketRow = {
 }
 
 const fakeCategoryRow = { id: 'cat-1', name: 'Soporte', description: null }
-const fakeAgentRow = { id: 'agent-1', full_name: 'Ana García', specialty: 'Redes', active_ticket_count: 2 }
+const fakeAgentRow = { id: 'agent-1', full_name: 'Ana García', category_id: 'cat-1', category_name: 'Redes', active_ticket_count: 2 }
 
 describe('useTicketList', () => {
   beforeEach(() => {
@@ -179,13 +179,13 @@ describe('useTicketList', () => {
 
     expect(mockRpc).toHaveBeenCalledWith('get_agents')
     expect(mockSetAgents).toHaveBeenCalledWith([
-      { id: 'agent-1', fullName: 'Ana García', specialty: 'Redes', activeTicketCount: 2 },
+      { id: 'agent-1', fullName: 'Ana García', categoryId: 'cat-1', categoryName: 'Redes', activeTicketCount: 2 },
     ])
   })
 
   it('loadAgents() maps full_name → fullName and active_ticket_count → activeTicketCount', async () => {
     mockRpc.mockResolvedValue({
-      data: [{ id: 'agent-2', full_name: 'Carlos López', specialty: null, active_ticket_count: 0 }],
+      data: [{ id: 'agent-2', full_name: 'Carlos López', category_id: null, category_name: null, active_ticket_count: 0 }],
       error: null,
     })
 
@@ -196,7 +196,7 @@ describe('useTicketList', () => {
     })
 
     expect(mockSetAgents).toHaveBeenCalledWith([
-      { id: 'agent-2', fullName: 'Carlos López', specialty: null, activeTicketCount: 0 },
+      { id: 'agent-2', fullName: 'Carlos López', categoryId: null, categoryName: null, activeTicketCount: 0 },
     ])
   })
 

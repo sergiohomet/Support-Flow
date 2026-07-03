@@ -83,7 +83,8 @@ const FAKE_USERS: AdminUser[] = [
     fullName: 'Alice Smith',
     avatarUrl: null,
     role: 'agent',
-    specialty: 'Backend',
+    categoryId: 'cat-1',
+    categoryName: 'Backend',
     isActive: true,
     createdAt: '2024-01-15T10:00:00Z',
   },
@@ -93,7 +94,8 @@ const FAKE_USERS: AdminUser[] = [
     fullName: 'Bob Jones',
     avatarUrl: null,
     role: 'client',
-    specialty: null,
+    categoryId: null,
+    categoryName: null,
     isActive: false,
     createdAt: '2024-02-20T12:00:00Z',
   },
@@ -295,6 +297,10 @@ describe('UsersPage', () => {
       const user = userEvent.setup()
       mockCreateUser.mockResolvedValue(true)
       vi.mocked(useCreateUser).mockReturnValue(makeCreateUserReturn({ execute: mockCreateUser }))
+      mockStoreState = {
+        ...mockStoreState,
+        categories: [{ id: 'cat-1', name: 'Hardware', description: null }],
+      }
 
       renderPage()
 
@@ -310,9 +316,14 @@ describe('UsersPage', () => {
       await user.type(screen.getByLabelText(/nombre completo/i), 'New User')
       await user.type(screen.getByLabelText(/^email$/i), 'new@example.com')
       await user.type(screen.getByLabelText(/contraseña temporal/i), 'password123')
+      // Role defaults to 'agent', which now requires a category.
+      // Scope to the CreateUserModal dialog — RoleChangeModal also renders a
+      // hidden "Especialidad" select (dialogs stay mounted, only `open` toggles).
+      const createDialog = screen.getByRole('dialog')
+      await user.selectOptions(within(createDialog).getByLabelText('Especialidad'), 'Hardware')
 
       // Submit
-      await user.click(screen.getByRole('button', { name: /crear usuario/i }))
+      await user.click(within(createDialog).getByRole('button', { name: /crear usuario/i }))
 
       await waitFor(() => {
         expect(mockCreateUser).toHaveBeenCalled()
@@ -358,15 +369,18 @@ describe('UsersPage', () => {
         expect(screen.getByRole('heading', { name: /cambiar rol/i })).toBeInTheDocument()
       })
 
-      // Change select to 'admin' — scope to dialog to avoid ambiguity with UserFilters select
+      // Change select to 'admin' — scope to dialog to avoid ambiguity with UserFilters select.
+      // Alice's current role is 'agent', so the category select is also visible; the role
+      // select is always the first combobox in the dialog.
       const dialog = screen.getByRole('dialog')
-      await user.selectOptions(within(dialog).getByRole('combobox'), 'admin')
+      const [roleSelect] = within(dialog).getAllByRole('combobox')
+      await user.selectOptions(roleSelect, 'admin')
 
       // Click confirm — scoped to dialog
       await user.click(within(dialog).getByRole('button', { name: /confirmar/i }))
 
       await waitFor(() => {
-        expect(mockUpdateRole).toHaveBeenCalledWith('user-1', 'admin')
+        expect(mockUpdateRole).toHaveBeenCalledWith('user-1', 'admin', undefined)
       })
     })
   })
@@ -411,7 +425,7 @@ describe('UsersPage', () => {
       await user.click(within(dialog).getByRole('button', { name: /confirmar/i }))
 
       await waitFor(() => {
-        expect(mockUpdateSpecialty).toHaveBeenCalledWith('user-1', 'Hardware')
+        expect(mockUpdateSpecialty).toHaveBeenCalledWith('user-1', 'cat-1')
       })
     })
   })

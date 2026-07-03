@@ -54,7 +54,8 @@ export function useListUsers(): UseListUsersResult {
           fullName: row.full_name as string,
           avatarUrl: row.avatar_url as string | null,
           role: row.role as AdminUser['role'],
-          specialty: row.specialty as string | null,
+          categoryId: row.category_id as string | null,
+          categoryName: row.category_name as string | null,
           isActive: row.is_active as boolean,
           createdAt: row.created_at as string,
         }))

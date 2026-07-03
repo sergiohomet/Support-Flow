@@ -109,7 +109,8 @@ export function useTicketList(): UseTicketListResult {
       const mapped: Agent[] = (data ?? []).map((row) => ({
         id: row.id,
         fullName: row.full_name,
-        specialty: row.specialty ?? null,
+        categoryId: row.category_id ?? null,
+        categoryName: row.category_name ?? null,
         activeTicketCount: row.active_ticket_count,
       }))
 

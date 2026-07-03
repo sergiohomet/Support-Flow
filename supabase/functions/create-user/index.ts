@@ -1,5 +1,5 @@
 // Edge Function: create-user
-// Creates a new user via Supabase Auth admin API, then patches the role/specialty
+// Creates a new user via Supabase Auth admin API, then patches the role/category
 // because handle_new_user trigger sets role='client' by default.
 //
 // REQUIRED SECRET: SUPABASE_SERVICE_ROLE_KEY must be set in the Supabase project
@@ -70,10 +70,10 @@ Deno.serve(async (req: Request) => {
       email: string
       temporaryPassword: string
       role: 'agent' | 'admin'
-      specialty: string | null
+      categoryId: string | null
     }
 
-    const { fullName, email, temporaryPassword, role, specialty } = body
+    const { fullName, email, temporaryPassword, role, categoryId } = body
 
     if (!fullName || !email || !temporaryPassword || !role) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -84,6 +84,13 @@ Deno.serve(async (req: Request) => {
 
     if (!['agent', 'admin'].includes(role)) {
       return new Response(JSON.stringify({ error: 'Invalid role. Must be agent or admin.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (role === 'agent' && !categoryId) {
+      return new Response(JSON.stringify({ error: 'categoryId is required when role is agent' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -106,20 +113,20 @@ Deno.serve(async (req: Request) => {
 
     const newUserId = newAuthUser.user.id
 
-    // ── 5. Patch role + specialty ────────────────────────────────────────────
+    // ── 5. Patch role + category ─────────────────────────────────────────────
     // handle_new_user trigger creates the public.users row with role='client'.
-    // We immediately override with the intended role and specialty.
+    // We immediately override with the intended role and category.
     const { error: patchError } = await supabaseAdmin
       .from('users')
       .update({
         role,
-        ...(specialty !== null && specialty !== undefined ? { specialty } : {}),
+        category_id: role === 'agent' ? categoryId : null,
       })
       .eq('id', newUserId)
 
     if (patchError) {
       // User was created in auth but profile update failed — log and still return userId
-      console.error('Failed to patch user role/specialty:', patchError.message)
+      console.error('Failed to patch user role/category:', patchError.message)
     }
 
     return new Response(JSON.stringify({ userId: newUserId }), {

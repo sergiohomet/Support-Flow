@@ -124,9 +124,9 @@ export function UsersPage(): React.JSX.Element {
     setPendingRoleChange({ user, selectedRole })
   }
 
-  const handleConfirmRoleChange = async (newRole: 'agent' | 'admin'): Promise<void> => {
+  const handleConfirmRoleChange = async (newRole: 'agent' | 'admin', categoryId?: string): Promise<void> => {
     if (!pendingRoleChange) return
-    const ok = await updateRole(pendingRoleChange.user.id, newRole as UserRole)
+    const ok = await updateRole(pendingRoleChange.user.id, newRole as UserRole, categoryId)
     if (ok) {
       setPendingRoleChange(null)
       void fetch({ search: null, role, isActive, page, pageSize: PAGE_SIZE })
@@ -141,9 +141,9 @@ export function UsersPage(): React.JSX.Element {
     setPendingSpecialtyChange(user)
   }
 
-  const handleConfirmSpecialtyChange = async (specialty: string | null): Promise<void> => {
+  const handleConfirmSpecialtyChange = async (categoryId: string): Promise<void> => {
     if (!pendingSpecialtyChange) return
-    const ok = await updateSpecialty(pendingSpecialtyChange.id, specialty)
+    const ok = await updateSpecialty(pendingSpecialtyChange.id, categoryId)
     if (ok) {
       setPendingSpecialtyChange(null)
       void fetch({ search: null, role, isActive, page, pageSize: PAGE_SIZE })
@@ -246,6 +246,7 @@ export function UsersPage(): React.JSX.Element {
       <RoleChangeModal
         isOpen={!!pendingRoleChange}
         user={pendingRoleChange ? { fullName: pendingRoleChange.user.fullName, role: pendingRoleChange.user.role } : null}
+        categories={categories}
         isLoading={isUpdatingRole}
         error={null}
         onConfirm={handleConfirmRoleChange}
@@ -255,7 +256,7 @@ export function UsersPage(): React.JSX.Element {
       {/* Specialty change modal */}
       <SpecialtyChangeModal
         isOpen={!!pendingSpecialtyChange}
-        user={pendingSpecialtyChange ? { fullName: pendingSpecialtyChange.fullName, specialty: pendingSpecialtyChange.specialty } : null}
+        user={pendingSpecialtyChange ? { fullName: pendingSpecialtyChange.fullName, categoryId: pendingSpecialtyChange.categoryId } : null}
         categories={categories}
         isLoading={isUpdatingSpecialty}
         error={specialtyError}

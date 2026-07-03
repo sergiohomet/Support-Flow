@@ -17,6 +17,7 @@ interface FormErrors {
   email?: string
   temporaryPassword?: string
   role?: string
+  categoryId?: string
 }
 
 export function CreateUserModal({
@@ -33,7 +34,7 @@ export function CreateUserModal({
   const [email, setEmail] = useState('')
   const [temporaryPassword, setTemporaryPassword] = useState('')
   const [role, setRole] = useState<'agent' | 'admin'>('agent')
-  const [specialty, setSpecialty] = useState('')
+  const [categoryId, setCategoryId] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({})
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export function CreateUserModal({
       temporaryPassword,
       role,
       // Specialty only applies to agents — never submit one for other roles.
-      specialty: role === 'agent' && specialty.trim() !== '' ? specialty.trim() : null,
+      categoryId: role === 'agent' && categoryId.trim() !== '' ? categoryId.trim() : null,
     }
 
     const result = createUserInputSchema.safeParse(formData)
@@ -157,22 +158,25 @@ export function CreateUserModal({
 
         {role === 'agent' && (
           <div>
-            <label htmlFor="specialty" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
               Especialidad
             </label>
             <select
-              id="specialty"
-              value={specialty}
-              onChange={(e) => setSpecialty(e.target.value)}
+              id="categoryId"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             >
-              <option value="">Sin especialidad</option>
+              <option value="" disabled>Seleccionar categoría...</option>
               {categories.map((category) => (
-                <option key={category.id} value={category.name}>
+                <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
               ))}
             </select>
+            {fieldErrors.categoryId && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.categoryId}</p>
+            )}
           </div>
         )}
 

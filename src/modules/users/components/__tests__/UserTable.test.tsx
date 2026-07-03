@@ -15,7 +15,8 @@ const USERS: AdminUser[] = [
     fullName: 'Alice Smith',
     avatarUrl: null,
     role: 'admin',
-    specialty: 'Backend',
+    categoryId: 'cat-1',
+    categoryName: 'Backend',
     isActive: true,
     createdAt: '2024-01-15T10:00:00Z',
   },
@@ -25,7 +26,8 @@ const USERS: AdminUser[] = [
     fullName: 'Bob Jones',
     avatarUrl: null,
     role: 'agent',
-    specialty: null,
+    categoryId: null,
+    categoryName: null,
     isActive: false,
     createdAt: '2024-02-20T12:00:00Z',
   },
@@ -101,7 +103,7 @@ describe('UserTable', () => {
     it('renders em dash when specialty is null', () => {
       renderTable()
 
-      // bob has null specialty — should render —
+      // bob has null categoryName — should render —
       expect(screen.getByText('—')).toBeInTheDocument()
     })
 

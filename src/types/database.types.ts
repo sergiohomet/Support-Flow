@@ -325,6 +325,7 @@ export type Database = {
       users: {
         Row: {
           avatar_url: string | null
+          category_id: string | null
           created_at: string
           email: string
           full_name: string
@@ -332,11 +333,11 @@ export type Database = {
           is_active: boolean
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
-          specialty: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          category_id?: string | null
           created_at?: string
           email: string
           full_name: string
@@ -344,11 +345,11 @@ export type Database = {
           is_active?: boolean
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          specialty?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          category_id?: string | null
           created_at?: string
           email?: string
           full_name?: string
@@ -356,10 +357,17 @@ export type Database = {
           is_active?: boolean
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          specialty?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -403,8 +411,6 @@ export type Database = {
         Returns: {
           category_id: string
           category_name: string
-          // NOTE: the Supabase type generator doesn't detect NULLIF-based
-          // nullability, so this is hand-corrected here.
           compliance_pct: number | null
           max_resolution_hours: number
           resolved_count: number
@@ -450,13 +456,14 @@ export type Database = {
         }
         Returns: {
           avatar_url: string
+          category_id: string
+          category_name: string
           created_at: string
           email: string
           full_name: string
           id: string
           is_active: boolean
           role: Database["public"]["Enums"]["user_role"]
-          specialty: string
           total_count: number
         }[]
       }
@@ -497,13 +504,14 @@ export type Database = {
       }
       admin_update_user_role: {
         Args: {
+          p_category_id?: string
           p_new_role: Database["public"]["Enums"]["user_role"]
           p_user_id: string
         }
         Returns: undefined
       }
       admin_update_user_specialty: {
-        Args: { p_specialty: string; p_user_id: string }
+        Args: { p_category_id: string; p_user_id: string }
         Returns: undefined
       }
       assign_ticket: {
@@ -533,9 +541,10 @@ export type Database = {
         Args: never
         Returns: {
           active_ticket_count: number
+          category_id: string
+          category_name: string
           full_name: string
           id: string
-          specialty: string
         }[]
       }
       get_categories: {

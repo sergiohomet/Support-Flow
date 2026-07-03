@@ -89,6 +89,7 @@ describe('CreateUserModal', () => {
     renderModal({ onSubmit })
 
     await fillValidForm(user)
+    await user.selectOptions(screen.getByLabelText('Especialidad'), 'Hardware')
     await user.click(screen.getByRole('button', { name: 'Crear usuario' }))
 
     const expected: CreateUserInput = {
@@ -96,7 +97,7 @@ describe('CreateUserModal', () => {
       email: 'jane@example.com',
       temporaryPassword: 'secret123',
       role: 'agent',
-      specialty: null,
+      categoryId: 'cat-1',
     }
     expect(onSubmit).toHaveBeenCalledOnce()
     expect(onSubmit).toHaveBeenCalledWith(expected)
@@ -134,11 +135,11 @@ describe('CreateUserModal', () => {
     await user.click(screen.getByRole('button', { name: 'Crear usuario' }))
 
     expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ specialty: 'Hardware' }),
+      expect.objectContaining({ categoryId: 'cat-1' }),
     )
   })
 
-  it('specialty defaults to "Sin especialidad" (null) when not selected', async () => {
+  it('does not submit when role is agent and no category was selected (categoryId required)', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     renderModal({ onSubmit })
@@ -146,9 +147,8 @@ describe('CreateUserModal', () => {
     await fillValidForm(user)
     await user.click(screen.getByRole('button', { name: 'Crear usuario' }))
 
-    expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ specialty: null }),
-    )
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByText('La especialidad es obligatoria para agentes')).toBeInTheDocument()
   })
 
   it('hides the specialty field when role is admin (specialty only applies to agents)', async () => {
@@ -162,7 +162,7 @@ describe('CreateUserModal', () => {
     expect(screen.queryByLabelText('Especialidad')).not.toBeInTheDocument()
   })
 
-  it('submits specialty: null when role is admin, even if a specialty was picked before switching', async () => {
+  it('submits categoryId: null when role is admin, even if a category was picked before switching', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     renderModal({ onSubmit })
@@ -173,7 +173,7 @@ describe('CreateUserModal', () => {
     await user.click(screen.getByRole('button', { name: 'Crear usuario' }))
 
     expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ role: 'admin', specialty: null }),
+      expect.objectContaining({ role: 'admin', categoryId: null }),
     )
   })
 

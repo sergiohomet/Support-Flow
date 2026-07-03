@@ -36,7 +36,8 @@ describe('adminUserSchema', () => {
     fullName: 'John Doe',
     avatarUrl: null,
     role: 'agent',
-    specialty: null,
+    categoryId: null,
+    categoryName: null,
     isActive: true,
     createdAt: '2024-01-01T00:00:00Z',
   }
@@ -51,8 +52,8 @@ describe('adminUserSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('accepts non-null specialty', () => {
-    const result = adminUserSchema.safeParse({ ...validUser, specialty: 'Backend' })
+  it('accepts non-null categoryId and categoryName', () => {
+    const result = adminUserSchema.safeParse({ ...validUser, categoryId: 'cat-1', categoryName: 'Backend' })
     expect(result.success).toBe(true)
   })
 
@@ -83,7 +84,7 @@ describe('createUserInputSchema', () => {
     email: 'jane@example.com',
     temporaryPassword: 'secret123',
     role: 'agent',
-    specialty: null,
+    categoryId: 'cat-1',
   }
 
   it('parses valid input', () => {
@@ -128,12 +129,35 @@ describe('createUserInputSchema', () => {
   })
 
   it('accepts admin role', () => {
-    const result = createUserInputSchema.safeParse({ ...validInput, role: 'admin' })
+    const result = createUserInputSchema.safeParse({ ...validInput, role: 'admin', categoryId: null })
     expect(result.success).toBe(true)
   })
 
-  it('accepts non-null specialty', () => {
-    const result = createUserInputSchema.safeParse({ ...validInput, specialty: 'DevOps' })
+  it('accepts non-null categoryId', () => {
+    const result = createUserInputSchema.safeParse({ ...validInput, categoryId: 'cat-2' })
+    expect(result.success).toBe(true)
+  })
+
+  it('fails when role is agent and categoryId is null', () => {
+    const result = createUserInputSchema.safeParse({ ...validInput, categoryId: null })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const paths = result.error.issues.map((i) => i.path.join('.'))
+      expect(paths).toContain('categoryId')
+    }
+  })
+
+  it('fails when role is agent and categoryId is empty string', () => {
+    const result = createUserInputSchema.safeParse({ ...validInput, categoryId: '' })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const paths = result.error.issues.map((i) => i.path.join('.'))
+      expect(paths).toContain('categoryId')
+    }
+  })
+
+  it('allows null categoryId when role is admin', () => {
+    const result = createUserInputSchema.safeParse({ ...validInput, role: 'admin', categoryId: null })
     expect(result.success).toBe(true)
   })
 })

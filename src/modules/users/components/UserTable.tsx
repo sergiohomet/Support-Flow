@@ -140,7 +140,7 @@ export function UserTable({
 
                   {/* Specialty */}
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                    {user.specialty || '—'}
+                    {user.categoryName || '—'}
                   </td>
 
                   {/* Status */}
