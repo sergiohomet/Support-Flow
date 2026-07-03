@@ -23,6 +23,7 @@ beforeAll(() => {
 const mockFetch = vi.fn()
 const mockCreateUser = vi.fn()
 const mockUpdateRole = vi.fn()
+const mockUpdateSpecialty = vi.fn()
 const mockToggleStatus = vi.fn()
 const mockLoadCategories = vi.fn()
 
@@ -34,6 +35,9 @@ vi.mock('@/modules/users/hooks/useCreateUser', () => ({
 }))
 vi.mock('@/modules/users/hooks/useUpdateUserRole', () => ({
   useUpdateUserRole: vi.fn(),
+}))
+vi.mock('@/modules/users/hooks/useUpdateUserSpecialty', () => ({
+  useUpdateUserSpecialty: vi.fn(),
 }))
 vi.mock('@/modules/users/hooks/useToggleUserStatus', () => ({
   useToggleUserStatus: vi.fn(),
@@ -102,6 +106,7 @@ const FAKE_USERS: AdminUser[] = [
 import { useListUsers } from '@/modules/users/hooks/useListUsers'
 import { useCreateUser } from '@/modules/users/hooks/useCreateUser'
 import { useUpdateUserRole } from '@/modules/users/hooks/useUpdateUserRole'
+import { useUpdateUserSpecialty } from '@/modules/users/hooks/useUpdateUserSpecialty'
 import { useToggleUserStatus } from '@/modules/users/hooks/useToggleUserStatus'
 
 function makeListUsersReturn(overrides: Partial<ReturnType<typeof useListUsers>> = {}): ReturnType<typeof useListUsers> {
@@ -127,6 +132,15 @@ function makeCreateUserReturn(overrides: Partial<ReturnType<typeof useCreateUser
 function makeUpdateRoleReturn(overrides: Partial<ReturnType<typeof useUpdateUserRole>> = {}): ReturnType<typeof useUpdateUserRole> {
   return {
     execute: mockUpdateRole,
+    isLoading: false,
+    error: null,
+    ...overrides,
+  }
+}
+
+function makeUpdateSpecialtyReturn(overrides: Partial<ReturnType<typeof useUpdateUserSpecialty>> = {}): ReturnType<typeof useUpdateUserSpecialty> {
+  return {
+    execute: mockUpdateSpecialty,
     isLoading: false,
     error: null,
     ...overrides,
@@ -159,11 +173,13 @@ describe('UsersPage', () => {
     mockFetch.mockReset()
     mockCreateUser.mockReset()
     mockUpdateRole.mockReset()
+    mockUpdateSpecialty.mockReset()
     mockToggleStatus.mockReset()
 
     mockFetch.mockResolvedValue(undefined)
     mockCreateUser.mockResolvedValue(true)
     mockUpdateRole.mockResolvedValue(true)
+    mockUpdateSpecialty.mockResolvedValue(true)
     mockToggleStatus.mockResolvedValue(true)
 
     mockStoreState = {
@@ -174,6 +190,7 @@ describe('UsersPage', () => {
     vi.mocked(useListUsers).mockReturnValue(makeListUsersReturn())
     vi.mocked(useCreateUser).mockReturnValue(makeCreateUserReturn())
     vi.mocked(useUpdateUserRole).mockReturnValue(makeUpdateRoleReturn())
+    vi.mocked(useUpdateUserSpecialty).mockReturnValue(makeUpdateSpecialtyReturn())
     vi.mocked(useToggleUserStatus).mockReturnValue(makeToggleStatusReturn())
   })
 
@@ -350,6 +367,51 @@ describe('UsersPage', () => {
 
       await waitFor(() => {
         expect(mockUpdateRole).toHaveBeenCalledWith('user-1', 'admin')
+      })
+    })
+  })
+
+  describe('specialty change modal', () => {
+    it('opens SpecialtyChangeModal when edit specialty button is clicked', async () => {
+      const user = userEvent.setup()
+      renderPage()
+
+      await user.selectOptions(screen.getByRole('combobox'), 'admin')
+      await waitFor(() => expect(screen.getByText('alice@example.com')).toBeInTheDocument())
+
+      const specialtyButtons = screen.getAllByRole('button', { name: /edit specialty/i })
+      await user.click(specialtyButtons[0])
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /cambiar especialidad/i })).toBeInTheDocument()
+      })
+    })
+
+    it('calls updateSpecialty with the specialty selected in SpecialtyChangeModal', async () => {
+      const user = userEvent.setup()
+      mockStoreState = {
+        ...mockStoreState,
+        categories: [{ id: 'cat-1', name: 'Hardware', description: null }],
+      }
+      mockUpdateSpecialty.mockResolvedValue(true)
+      renderPage()
+
+      await user.selectOptions(screen.getByRole('combobox'), 'admin')
+      await waitFor(() => expect(screen.getByText('alice@example.com')).toBeInTheDocument())
+
+      const specialtyButtons = screen.getAllByRole('button', { name: /edit specialty/i })
+      await user.click(specialtyButtons[0])
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /cambiar especialidad/i })).toBeInTheDocument()
+      })
+
+      const dialog = screen.getByRole('dialog')
+      await user.selectOptions(within(dialog).getByRole('combobox'), 'Hardware')
+      await user.click(within(dialog).getByRole('button', { name: /confirmar/i }))
+
+      await waitFor(() => {
+        expect(mockUpdateSpecialty).toHaveBeenCalledWith('user-1', 'Hardware')
       })
     })
   })

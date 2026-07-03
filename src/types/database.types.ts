@@ -502,6 +502,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_update_user_specialty: {
+        Args: { p_specialty: string; p_user_id: string }
+        Returns: undefined
+      }
       assign_ticket: {
         Args: { p_agent_id: string; p_ticket_id: string }
         Returns: {

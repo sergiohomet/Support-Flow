@@ -5,12 +5,14 @@ import { useListUsers } from '@/modules/users/hooks/useListUsers'
 import { useCreateUser } from '@/modules/users/hooks/useCreateUser'
 import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
 import { useUpdateUserRole } from '@/modules/users/hooks/useUpdateUserRole'
+import { useUpdateUserSpecialty } from '@/modules/users/hooks/useUpdateUserSpecialty'
 import { useToggleUserStatus } from '@/modules/users/hooks/useToggleUserStatus'
 import { UserFilters } from '@/modules/users/components/UserFilters'
 import { UserTable } from '@/modules/users/components/UserTable'
 import { CreateUserModal } from '@/modules/users/components/CreateUserModal'
 import { ConfirmModal } from '@/modules/users/components/ConfirmModal'
 import { RoleChangeModal } from '@/modules/users/components/RoleChangeModal'
+import { SpecialtyChangeModal } from '@/modules/users/components/SpecialtyChangeModal'
 import type { CombinedFilter } from '@/modules/users/components/UserFilters'
 import type { AdminUser, UserRole, CreateUserInput } from '@/modules/users/schemas'
 
@@ -41,6 +43,7 @@ export function UsersPage(): React.JSX.Element {
   const { users, totalCount, isFetching, error, fetch } = useListUsers()
   const { execute: createUser, isLoading: isCreating, error: createError } = useCreateUser()
   const { execute: updateRole, isLoading: isUpdatingRole } = useUpdateUserRole()
+  const { execute: updateSpecialty, isLoading: isUpdatingSpecialty, error: specialtyError } = useUpdateUserSpecialty()
   const { execute: toggleStatus, isLoading: isTogglingStatus } = useToggleUserStatus()
   const { loadCategories } = useTicketList()
 
@@ -52,6 +55,7 @@ export function UsersPage(): React.JSX.Element {
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [pendingRoleChange, setPendingRoleChange] = useState<{ user: AdminUser; selectedRole: 'agent' | 'admin' } | null>(null)
+  const [pendingSpecialtyChange, setPendingSpecialtyChange] = useState<AdminUser | null>(null)
   const [pendingStatusToggle, setPendingStatusToggle] = useState<AdminUser | null>(null)
 
   // Derived filter params
@@ -130,6 +134,23 @@ export function UsersPage(): React.JSX.Element {
   }
 
   // ---------------------------------------------------------------------------
+  // Specialty change
+  // ---------------------------------------------------------------------------
+
+  const handleSpecialtyChange = (user: AdminUser): void => {
+    setPendingSpecialtyChange(user)
+  }
+
+  const handleConfirmSpecialtyChange = async (specialty: string | null): Promise<void> => {
+    if (!pendingSpecialtyChange) return
+    const ok = await updateSpecialty(pendingSpecialtyChange.id, specialty)
+    if (ok) {
+      setPendingSpecialtyChange(null)
+      void fetch({ search: null, role, isActive, page, pageSize: PAGE_SIZE })
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Status toggle
   // ---------------------------------------------------------------------------
 
@@ -198,6 +219,7 @@ export function UsersPage(): React.JSX.Element {
           pageSize={PAGE_SIZE}
           currentUserId={currentUserId}
           onRoleChange={handleRoleChange}
+          onSpecialtyChange={handleSpecialtyChange}
           onStatusToggle={handleStatusToggle}
           onPageChange={setPage}
         />
@@ -228,6 +250,17 @@ export function UsersPage(): React.JSX.Element {
         error={null}
         onConfirm={handleConfirmRoleChange}
         onClose={() => setPendingRoleChange(null)}
+      />
+
+      {/* Specialty change modal */}
+      <SpecialtyChangeModal
+        isOpen={!!pendingSpecialtyChange}
+        user={pendingSpecialtyChange ? { fullName: pendingSpecialtyChange.fullName, specialty: pendingSpecialtyChange.specialty } : null}
+        categories={categories}
+        isLoading={isUpdatingSpecialty}
+        error={specialtyError}
+        onConfirm={handleConfirmSpecialtyChange}
+        onClose={() => setPendingSpecialtyChange(null)}
       />
 
       {/* Confirm status toggle modal */}

@@ -14,6 +14,7 @@ interface UserTableProps {
   pageSize: number
   currentUserId: string
   onRoleChange: (user: AdminUser) => void
+  onSpecialtyChange: (user: AdminUser) => void
   onStatusToggle: (user: AdminUser) => void
   onPageChange: (page: number) => void
 }
@@ -34,6 +35,7 @@ export function UserTable({
   pageSize,
   currentUserId,
   onRoleChange,
+  onSpecialtyChange,
   onStatusToggle,
   onPageChange,
 }: UserTableProps): React.JSX.Element {
@@ -165,6 +167,16 @@ export function UserTable({
                         className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <span className="material-icons text-base">edit</span>
+                      </button>
+
+                      {/* Edit specialty button */}
+                      <button
+                        type="button"
+                        onClick={() => onSpecialtyChange(user)}
+                        aria-label="Edit specialty"
+                        className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <span className="material-icons text-base">build</span>
                       </button>
 
                       {/* Toggle status button */}
