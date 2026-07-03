@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Category } from '@/store/ticketsSlice'
 
-type RoleChangeModalProps = {
+type SpecialtyChangeModalProps = {
   isOpen: boolean
-  user: { fullName: string; role: string } | null
+  user: { fullName: string; categoryId: string | null } | null
   categories: Category[]
   isLoading: boolean
   error: string | null
-  onConfirm: (newRole: 'agent' | 'admin', categoryId?: string) => void
+  onConfirm: (categoryId: string) => void
   onClose: () => void
 }
 
-export function RoleChangeModal({
+export function SpecialtyChangeModal({
   isOpen,
   user,
   categories,
@@ -19,17 +19,14 @@ export function RoleChangeModal({
   error,
   onConfirm,
   onClose,
-}: RoleChangeModalProps) {
+}: SpecialtyChangeModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const [selectedRole, setSelectedRole] = useState<'agent' | 'admin'>('agent')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
 
-  // Sync selectedRole when modal opens with a new user
+  // Sync selectedCategoryId when modal opens with a new user
   useEffect(() => {
     if (isOpen && user) {
-      const role = user.role === 'admin' ? 'admin' : 'agent'
-      setSelectedRole(role)
-      setSelectedCategoryId('')
+      setSelectedCategoryId(user.categoryId ?? '')
     }
   }, [isOpen, user])
 
@@ -50,47 +47,29 @@ export function RoleChangeModal({
       className="m-auto rounded-lg p-6 shadow-xl backdrop:bg-black/40 max-w-md w-full"
       onClose={onClose}
     >
-      <h2 className="text-lg font-semibold text-gray-900">Cambiar rol</h2>
+      <h2 className="text-lg font-semibold text-gray-900">Cambiar especialidad</h2>
 
       {user && (
         <p className="mt-2 text-sm text-gray-600">
-          Seleccioná el nuevo rol para {user.fullName}
+          Seleccioná la nueva especialidad para {user.fullName}
         </p>
       )}
 
       <div className="mt-4">
         <select
-          value={selectedRole}
-          onChange={(e) => setSelectedRole(e.target.value as 'agent' | 'admin')}
+          value={selectedCategoryId}
+          onChange={(e) => setSelectedCategoryId(e.target.value)}
           disabled={isLoading}
           className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="agent">Agente</option>
-          <option value="admin">Admin</option>
+          <option value="" disabled>Seleccionar categoría...</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
         </select>
       </div>
-
-      {selectedRole === 'agent' && (
-        <div className="mt-4">
-          <label htmlFor="roleChangeCategoryId" className="block text-sm font-medium text-gray-700">
-            Especialidad
-          </label>
-          <select
-            id="roleChangeCategoryId"
-            value={selectedCategoryId}
-            onChange={(e) => setSelectedCategoryId(e.target.value)}
-            disabled={isLoading}
-            className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="" disabled>Seleccionar categoría...</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
 
       {error && (
         <p className="mt-3 text-sm text-red-600">{error}</p>
@@ -107,8 +86,8 @@ export function RoleChangeModal({
         </button>
         <button
           type="button"
-          onClick={() => onConfirm(selectedRole, selectedRole === 'agent' ? selectedCategoryId : undefined)}
-          disabled={isLoading || (selectedRole === 'agent' && selectedCategoryId === '')}
+          onClick={() => onConfirm(selectedCategoryId)}
+          disabled={isLoading || selectedCategoryId === ''}
           className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading && (

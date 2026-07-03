@@ -19,9 +19,15 @@ const mockUser = {
   role: 'agent',
 }
 
+const fakeCategories = [
+  { id: 'cat-1', name: 'Hardware', description: null },
+  { id: 'cat-2', name: 'Software', description: null },
+]
+
 const defaultProps = {
   isOpen: true,
   user: mockUser,
+  categories: fakeCategories,
   isLoading: false,
   error: null,
   onConfirm: vi.fn(),
@@ -44,21 +50,38 @@ describe('RoleChangeModal', () => {
 
   it('select pre-set to current role', () => {
     renderModal()
-    const select = screen.getByRole('combobox')
-    expect((select as HTMLSelectElement).value).toBe('agent')
+    const selects = screen.getAllByRole('combobox')
+    expect((selects[0] as HTMLSelectElement).value).toBe('agent')
   })
 
-  it('onConfirm called with selected role on confirm click', async () => {
+  it('onConfirm called with selected role and undefined categoryId when switching to admin', async () => {
     const user = userEvent.setup()
     const onConfirm = vi.fn()
     renderModal({ onConfirm })
 
-    const select = screen.getByRole('combobox')
-    await user.selectOptions(select, 'admin')
+    const [roleSelect] = screen.getAllByRole('combobox')
+    await user.selectOptions(roleSelect, 'admin')
 
     await user.click(screen.getByRole('button', { name: /confirmar/i }))
 
-    expect(onConfirm).toHaveBeenCalledWith('admin')
+    expect(onConfirm).toHaveBeenCalledWith('admin', undefined)
+  })
+
+  it('requires a category when role is agent — confirm disabled until one is picked', async () => {
+    const user = userEvent.setup()
+    const onConfirm = vi.fn()
+    renderModal({ onConfirm })
+
+    const confirmBtn = screen.getByRole('button', { name: /confirmar/i })
+    expect(confirmBtn).toBeDisabled()
+
+    const categorySelect = screen.getByLabelText('Especialidad')
+    await user.selectOptions(categorySelect, 'Hardware')
+
+    expect(confirmBtn).not.toBeDisabled()
+    await user.click(confirmBtn)
+
+    expect(onConfirm).toHaveBeenCalledWith('agent', 'cat-1')
   })
 
   it('onClose called on cancel', async () => {

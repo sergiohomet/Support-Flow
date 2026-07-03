@@ -1,27 +1,25 @@
 import { useState } from 'react'
 import { supabase } from '@/core/supabase/client'
 import { parseRpcError } from '@/core/utils/parseRpcError'
-import type { UserRole } from '../schemas'
 
-interface UseUpdateUserRoleResult {
-  execute: (userId: string, newRole: UserRole, categoryId?: string) => Promise<boolean>
+interface UseUpdateUserSpecialtyResult {
+  execute: (userId: string, categoryId: string) => Promise<boolean>
   isLoading: boolean
   error: string | null
 }
 
-export function useUpdateUserRole(): UseUpdateUserRoleResult {
+export function useUpdateUserSpecialty(): UseUpdateUserSpecialtyResult {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const execute = async (userId: string, newRole: UserRole, categoryId?: string): Promise<boolean> => {
+  const execute = async (userId: string, categoryId: string): Promise<boolean> => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error: rpcError } = await supabase.rpc('admin_update_user_role', {
+      const { error: rpcError } = await supabase.rpc('admin_update_user_specialty', {
         p_user_id: userId,
-        p_new_role: newRole,
-        p_category_id: categoryId ?? undefined,
+        p_category_id: categoryId,
       })
 
       if (rpcError) {

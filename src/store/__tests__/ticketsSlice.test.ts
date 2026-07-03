@@ -90,7 +90,7 @@ describe('ticketsSlice', () => {
   })
 
   it('setAgents(list) sets agents', () => {
-    const list = [{ id: 'agent-1', fullName: 'María García', specialty: 'Redes', activeTicketCount: 2 }]
+    const list = [{ id: 'agent-1', fullName: 'María García', categoryId: 'cat-1', categoryName: 'Redes', activeTicketCount: 2 }]
     useStore.getState().setAgents(list)
     expect(useStore.getState().agents).toEqual(list)
   })

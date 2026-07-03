@@ -22,6 +22,21 @@ describe('useUpdateUserRole', () => {
     expect(mockRpc).toHaveBeenCalledWith('admin_update_user_role', {
       p_user_id: 'user-1',
       p_new_role: 'admin',
+      p_category_id: undefined,
+    })
+  })
+
+  it('execute(userId, newRole, categoryId) forwards p_category_id when promoting to agent', async () => {
+    const { result } = renderHook(() => useUpdateUserRole())
+
+    await act(async () => {
+      await result.current.execute('user-1', 'agent', 'cat-1')
+    })
+
+    expect(mockRpc).toHaveBeenCalledWith('admin_update_user_role', {
+      p_user_id: 'user-1',
+      p_new_role: 'agent',
+      p_category_id: 'cat-1',
     })
   })
 

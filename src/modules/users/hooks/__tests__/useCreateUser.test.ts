@@ -12,7 +12,7 @@ const validInput: CreateUserInput = {
   email: 'bob@example.com',
   temporaryPassword: 'secret1234',
   role: 'agent',
-  specialty: null,
+  categoryId: 'cat-1',
 }
 
 describe('useCreateUser', () => {

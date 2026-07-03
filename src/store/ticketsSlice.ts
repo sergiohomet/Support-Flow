@@ -43,7 +43,8 @@ export interface Category {
 export interface Agent {
   id: string
   fullName: string
-  specialty: string | null
+  categoryId: string | null
+  categoryName: string | null
   activeTicketCount: number
 }
 

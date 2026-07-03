@@ -20,7 +20,8 @@ export const adminUserSchema = z.object({
   fullName: z.string(),
   avatarUrl: z.string().nullable(),
   role: userRoleSchema,
-  specialty: z.string().nullable(),
+  categoryId: z.string().nullable(),
+  categoryName: z.string().nullable(),
   isActive: z.boolean(),
   createdAt: z.string(),
 })
@@ -29,13 +30,18 @@ export type AdminUser = z.infer<typeof adminUserSchema>
 
 // ── CreateUserInput — used by Edge Function ───────────────────────────────────
 
-export const createUserInputSchema = z.object({
-  fullName: z.string().min(1),
-  email: z.string().email(),
-  temporaryPassword: z.string().min(8),
-  role: z.enum(['agent', 'admin']),
-  specialty: z.string().nullable(),
-})
+export const createUserInputSchema = z
+  .object({
+    fullName: z.string().min(1),
+    email: z.string().email(),
+    temporaryPassword: z.string().min(8),
+    role: z.enum(['agent', 'admin']),
+    categoryId: z.string().nullable(),
+  })
+  .refine((data) => data.role !== 'agent' || (data.categoryId !== null && data.categoryId !== ''), {
+    message: 'La especialidad es obligatoria para agentes',
+    path: ['categoryId'],
+  })
 
 export type CreateUserInput = z.infer<typeof createUserInputSchema>
 

@@ -75,7 +75,8 @@ export const categorySchema = z.object({
 export const agentSchema = z.object({
   id: z.string(),
   fullName: z.string(),
-  specialty: z.string().nullable(),
+  categoryId: z.string().nullable(),
+  categoryName: z.string().nullable(),
   activeTicketCount: z.number(),
 })
 

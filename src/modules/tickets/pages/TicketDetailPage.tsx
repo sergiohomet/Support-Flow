@@ -399,6 +399,7 @@ export function TicketDetailPage(): React.ReactElement {
                       ticketShortId={ticket.id.slice(0, 8)}
                       currentAgentId={ticket.agentId}
                       currentAgentName={ticket.agentFullName ?? null}
+                      ticketCategoryId={ticket.categoryId}
                       onClose={() => setIsReassignOpen(false)}
                       onSuccess={() => {
                         setIsReassignOpen(false)

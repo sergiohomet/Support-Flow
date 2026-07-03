@@ -4,6 +4,7 @@ import type { AdminUser } from '@/modules/users/schemas'
 import { UserTable } from '../UserTable'
 
 const mockOnRoleChange = vi.fn()
+const mockOnSpecialtyChange = vi.fn()
 const mockOnStatusToggle = vi.fn()
 const mockOnPageChange = vi.fn()
 
@@ -14,7 +15,8 @@ const USERS: AdminUser[] = [
     fullName: 'Alice Smith',
     avatarUrl: null,
     role: 'admin',
-    specialty: 'Backend',
+    categoryId: 'cat-1',
+    categoryName: 'Backend',
     isActive: true,
     createdAt: '2024-01-15T10:00:00Z',
   },
@@ -24,7 +26,8 @@ const USERS: AdminUser[] = [
     fullName: 'Bob Jones',
     avatarUrl: null,
     role: 'agent',
-    specialty: null,
+    categoryId: null,
+    categoryName: null,
     isActive: false,
     createdAt: '2024-02-20T12:00:00Z',
   },
@@ -47,6 +50,7 @@ function renderTable(overrides: {
       pageSize={overrides.pageSize ?? 20}
       currentUserId={overrides.currentUserId ?? 'other-user'}
       onRoleChange={mockOnRoleChange}
+      onSpecialtyChange={mockOnSpecialtyChange}
       onStatusToggle={mockOnStatusToggle}
       onPageChange={mockOnPageChange}
     />,
@@ -56,6 +60,7 @@ function renderTable(overrides: {
 describe('UserTable', () => {
   beforeEach(() => {
     mockOnRoleChange.mockReset()
+    mockOnSpecialtyChange.mockReset()
     mockOnStatusToggle.mockReset()
     mockOnPageChange.mockReset()
   })
@@ -98,7 +103,7 @@ describe('UserTable', () => {
     it('renders em dash when specialty is null', () => {
       renderTable()
 
-      // bob has null specialty — should render —
+      // bob has null categoryName — should render —
       expect(screen.getByText('—')).toBeInTheDocument()
     })
 
@@ -184,14 +189,45 @@ describe('UserTable', () => {
       expect(mockOnStatusToggle).toHaveBeenCalledWith(USERS[0])
     })
 
-    it('disables action buttons for the row where user.id === currentUserId', () => {
+    it('disables role and status action buttons for the row where user.id === currentUserId', () => {
       renderTable({ currentUserId: 'user-1' })
 
       const rows = screen.getAllByRole('row')
       // row index 1 is the first data row (user-1)
       const firstDataRow = rows[1]
-      const buttons = within(firstDataRow).getAllByRole('button')
-      buttons.forEach((btn) => expect(btn).toBeDisabled())
+      expect(within(firstDataRow).getByLabelText('Edit role')).toBeDisabled()
+      expect(within(firstDataRow).getByLabelText('Deactivate user')).toBeDisabled()
+    })
+
+    it('does NOT disable the specialty button for the current user when they are an agent (no security implication)', () => {
+      // USERS[1] (Bob) is role: 'agent' — the only role specialty applies to
+      renderTable({ currentUserId: 'user-2' })
+
+      const rows = screen.getAllByRole('row')
+      const secondDataRow = rows[2]
+      expect(within(secondDataRow).getByLabelText('Edit specialty')).not.toBeDisabled()
+    })
+
+    it('disables the specialty button for non-agent users regardless of currentUserId', () => {
+      // USERS[0] (Alice) is role: 'admin' — specialty never applies
+      renderTable({ currentUserId: 'someone-else' })
+
+      const rows = screen.getAllByRole('row')
+      const firstDataRow = rows[1]
+      expect(within(firstDataRow).getByLabelText('Edit specialty')).toBeDisabled()
+    })
+
+    it('calls onSpecialtyChange with the correct user when specialty button is clicked', async () => {
+      const user = userEvent.setup()
+      renderTable()
+
+      // USERS[0] is admin (specialty button disabled) — target USERS[1] (agent) instead
+      const rows = screen.getAllByRole('row')
+      const secondDataRow = rows[2]
+      await user.click(within(secondDataRow).getByLabelText('Edit specialty'))
+
+      expect(mockOnSpecialtyChange).toHaveBeenCalledOnce()
+      expect(mockOnSpecialtyChange).toHaveBeenCalledWith(USERS[1])
     })
 
     it('does not disable action buttons for rows where user.id !== currentUserId', () => {
