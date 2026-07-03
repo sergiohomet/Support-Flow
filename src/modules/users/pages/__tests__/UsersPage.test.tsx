@@ -24,6 +24,7 @@ const mockFetch = vi.fn()
 const mockCreateUser = vi.fn()
 const mockUpdateRole = vi.fn()
 const mockToggleStatus = vi.fn()
+const mockLoadCategories = vi.fn()
 
 vi.mock('@/modules/users/hooks/useListUsers', () => ({
   useListUsers: vi.fn(),
@@ -37,6 +38,17 @@ vi.mock('@/modules/users/hooks/useUpdateUserRole', () => ({
 vi.mock('@/modules/users/hooks/useToggleUserStatus', () => ({
   useToggleUserStatus: vi.fn(),
 }))
+vi.mock('@/modules/tickets/hooks/useTicketList', () => ({
+  useTicketList: vi.fn(() => ({
+    isFetching: false,
+    isLoadingCategories: false,
+    isLoadingAgents: false,
+    error: null,
+    fetch: vi.fn(),
+    loadCategories: mockLoadCategories,
+    loadAgents: vi.fn(),
+  })),
+}))
 
 // ---------------------------------------------------------------------------
 // Store mock
@@ -44,10 +56,12 @@ vi.mock('@/modules/users/hooks/useToggleUserStatus', () => ({
 
 type MockStoreState = {
   user: { id: string; email: string; full_name: string; role: 'admin' } | null
+  categories: Array<{ id: string; name: string; description: string | null }>
 }
 
 let mockStoreState: MockStoreState = {
   user: { id: 'current-admin', email: 'admin@test.com', full_name: 'Admin User', role: 'admin' },
+  categories: [],
 }
 
 vi.mock('@/store', () => ({
@@ -154,6 +168,7 @@ describe('UsersPage', () => {
 
     mockStoreState = {
       user: { id: 'current-admin', email: 'admin@test.com', full_name: 'Admin User', role: 'admin' },
+      categories: [],
     }
 
     vi.mocked(useListUsers).mockReturnValue(makeListUsersReturn())

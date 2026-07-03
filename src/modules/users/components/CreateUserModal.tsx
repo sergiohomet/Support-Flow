@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { createUserInputSchema } from '@/modules/users/schemas'
 import type { CreateUserInput } from '@/modules/users/schemas'
+import type { Category } from '@/store/ticketsSlice'
 
 interface CreateUserModalProps {
   isOpen: boolean
   isLoading: boolean
   error: string | null
+  categories: Category[]
   onSubmit: (input: CreateUserInput) => void
   onClose: () => void
 }
@@ -21,6 +23,7 @@ export function CreateUserModal({
   isOpen,
   isLoading,
   error,
+  categories,
   onSubmit,
   onClose,
 }: CreateUserModalProps) {
@@ -155,13 +158,19 @@ export function CreateUserModal({
           <label htmlFor="specialty" className="block text-sm font-medium text-gray-700">
             Especialidad
           </label>
-          <input
+          <select
             id="specialty"
-            type="text"
             value={specialty}
             onChange={(e) => setSpecialty(e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-          />
+          >
+            <option value="">Sin especialidad</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.name}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="flex justify-end gap-3 pt-2">

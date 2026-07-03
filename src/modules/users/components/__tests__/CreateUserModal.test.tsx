@@ -19,10 +19,17 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
+const fakeCategories = [
+  { id: 'cat-1', name: 'Hardware', description: null },
+  { id: 'cat-2', name: 'Software', description: null },
+  { id: 'cat-3', name: 'Redes', description: null },
+]
+
 const defaultProps = {
   isOpen: true,
   isLoading: false,
   error: null,
+  categories: fakeCategories,
   onSubmit: vi.fn(),
   onClose: vi.fn(),
 }
@@ -111,19 +118,36 @@ describe('CreateUserModal', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('User creation failed')
   })
 
-  it('specialty field is visible and accepts input', async () => {
+  it('specialty field is a dropdown populated from categories', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     renderModal({ onSubmit })
 
-    expect(screen.getByLabelText('Especialidad')).toBeInTheDocument()
+    const specialtySelect = screen.getByLabelText('Especialidad')
+    expect(specialtySelect).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Hardware' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Software' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Redes' })).toBeInTheDocument()
 
     await fillValidForm(user)
-    await user.type(screen.getByLabelText('Especialidad'), 'Billing')
+    await user.selectOptions(specialtySelect, 'Hardware')
     await user.click(screen.getByRole('button', { name: 'Crear usuario' }))
 
     expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ specialty: 'Billing' }),
+      expect.objectContaining({ specialty: 'Hardware' }),
+    )
+  })
+
+  it('specialty defaults to "Sin especialidad" (null) when not selected', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    renderModal({ onSubmit })
+
+    await fillValidForm(user)
+    await user.click(screen.getByRole('button', { name: 'Crear usuario' }))
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ specialty: null }),
     )
   })
 
