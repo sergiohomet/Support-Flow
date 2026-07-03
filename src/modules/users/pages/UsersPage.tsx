@@ -3,6 +3,7 @@ import { useDebounce } from '@/core/hooks/useDebounce'
 import { useStore } from '@/store'
 import { useListUsers } from '@/modules/users/hooks/useListUsers'
 import { useCreateUser } from '@/modules/users/hooks/useCreateUser'
+import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
 import { useUpdateUserRole } from '@/modules/users/hooks/useUpdateUserRole'
 import { useToggleUserStatus } from '@/modules/users/hooks/useToggleUserStatus'
 import { UserFilters } from '@/modules/users/components/UserFilters'
@@ -34,12 +35,14 @@ const PAGE_SIZE = 10
 export function UsersPage(): React.JSX.Element {
   // Auth
   const currentUserId = useStore((s) => s.user?.id ?? '')
+  const categories = useStore((s) => s.categories)
 
   // Hooks
   const { users, totalCount, isFetching, error, fetch } = useListUsers()
   const { execute: createUser, isLoading: isCreating, error: createError } = useCreateUser()
   const { execute: updateRole, isLoading: isUpdatingRole } = useUpdateUserRole()
   const { execute: toggleStatus, isLoading: isTogglingStatus } = useToggleUserStatus()
+  const { loadCategories } = useTicketList()
 
   // Filter state
   const [search, setSearch] = useState('')
@@ -63,6 +66,10 @@ export function UsersPage(): React.JSX.Element {
   // ---------------------------------------------------------------------------
   // Fetch effect — solo ejecuta cuando hay al menos un filtro activo
   // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    void loadCategories()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!hasActiveFilters) return
@@ -208,6 +215,7 @@ export function UsersPage(): React.JSX.Element {
         isOpen={isCreateModalOpen}
         isLoading={isCreating}
         error={createError}
+        categories={categories}
         onSubmit={handleCreateUser}
         onClose={() => setIsCreateModalOpen(false)}
       />
