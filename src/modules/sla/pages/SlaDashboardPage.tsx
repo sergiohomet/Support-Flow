@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSlaDashboardSummary } from '@/modules/sla/hooks/useSlaDashboardSummary'
 import { useSlaComplianceByCategory } from '@/modules/sla/hooks/useSlaComplianceByCategory'
 import { useSlaAtRiskTickets } from '@/modules/sla/hooks/useSlaAtRiskTickets'
@@ -8,15 +8,14 @@ import { CategoryComplianceDonut } from '@/modules/sla/components/CategoryCompli
 import { AtRiskTicketsTable } from '@/modules/sla/components/AtRiskTicketsTable'
 import { Spinner } from '@/ui/Spinner'
 
-function toIsoDate(date: Date): string {
-  return date.toISOString().slice(0, 10)
-}
-
 function computeDateRange(days: number): { dateFrom: string; dateTo: string } {
   const now = new Date()
   const from = new Date(now)
   from.setDate(from.getDate() - days)
-  return { dateFrom: toIsoDate(from), dateTo: toIsoDate(now) }
+  // Send full timestamps, not date-only strings — a date-only "dateTo" is
+  // parsed by Postgres as midnight UTC, which excludes everything created
+  // later today from the BETWEEN filter in the SLA RPCs.
+  return { dateFrom: from.toISOString(), dateTo: now.toISOString() }
 }
 
 function round(value: number): number {
@@ -25,7 +24,10 @@ function round(value: number): number {
 
 export function SlaDashboardPage(): React.JSX.Element {
   const [days, setDays] = useState(7)
-  const { dateFrom, dateTo } = computeDateRange(days)
+  // Compute the range once per `days` change — recomputing on every render
+  // would produce a new millisecond-precision timestamp each time, which
+  // kept re-triggering the fetch effects below in an infinite loop.
+  const { dateFrom, dateTo } = useMemo(() => computeDateRange(days), [days])
 
   const { data: summary, isLoading: isSummaryLoading, error: summaryError } = useSlaDashboardSummary(
     dateFrom,
