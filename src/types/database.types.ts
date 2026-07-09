@@ -396,6 +396,40 @@ export type Database = {
           name: string
         }[]
       }
+      admin_get_reports_agent_performance: {
+        Args: { p_date_from: string; p_date_to: string }
+        Returns: {
+          agent_full_name: string
+          agent_id: string
+          avg_working_hours: number
+          resolved_count: number
+          sla_compliance_pct: number
+        }[]
+      }
+      admin_get_reports_summary: {
+        Args: { p_date_from: string; p_date_to: string }
+        Returns: {
+          avg_resolution_hours: number
+          escalated_count: number
+          sla_compliance_pct: number
+          total_tickets: number
+        }[]
+      }
+      admin_get_reports_tickets_by_category: {
+        Args: { p_date_from: string; p_date_to: string }
+        Returns: {
+          category_id: string
+          category_name: string
+          ticket_count: number
+        }[]
+      }
+      admin_get_reports_tickets_by_week: {
+        Args: { p_date_from: string; p_date_to: string }
+        Returns: {
+          ticket_count: number
+          week_start: string
+        }[]
+      }
       admin_get_sla_at_risk_tickets: {
         Args: { p_limit?: number }
         Returns: {
