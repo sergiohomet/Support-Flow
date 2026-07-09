@@ -3,11 +3,8 @@ import { useReportsSummary } from '@/modules/reports/hooks/useReportsSummary'
 import { useReportsTicketsByCategory } from '@/modules/reports/hooks/useReportsTicketsByCategory'
 import { useReportsTicketsByWeek } from '@/modules/reports/hooks/useReportsTicketsByWeek'
 import { useReportsAgentPerformance } from '@/modules/reports/hooks/useReportsAgentPerformance'
-import {
-  ReportsDateRangeFilter,
-  computeReportsDateRange,
-  type ReportsRangePreset,
-} from '@/modules/reports/components/ReportsDateRangeFilter'
+import { ReportsDateRangeFilter } from '@/modules/reports/components/ReportsDateRangeFilter'
+import { computeReportsDateRange, type ReportsRangePreset } from '@/modules/reports/components/dateRange'
 import { TicketsByWeekChart } from '@/modules/reports/components/TicketsByWeekChart'
 import { TicketsByCategoryBreakdown } from '@/modules/reports/components/TicketsByCategoryBreakdown'
 import { AgentPerformanceTable } from '@/modules/reports/components/AgentPerformanceTable'
