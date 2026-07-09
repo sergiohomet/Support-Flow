@@ -14,6 +14,7 @@ import { UsersPage } from "@/modules/users";
 import { CategoriesPage } from "@/modules/categories";
 import { SlaConfigPage, SlaDashboardPage } from "@/modules/sla";
 import { NotificationsPage } from "@/modules/notifications";
+import { ReportsPage } from "@/modules/reports";
 
 export default function App() {
   return (
@@ -76,8 +77,8 @@ export default function App() {
             <Route
               path="/reports"
               element={
-                <RoleGuard allowedRoles={['agent', 'admin']}>
-                  <div>Reports — TODO</div>
+                <RoleGuard allowedRoles={['admin']}>
+                  <ReportsPage />
                 </RoleGuard>
               }
             />

@@ -9,7 +9,7 @@ const makeRow = (overrides: Partial<TicketsByWeek> = {}): TicketsByWeek => ({
 })
 
 describe('TicketsByWeekChart', () => {
-  it('renders one bar per data point', () => {
+  it('renders one point per data point', () => {
     const data = [
       makeRow({ weekStart: '2026-06-01', ticketCount: 5 }),
       makeRow({ weekStart: '2026-06-08', ticketCount: 15 }),
@@ -29,8 +29,8 @@ describe('TicketsByWeekChart', () => {
   it('does not divide by zero with a single data point (max = that value)', () => {
     render(<TicketsByWeekChart data={[makeRow({ ticketCount: 7 })]} />)
 
-    const bar = screen.getByRole('img')
-    expect(bar).toHaveStyle({ height: '100%' })
-    expect(bar.getAttribute('style')).not.toMatch(/nan/i)
+    const point = screen.getByRole('img')
+    expect(point.getAttribute('cx')).not.toMatch(/nan/i)
+    expect(point.getAttribute('cy')).not.toMatch(/nan/i)
   })
 })
