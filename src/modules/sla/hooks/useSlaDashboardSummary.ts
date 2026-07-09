@@ -11,38 +11,74 @@ interface UseSlaDashboardSummaryResult {
   refetch: () => Promise<void>
 }
 
+interface FetchResult {
+  data: SlaDashboardSummary | null
+  error: string | null
+}
+
+async function fetchSlaDashboardSummary(dateFrom: string, dateTo: string): Promise<FetchResult> {
+  const { data: rpcData, error: rpcError } = await supabase.rpc('admin_get_sla_dashboard', {
+    p_date_from: dateFrom,
+    p_date_to: dateTo,
+  })
+
+  if (rpcError) {
+    return { data: null, error: parseRpcError(rpcError.message) }
+  }
+
+  const rows = (rpcData as Array<Record<string, unknown>>) ?? []
+  const row = rows[0]
+  return { data: row ? mapSlaDashboardSummary(row as Parameters<typeof mapSlaDashboardSummary>[0]) : null, error: null }
+}
+
 export function useSlaDashboardSummary(dateFrom: string, dateTo: string): UseSlaDashboardSummaryResult {
   const [data, setData] = useState<SlaDashboardSummary | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchSummary = async (): Promise<void> => {
+  const refetch = async (): Promise<void> => {
     setIsLoading(true)
     setError(null)
-
     try {
-      const { data: rpcData, error: rpcError } = await supabase.rpc('admin_get_sla_dashboard', {
-        p_date_from: dateFrom,
-        p_date_to: dateTo,
-      })
-
-      if (rpcError) {
-        setError(parseRpcError(rpcError.message))
-        return
-      }
-
-      const rows = (rpcData as Array<Record<string, unknown>>) ?? []
-      const row = rows[0]
-      setData(row ? mapSlaDashboardSummary(row as Parameters<typeof mapSlaDashboardSummary>[0]) : null)
+      const result = await fetchSlaDashboardSummary(dateFrom, dateTo)
+      setData(result.data)
+      setError(result.error)
+    } catch (err) {
+      setError(parseRpcError(err instanceof Error ? err.message : String(err)))
     } finally {
       setIsLoading(false)
     }
   }
 
+  // See src/modules/reports/hooks/useReportsSummary.ts for why the fetch
+  // logic is a plain function and the effect wraps it in a locally-defined
+  // async runner instead of calling it directly —
+  // react-hooks/set-state-in-effect flags any effect whose top level calls
+  // an outer function (or sets state directly at its top level) that
+  // updates state.
   useEffect(() => {
-    void fetchSummary()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let cancelled = false
+
+    async function run(): Promise<void> {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const result = await fetchSlaDashboardSummary(dateFrom, dateTo)
+        if (cancelled) return
+        setData(result.data)
+        setError(result.error)
+      } catch (err) {
+        if (!cancelled) setError(parseRpcError(err instanceof Error ? err.message : String(err)))
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    void run()
+    return () => {
+      cancelled = true
+    }
   }, [dateFrom, dateTo])
 
-  return { data, isLoading, error, refetch: fetchSummary }
+  return { data, isLoading, error, refetch }
 }
