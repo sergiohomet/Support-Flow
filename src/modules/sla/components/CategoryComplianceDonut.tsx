@@ -1,10 +1,9 @@
 import type { SlaComplianceByCategory } from '@/modules/sla/schemas'
+import { getTier, type ComplianceTier } from './getTier'
 
 interface CategoryComplianceDonutProps {
   row: SlaComplianceByCategory
 }
-
-type ComplianceTier = 'green' | 'amber' | 'red'
 
 const TIER_TEXT_CLASS: Record<ComplianceTier, string> = {
   green: 'text-[#16a34a]',
@@ -16,13 +15,6 @@ const TIER_DOT_CLASS: Record<ComplianceTier, string> = {
   green: 'bg-[#16a34a]',
   amber: 'bg-[#d97706]',
   red: 'bg-red-600',
-}
-
-function getTier(compliancePct: number | null): ComplianceTier {
-  if (compliancePct === null) return 'red'
-  if (compliancePct >= 80) return 'green'
-  if (compliancePct >= 70) return 'amber'
-  return 'red'
 }
 
 export function CategoryComplianceDonut({ row }: CategoryComplianceDonutProps): React.JSX.Element {

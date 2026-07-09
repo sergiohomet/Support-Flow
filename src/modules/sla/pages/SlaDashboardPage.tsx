@@ -6,17 +6,8 @@ import { DateRangeFilter } from '@/modules/sla/components/DateRangeFilter'
 import { SummaryCard } from '@/modules/sla/components/SummaryCard'
 import { CategoryComplianceDonut } from '@/modules/sla/components/CategoryComplianceDonut'
 import { AtRiskTicketsTable } from '@/modules/sla/components/AtRiskTicketsTable'
+import { computeDateRange } from '@/modules/sla/components/dateRange'
 import { Spinner } from '@/ui/Spinner'
-
-function computeDateRange(days: number): { dateFrom: string; dateTo: string } {
-  const now = new Date()
-  const from = new Date(now)
-  from.setDate(from.getDate() - days)
-  // Send full timestamps, not date-only strings — a date-only "dateTo" is
-  // parsed by Postgres as midnight UTC, which excludes everything created
-  // later today from the BETWEEN filter in the SLA RPCs.
-  return { dateFrom: from.toISOString(), dateTo: now.toISOString() }
-}
 
 function round(value: number): number {
   return Math.round(value)
