@@ -57,14 +57,14 @@ const fakeLog = {
   changed_at: '2026-06-15T10:00:00Z',
 }
 
+async function flush(): Promise<void> {
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 0))
+  })
+}
+
 describe('useTicketDetail', () => {
   beforeEach(() => {
-    mockRpc.mockImplementation((rpcName: string) => {
-      if (rpcName === 'get_ticket_detail') return Promise.resolve({ data: [fakeDetail], error: null })
-      if (rpcName === 'get_ticket_comments') return Promise.resolve({ data: [fakeComment], error: null })
-      if (rpcName === 'get_ticket_status_log') return Promise.resolve({ data: [fakeLog], error: null })
-      return Promise.resolve({ data: [], error: null })
-    })
     mockRpc.mockReset()
     mockRpc.mockImplementation((rpcName: string) => {
       if (rpcName === 'get_ticket_detail') return Promise.resolve({ data: [fakeDetail], error: null })
@@ -83,141 +83,163 @@ describe('useTicketDetail', () => {
     mockChannel.mockReturnValue({ on: mockOn })
   })
 
-  it('fetch("ticket-1") sets ticket with camelCase mapping', async () => {
-    const { result } = renderHook(() => useTicketDetail())
+  describe('auto-fetch on ticketId', () => {
+    it('does not fetch when ticketId is undefined', async () => {
+      renderHook(() => useTicketDetail(undefined))
+      await flush()
 
-    await act(async () => {
-      await result.current.fetch('ticket-1')
+      expect(mockRpc).not.toHaveBeenCalled()
     })
 
-    expect(result.current.ticket).toMatchObject({
-      id: 'ticket-1',
-      title: 'Test',
-      categoryId: 'cat-1',
-      agentId: null,
+    it('sets ticket with camelCase mapping on mount', async () => {
+      const { result } = renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
+
+      expect(result.current.ticket).toMatchObject({
+        id: 'ticket-1',
+        title: 'Test',
+        categoryId: 'cat-1',
+        agentId: null,
+      })
+    })
+
+    it('maps category_is_active: true → categoryIsActive: true', async () => {
+      const { result } = renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
+
+      expect(result.current.ticket?.categoryIsActive).toBe(true)
+    })
+
+    it('maps category_is_active: false → categoryIsActive: false', async () => {
+      mockRpc.mockImplementation((rpcName: string) => {
+        if (rpcName === 'get_ticket_detail')
+          return Promise.resolve({ data: [{ ...fakeDetail, category_is_active: false }], error: null })
+        if (rpcName === 'get_ticket_comments') return Promise.resolve({ data: [fakeComment], error: null })
+        if (rpcName === 'get_ticket_status_log') return Promise.resolve({ data: [fakeLog], error: null })
+        return Promise.resolve({ data: [], error: null })
+      })
+
+      const { result } = renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
+
+      expect(result.current.ticket?.categoryIsActive).toBe(false)
+    })
+
+    it('sets comments with camelCase mapping', async () => {
+      const { result } = renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
+
+      expect(result.current.comments).toEqual([
+        {
+          id: 'c-1',
+          ticketId: 'ticket-1',
+          userId: 'user-1',
+          userFullName: 'Juan',
+          content: 'Hola',
+          createdAt: '2026-06-15T10:00:00Z',
+        },
+      ])
+    })
+
+    it('sets statusLog with fromStatus: null', async () => {
+      const { result } = renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
+
+      expect(result.current.statusLog).toEqual([
+        {
+          id: 'log-1',
+          ticketId: 'ticket-1',
+          fromStatus: null,
+          toStatus: 'abierto',
+          changedBy: 'user-1',
+          changedByFullName: 'Juan',
+          changedAt: '2026-06-15T10:00:00Z',
+        },
+      ])
+    })
+
+    it('sets error when get_ticket_detail returns an error', async () => {
+      mockRpc.mockImplementation((rpcName: string) => {
+        if (rpcName === 'get_ticket_detail') return Promise.resolve({ data: null, error: { message: 'Access denied' } })
+        if (rpcName === 'get_ticket_comments') return Promise.resolve({ data: [], error: null })
+        if (rpcName === 'get_ticket_status_log') return Promise.resolve({ data: [], error: null })
+        return Promise.resolve({ data: [], error: null })
+      })
+
+      const { result } = renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
+
+      expect(result.current.error).toBe('Access denied')
+      expect(result.current.ticket).toBeNull()
+    })
+
+    it('sets error when detail returns empty array (ticket not found)', async () => {
+      mockRpc.mockImplementation((rpcName: string) => {
+        if (rpcName === 'get_ticket_detail') return Promise.resolve({ data: [], error: null })
+        if (rpcName === 'get_ticket_comments') return Promise.resolve({ data: [], error: null })
+        if (rpcName === 'get_ticket_status_log') return Promise.resolve({ data: [], error: null })
+        return Promise.resolve({ data: [], error: null })
+      })
+
+      const { result } = renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
+
+      expect(result.current.error).toBe('Ticket not found or access denied.')
+      expect(result.current.ticket).toBeNull()
+    })
+
+    it('isLoading is false after the mount fetch completes', async () => {
+      const { result } = renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
+
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    it('refetches when ticketId changes', async () => {
+      const { rerender } = renderHook(({ ticketId }) => useTicketDetail(ticketId), {
+        initialProps: { ticketId: 'ticket-1' },
+      })
+      await flush()
+
+      expect(mockRpc).toHaveBeenCalledWith('get_ticket_detail', { p_ticket_id: 'ticket-1' })
+
+      mockRpc.mockClear()
+      rerender({ ticketId: 'ticket-2' })
+      await flush()
+
+      expect(mockRpc).toHaveBeenCalledWith('get_ticket_detail', { p_ticket_id: 'ticket-2' })
     })
   })
 
-  it('fetch() maps category_is_active: true → categoryIsActive: true', async () => {
-    const { result } = renderHook(() => useTicketDetail())
+  describe('refetch() (manual re-invocation)', () => {
+    it('re-calls the RPCs for the same ticketId', async () => {
+      const { result } = renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
 
-    await act(async () => {
-      await result.current.fetch('ticket-1')
+      mockRpc.mockClear()
+      await act(async () => {
+        await result.current.refetch()
+      })
+
+      expect(mockRpc).toHaveBeenCalledWith('get_ticket_detail', { p_ticket_id: 'ticket-1' })
     })
 
-    expect(result.current.ticket?.categoryIsActive).toBe(true)
-  })
+    it('is a no-op when ticketId is undefined', async () => {
+      const { result } = renderHook(() => useTicketDetail(undefined))
+      await flush()
 
-  it('fetch() maps category_is_active: false → categoryIsActive: false', async () => {
-    mockRpc.mockImplementation((rpcName: string) => {
-      if (rpcName === 'get_ticket_detail')
-        return Promise.resolve({ data: [{ ...fakeDetail, category_is_active: false }], error: null })
-      if (rpcName === 'get_ticket_comments') return Promise.resolve({ data: [fakeComment], error: null })
-      if (rpcName === 'get_ticket_status_log') return Promise.resolve({ data: [fakeLog], error: null })
-      return Promise.resolve({ data: [], error: null })
+      await act(async () => {
+        await result.current.refetch()
+      })
+
+      expect(mockRpc).not.toHaveBeenCalled()
     })
-
-    const { result } = renderHook(() => useTicketDetail())
-
-    await act(async () => {
-      await result.current.fetch('ticket-1')
-    })
-
-    expect(result.current.ticket?.categoryIsActive).toBe(false)
-  })
-
-  it('fetch("ticket-1") sets comments with camelCase mapping', async () => {
-    const { result } = renderHook(() => useTicketDetail())
-
-    await act(async () => {
-      await result.current.fetch('ticket-1')
-    })
-
-    expect(result.current.comments).toEqual([
-      {
-        id: 'c-1',
-        ticketId: 'ticket-1',
-        userId: 'user-1',
-        userFullName: 'Juan',
-        content: 'Hola',
-        createdAt: '2026-06-15T10:00:00Z',
-      },
-    ])
-  })
-
-  it('fetch("ticket-1") sets statusLog with fromStatus: null', async () => {
-    const { result } = renderHook(() => useTicketDetail())
-
-    await act(async () => {
-      await result.current.fetch('ticket-1')
-    })
-
-    expect(result.current.statusLog).toEqual([
-      {
-        id: 'log-1',
-        ticketId: 'ticket-1',
-        fromStatus: null,
-        toStatus: 'abierto',
-        changedBy: 'user-1',
-        changedByFullName: 'Juan',
-        changedAt: '2026-06-15T10:00:00Z',
-      },
-    ])
-  })
-
-  it('fetch() sets error when get_ticket_detail returns an error', async () => {
-    mockRpc.mockImplementation((rpcName: string) => {
-      if (rpcName === 'get_ticket_detail') return Promise.resolve({ data: null, error: { message: 'Access denied' } })
-      if (rpcName === 'get_ticket_comments') return Promise.resolve({ data: [], error: null })
-      if (rpcName === 'get_ticket_status_log') return Promise.resolve({ data: [], error: null })
-      return Promise.resolve({ data: [], error: null })
-    })
-
-    const { result } = renderHook(() => useTicketDetail())
-
-    await act(async () => {
-      await result.current.fetch('ticket-1')
-    })
-
-    expect(result.current.error).toBe('Access denied')
-    expect(result.current.ticket).toBeNull()
-  })
-
-  it('fetch() sets error when detail returns empty array (ticket not found)', async () => {
-    mockRpc.mockImplementation((rpcName: string) => {
-      if (rpcName === 'get_ticket_detail') return Promise.resolve({ data: [], error: null })
-      if (rpcName === 'get_ticket_comments') return Promise.resolve({ data: [], error: null })
-      if (rpcName === 'get_ticket_status_log') return Promise.resolve({ data: [], error: null })
-      return Promise.resolve({ data: [], error: null })
-    })
-
-    const { result } = renderHook(() => useTicketDetail())
-
-    await act(async () => {
-      await result.current.fetch('ticket-1')
-    })
-
-    expect(result.current.error).toBe('Ticket not found or access denied.')
-    expect(result.current.ticket).toBeNull()
-  })
-
-  it('isLoading is false after fetch() completes', async () => {
-    const { result } = renderHook(() => useTicketDetail())
-
-    await act(async () => {
-      await result.current.fetch('ticket-1')
-    })
-
-    expect(result.current.isLoading).toBe(false)
   })
 
   describe('realtime subscription', () => {
-    it('subscribes to a channel scoped to the ticket id after fetch() loads the ticket', async () => {
-      const { result } = renderHook(() => useTicketDetail())
-
-      await act(async () => {
-        await result.current.fetch('ticket-1')
-      })
+    it('subscribes to a channel scoped to the ticket id after the ticket loads', async () => {
+      renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
 
       expect(mockChannel).toHaveBeenCalledWith('ticket-comments-ticket-1')
       expect(mockOn).toHaveBeenCalledWith(
@@ -234,11 +256,8 @@ describe('useTicketDetail', () => {
     })
 
     it('removes the channel on unmount', async () => {
-      const { result, unmount } = renderHook(() => useTicketDetail())
-
-      await act(async () => {
-        await result.current.fetch('ticket-1')
-      })
+      const { unmount } = renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
 
       unmount()
 
@@ -246,11 +265,8 @@ describe('useTicketDetail', () => {
     })
 
     it('triggers a refetch when an INSERT comes from another user', async () => {
-      const { result } = renderHook(() => useTicketDetail())
-
-      await act(async () => {
-        await result.current.fetch('ticket-1')
-      })
+      renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
 
       mockRpc.mockClear()
       const insertHandler = mockOn.mock.calls[0][2] as (payload: { new: { user_id: string } }) => void
@@ -264,11 +280,8 @@ describe('useTicketDetail', () => {
     })
 
     it('does NOT trigger a refetch when an INSERT comes from the current user', async () => {
-      const { result } = renderHook(() => useTicketDetail())
-
-      await act(async () => {
-        await result.current.fetch('ticket-1')
-      })
+      renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
 
       mockRpc.mockClear()
       const insertHandler = mockOn.mock.calls[0][2] as (payload: { new: { user_id: string } }) => void
