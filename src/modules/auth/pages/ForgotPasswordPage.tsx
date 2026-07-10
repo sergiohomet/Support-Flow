@@ -1,32 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/core/supabase/client";
 import { ForgotPasswordForm } from "../components/ForgotPasswordForm";
 import { useForgotPassword } from "../hooks/useForgotPassword";
-
-type Phase = "request" | "reset";
+import { useRecoveryPhase } from "../hooks/useRecoveryPhase";
 
 export function ForgotPasswordPage(): React.ReactElement {
-  const [phase, setPhase] = useState<Phase>("request");
+  const phase = useRecoveryPhase();
   const { executeRequest, executeReset, isLoading, error, sent } =
     useForgotPassword();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Check if the user already has a recovery session (e.g., arrived via email link)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) setPhase("reset");
-    });
-
-    // Also listen for PASSWORD_RECOVERY event (fires when Supabase processes the URL token)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setPhase("reset");
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const handleSubmitRequest = (email: string): void => {
     void executeRequest(email);
