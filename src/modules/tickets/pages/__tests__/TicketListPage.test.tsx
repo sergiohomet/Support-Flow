@@ -56,12 +56,8 @@ import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
 function makeHookReturn(overrides: Partial<ReturnType<typeof useTicketList>> = {}): ReturnType<typeof useTicketList> {
   return {
     isFetching: false,
-    isLoadingCategories: false,
-    isLoadingAgents: false,
     error: null,
     fetch: mockFetch,
-    loadCategories: vi.fn().mockResolvedValue(undefined),
-    loadAgents: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   }
 }

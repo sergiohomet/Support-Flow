@@ -4,7 +4,7 @@ import { useStore } from '@/store'
 import { useTicketDetail } from '@/modules/tickets/hooks/useTicketDetail'
 import { useUpdateTicketStatus } from '@/modules/tickets/hooks/useUpdateTicketStatus'
 import { useAddComment } from '@/modules/tickets/hooks/useAddComment'
-import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
+import { useAgentList } from '@/modules/tickets/hooks/useAgentList'
 import { TicketComments } from '@/modules/tickets/components/TicketComments'
 import { TicketStatusLog } from '@/modules/tickets/components/TicketStatusLog'
 import { ReassignTicketModal } from '@/modules/tickets/components/ReassignTicketModal'
@@ -112,7 +112,7 @@ export function TicketDetailPage(): React.ReactElement {
   const { execute: updateStatus, isLoading: statusLoading, error: statusError } = useUpdateTicketStatus()
   const { execute: unassignTicket, isLoading: unassignLoading, error: unassignError } = useUnassignTicket()
   const { execute: addComment, isLoading: commentLoading, error: commentError } = useAddComment()
-  const { loadAgents } = useTicketList()
+  const { loadAgents } = useAgentList()
 
   const user = useStore((s) => s.user)
 

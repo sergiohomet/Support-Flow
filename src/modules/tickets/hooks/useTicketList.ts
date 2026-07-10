@@ -1,26 +1,18 @@
 import { useState } from 'react'
 import { supabase } from '@/core/supabase/client'
 import { useStore } from '@/store'
-import type { TicketListItem, Category, Agent } from '../schemas'
+import type { TicketListItem } from '../schemas'
 
 interface UseTicketListResult {
   isFetching: boolean
-  isLoadingCategories: boolean
-  isLoadingAgents: boolean
   error: string | null
   fetch: () => Promise<void>
-  loadCategories: () => Promise<void>
-  loadAgents: () => Promise<void>
 }
 
 export function useTicketList(): UseTicketListResult {
   const [isFetching, setIsFetching] = useState(false)
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
-  const [isLoadingAgents, setIsLoadingAgents] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const setTickets = useStore((s) => s.setTickets)
-  const setCategories = useStore((s) => s.setCategories)
-  const setAgents = useStore((s) => s.setAgents)
 
   const fetch = async (): Promise<void> => {
     setIsFetching(true)
@@ -66,59 +58,5 @@ export function useTicketList(): UseTicketListResult {
     }
   }
 
-  const loadCategories = async (): Promise<void> => {
-    if (useStore.getState().categories.length > 0) return
-
-    setIsLoadingCategories(true)
-    setError(null)
-
-    try {
-      const { data, error: rpcError } = await supabase.rpc('get_categories')
-
-      if (rpcError) {
-        setError(rpcError.message)
-        return
-      }
-
-      const mapped: Category[] = (data ?? []).map((row) => ({
-        id: row.id,
-        name: row.name,
-        description: row.description ?? null,
-      }))
-
-      setCategories(mapped)
-    } finally {
-      setIsLoadingCategories(false)
-    }
-  }
-
-  const loadAgents = async (): Promise<void> => {
-    if (useStore.getState().agents.length > 0) return
-
-    setIsLoadingAgents(true)
-    setError(null)
-
-    try {
-      const { data, error: rpcError } = await supabase.rpc('get_agents')
-
-      if (rpcError) {
-        setError(rpcError.message)
-        return
-      }
-
-      const mapped: Agent[] = (data ?? []).map((row) => ({
-        id: row.id,
-        fullName: row.full_name,
-        categoryId: row.category_id ?? null,
-        categoryName: row.category_name ?? null,
-        activeTicketCount: row.active_ticket_count,
-      }))
-
-      setAgents(mapped)
-    } finally {
-      setIsLoadingAgents(false)
-    }
-  }
-
-  return { isFetching, isLoadingCategories, isLoadingAgents, error, fetch, loadCategories, loadAgents }
+  return { isFetching, error, fetch }
 }

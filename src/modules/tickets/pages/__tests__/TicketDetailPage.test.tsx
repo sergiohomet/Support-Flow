@@ -33,8 +33,8 @@ vi.mock('@/modules/tickets/hooks/useAddComment', () => ({
   useAddComment: vi.fn(),
 }))
 
-vi.mock('@/modules/tickets/hooks/useTicketList', () => ({
-  useTicketList: vi.fn(),
+vi.mock('@/modules/tickets/hooks/useAgentList', () => ({
+  useAgentList: vi.fn(),
 }))
 
 // --- store mock ---
@@ -59,7 +59,7 @@ import { useTicketDetail } from '@/modules/tickets/hooks/useTicketDetail'
 import { useUnassignTicket } from '@/modules/tickets/hooks/useUnassignTicket'
 import { useUpdateTicketStatus } from '@/modules/tickets/hooks/useUpdateTicketStatus'
 import { useAddComment } from '@/modules/tickets/hooks/useAddComment'
-import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
+import { useAgentList } from '@/modules/tickets/hooks/useAgentList'
 import type { TicketDetail, StatusLogEntry } from '@/modules/tickets/schemas'
 
 const fakeTicket: TicketDetail = {
@@ -146,13 +146,9 @@ describe('TicketDetailPage', () => {
     vi.mocked(useUnassignTicket).mockReturnValue({ execute: mockAssignTicket, isLoading: false, error: null })
     vi.mocked(useUpdateTicketStatus).mockReturnValue({ execute: mockUpdateStatus, isLoading: false, error: null })
     vi.mocked(useAddComment).mockReturnValue({ execute: mockAddComment, isLoading: false, error: null })
-    vi.mocked(useTicketList).mockReturnValue({
-      isFetching: false,
-      isLoadingCategories: false,
+    vi.mocked(useAgentList).mockReturnValue({
       isLoadingAgents: false,
       error: null,
-      fetch: vi.fn(),
-      loadCategories: vi.fn(),
       loadAgents: mockLoadAgents,
     })
   })

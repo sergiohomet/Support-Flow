@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/store'
-import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
+import { useCategoryList } from '@/modules/tickets/hooks/useCategoryList'
 import { useCreateTicket } from '@/modules/tickets/hooks/useCreateTicket'
 import { CreateTicketForm } from '@/modules/tickets/components/CreateTicketForm'
 import type { CreateTicketInput } from '@/modules/tickets/schemas'
 
 export function CreateTicketPage(): React.ReactElement {
   const navigate = useNavigate()
-  const { loadCategories } = useTicketList()
+  const { loadCategories } = useCategoryList()
   const { execute, isLoading, error } = useCreateTicket()
 
   const categories = useStore((s) => s.categories)
