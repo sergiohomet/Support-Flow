@@ -5,6 +5,8 @@ export { TicketDetailPage } from './pages/TicketDetailPage'
 
 // Hooks
 export { useTicketList } from './hooks/useTicketList'
+export { useCategoryList } from './hooks/useCategoryList'
+export { useAgentList } from './hooks/useAgentList'
 export { useTicketDetail } from './hooks/useTicketDetail'
 export { useCreateTicket } from './hooks/useCreateTicket'
 export { useReassignTicket } from './hooks/useReassignTicket'

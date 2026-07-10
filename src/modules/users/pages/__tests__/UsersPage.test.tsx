@@ -20,7 +20,7 @@ beforeAll(() => {
 // Hook mocks
 // ---------------------------------------------------------------------------
 
-const mockFetch = vi.fn()
+const mockRefetch = vi.fn()
 const mockCreateUser = vi.fn()
 const mockUpdateRole = vi.fn()
 const mockUpdateSpecialty = vi.fn()
@@ -42,15 +42,11 @@ vi.mock('@/modules/users/hooks/useUpdateUserSpecialty', () => ({
 vi.mock('@/modules/users/hooks/useToggleUserStatus', () => ({
   useToggleUserStatus: vi.fn(),
 }))
-vi.mock('@/modules/tickets/hooks/useTicketList', () => ({
-  useTicketList: vi.fn(() => ({
-    isFetching: false,
+vi.mock('@/modules/tickets/hooks/useCategoryList', () => ({
+  useCategoryList: vi.fn(() => ({
     isLoadingCategories: false,
-    isLoadingAgents: false,
     error: null,
-    fetch: vi.fn(),
     loadCategories: mockLoadCategories,
-    loadAgents: vi.fn(),
   })),
 }))
 
@@ -117,7 +113,7 @@ function makeListUsersReturn(overrides: Partial<ReturnType<typeof useListUsers>>
     totalCount: FAKE_USERS.length,
     isFetching: false,
     error: null,
-    fetch: mockFetch,
+    refetch: mockRefetch,
     ...overrides,
   }
 }
@@ -172,13 +168,13 @@ function renderPage(): void {
 
 describe('UsersPage', () => {
   beforeEach(() => {
-    mockFetch.mockReset()
+    mockRefetch.mockReset()
     mockCreateUser.mockReset()
     mockUpdateRole.mockReset()
     mockUpdateSpecialty.mockReset()
     mockToggleStatus.mockReset()
 
-    mockFetch.mockResolvedValue(undefined)
+    mockRefetch.mockResolvedValue(undefined)
     mockCreateUser.mockResolvedValue(true)
     mockUpdateRole.mockResolvedValue(true)
     mockUpdateSpecialty.mockResolvedValue(true)
@@ -189,6 +185,7 @@ describe('UsersPage', () => {
       categories: [],
     }
 
+    vi.mocked(useListUsers).mockClear()
     vi.mocked(useListUsers).mockReturnValue(makeListUsersReturn())
     vi.mocked(useCreateUser).mockReturnValue(makeCreateUserReturn())
     vi.mocked(useUpdateUserRole).mockReturnValue(makeUpdateRoleReturn())
@@ -216,9 +213,11 @@ describe('UsersPage', () => {
   })
 
   describe('on mount (sin filtros)', () => {
-    it('does NOT call fetch on mount when no filters are active', () => {
+    it('calls useListUsers with enabled: false on mount when no filters are active', () => {
       renderPage()
-      expect(mockFetch).not.toHaveBeenCalled()
+      expect(vi.mocked(useListUsers)).toHaveBeenCalledWith(
+        expect.objectContaining({ enabled: false }),
+      )
     })
 
     it('shows empty-state message when no filters are active', () => {
@@ -255,28 +254,28 @@ describe('UsersPage', () => {
       expect(screen.getByRole('combobox')).toBeInTheDocument()
     })
 
-    it('changing combined filter to "admin" calls fetch with p_role: "admin"', async () => {
+    it('changing combined filter to "admin" calls useListUsers with role: "admin"', async () => {
       const user = userEvent.setup()
       renderPage()
 
       await user.selectOptions(screen.getByRole('combobox'), 'admin')
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith(
-          expect.objectContaining({ role: 'admin', isActive: null }),
+        expect(vi.mocked(useListUsers)).toHaveBeenCalledWith(
+          expect.objectContaining({ role: 'admin', isActive: null, enabled: true }),
         )
       })
     })
 
-    it('changing combined filter to "inactive" calls fetch with isActive: false', async () => {
+    it('changing combined filter to "inactive" calls useListUsers with isActive: false', async () => {
       const user = userEvent.setup()
       renderPage()
 
       await user.selectOptions(screen.getByRole('combobox'), 'inactive')
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith(
-          expect.objectContaining({ role: null, isActive: false }),
+        expect(vi.mocked(useListUsers)).toHaveBeenCalledWith(
+          expect.objectContaining({ role: null, isActive: false, enabled: true }),
         )
       })
     })
@@ -304,9 +303,8 @@ describe('UsersPage', () => {
 
       renderPage()
 
-      // Activar filtro para que haya una primera llamada a fetch
+      // Activar filtro para que la tabla (y el modal) tengan sentido
       await user.selectOptions(screen.getByRole('combobox'), 'admin')
-      await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1))
 
       // Open modal
       await user.click(screen.getByRole('button', { name: /nuevo usuario/i }))
@@ -329,9 +327,9 @@ describe('UsersPage', () => {
         expect(mockCreateUser).toHaveBeenCalled()
       })
 
-      // After success, fetch is called again (2nd call)
+      // After success, the list is refetched
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledTimes(2)
+        expect(mockRefetch).toHaveBeenCalledTimes(1)
       })
     })
   })
@@ -448,7 +446,7 @@ describe('UsersPage', () => {
   })
 
   describe('page change', () => {
-    it('calls fetch with new page when Pagination fires onPageChange', async () => {
+    it('calls useListUsers with new page when Pagination fires onPageChange', async () => {
       vi.mocked(useListUsers).mockReturnValue(
         makeListUsersReturn({ users: FAKE_USERS, totalCount: 50 }),
       )
@@ -463,7 +461,7 @@ describe('UsersPage', () => {
       await user.click(nextButton)
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith(
+        expect(vi.mocked(useListUsers)).toHaveBeenCalledWith(
           expect.objectContaining({ page: 2 }),
         )
       })

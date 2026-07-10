@@ -7,20 +7,14 @@ vi.mock('@/core/supabase/client', () => ({
 }))
 
 const mockSetTickets = vi.fn()
-const mockSetCategories = vi.fn()
-const mockSetAgents = vi.fn()
 
 let mockGetStateReturn = {
   filters: { status: null, priority: null, categoryId: null, agentId: null, page: 1, pageSize: 10 },
-  categories: [] as unknown[],
-  agents: [] as unknown[],
 }
 
 vi.mock('@/store', () => ({
   useStore: Object.assign(
-    vi.fn((selector: (s: unknown) => unknown) =>
-      selector({ setTickets: mockSetTickets, setCategories: mockSetCategories, setAgents: mockSetAgents })
-    ),
+    vi.fn((selector: (s: unknown) => unknown) => selector({ setTickets: mockSetTickets })),
     { getState: vi.fn(() => mockGetStateReturn) }
   ),
 }))
@@ -43,20 +37,13 @@ const fakeTicketRow = {
   total_count: 1,
 }
 
-const fakeCategoryRow = { id: 'cat-1', name: 'Soporte', description: null }
-const fakeAgentRow = { id: 'agent-1', full_name: 'Ana García', category_id: 'cat-1', category_name: 'Redes', active_ticket_count: 2 }
-
 describe('useTicketList', () => {
   beforeEach(() => {
     mockRpc.mockReset()
     mockRpc.mockResolvedValue({ data: [], error: null })
     mockSetTickets.mockReset()
-    mockSetCategories.mockReset()
-    mockSetAgents.mockReset()
     mockGetStateReturn = {
       filters: { status: null, priority: null, categoryId: null, agentId: null, page: 1, pageSize: 10 },
-      categories: [],
-      agents: [],
     }
   })
 
@@ -138,66 +125,6 @@ describe('useTicketList', () => {
 
     expect(result.current.error).toBe('DB error')
     expect(mockSetTickets).not.toHaveBeenCalled()
-  })
-
-  it('loadCategories() calls rpc("get_categories") and setCategories when categories is empty', async () => {
-    mockRpc.mockResolvedValue({ data: [fakeCategoryRow], error: null })
-
-    const { result } = renderHook(() => useTicketList())
-
-    await act(async () => {
-      await result.current.loadCategories()
-    })
-
-    expect(mockRpc).toHaveBeenCalledWith('get_categories')
-    expect(mockSetCategories).toHaveBeenCalledWith([
-      { id: 'cat-1', name: 'Soporte', description: null },
-    ])
-  })
-
-  it('loadCategories() does NOT call rpc when categories is already populated', async () => {
-    mockGetStateReturn.categories = [fakeCategoryRow]
-
-    const { result } = renderHook(() => useTicketList())
-
-    await act(async () => {
-      await result.current.loadCategories()
-    })
-
-    expect(mockRpc).not.toHaveBeenCalled()
-    expect(mockSetCategories).not.toHaveBeenCalled()
-  })
-
-  it('loadAgents() calls rpc("get_agents") and setAgents when agents is empty', async () => {
-    mockRpc.mockResolvedValue({ data: [fakeAgentRow], error: null })
-
-    const { result } = renderHook(() => useTicketList())
-
-    await act(async () => {
-      await result.current.loadAgents()
-    })
-
-    expect(mockRpc).toHaveBeenCalledWith('get_agents')
-    expect(mockSetAgents).toHaveBeenCalledWith([
-      { id: 'agent-1', fullName: 'Ana García', categoryId: 'cat-1', categoryName: 'Redes', activeTicketCount: 2 },
-    ])
-  })
-
-  it('loadAgents() maps full_name → fullName and active_ticket_count → activeTicketCount', async () => {
-    mockRpc.mockResolvedValue({
-      data: [{ id: 'agent-2', full_name: 'Carlos López', category_id: null, category_name: null, active_ticket_count: 0 }],
-      error: null,
-    })
-
-    const { result } = renderHook(() => useTicketList())
-
-    await act(async () => {
-      await result.current.loadAgents()
-    })
-
-    expect(mockSetAgents).toHaveBeenCalledWith([
-      { id: 'agent-2', fullName: 'Carlos López', categoryId: null, categoryName: null, activeTicketCount: 0 },
-    ])
   })
 
   it('isFetching is false after fetch() completes', async () => {
