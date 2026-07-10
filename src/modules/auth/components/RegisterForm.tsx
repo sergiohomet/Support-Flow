@@ -1,13 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PasswordInput } from './PasswordInput'
-
-interface RegisterFormData {
-  full_name: string
-  email: string
-  password: string
-  confirm_password: string
-}
+import { registerSchema, type RegisterFormData } from '../schemas'
 
 interface RegisterFormProps {
   onSubmit: (data: RegisterFormData) => void
@@ -21,10 +15,6 @@ interface FieldErrors {
   email?: string
   password?: string
   confirm_password?: string
-}
-
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
 export function RegisterForm({
@@ -47,44 +37,28 @@ export function RegisterForm({
     )
   }
 
-  const validate = (): FieldErrors => {
-    const errors: FieldErrors = {}
-
-    if (!fullName.trim() || fullName.trim().length < 2) {
-      errors.full_name = 'El nombre debe tener al menos 2 caracteres.'
-    }
-    if (!email.trim()) {
-      errors.email = 'El email es requerido.'
-    } else if (!isValidEmail(email)) {
-      errors.email = 'Ingresá un email válido.'
-    }
-    if (!password) {
-      errors.password = 'La contraseña es requerida.'
-    } else if (password.length < 8) {
-      errors.password = 'La contraseña debe tener al menos 8 caracteres.'
-    }
-    if (!confirmPassword) {
-      errors.confirm_password = 'Confirmá tu contraseña.'
-    } else if (confirmPassword !== password) {
-      errors.confirm_password = 'Las contraseñas no coinciden.'
-    }
-
-    return errors
-  }
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
-    const errors = validate()
-    setFieldErrors(errors)
 
-    if (Object.keys(errors).length > 0) return
-
-    onSubmit({
+    const result = registerSchema.safeParse({
       full_name: fullName.trim(),
       email: email.trim(),
       password,
       confirm_password: confirmPassword,
     })
+
+    if (!result.success) {
+      const errors: FieldErrors = {}
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as keyof FieldErrors
+        if (!errors[field]) errors[field] = issue.message
+      }
+      setFieldErrors(errors)
+      return
+    }
+
+    setFieldErrors({})
+    onSubmit(result.data)
   }
 
   return (
