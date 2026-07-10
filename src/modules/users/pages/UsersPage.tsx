@@ -13,20 +13,9 @@ import { CreateUserModal } from '@/modules/users/components/CreateUserModal'
 import { ConfirmModal } from '@/modules/users/components/ConfirmModal'
 import { RoleChangeModal } from '@/modules/users/components/RoleChangeModal'
 import { SpecialtyChangeModal } from '@/modules/users/components/SpecialtyChangeModal'
+import { filterToParams } from './filterToParams'
 import type { CombinedFilter } from '@/modules/users/components/UserFilters'
 import type { AdminUser, UserRole, CreateUserInput } from '@/modules/users/schemas'
-
-// ---------------------------------------------------------------------------
-// Filter → RPC params mapping
-// ---------------------------------------------------------------------------
-
-function filterToParams(f: CombinedFilter): { role: UserRole | null; isActive: boolean | null } {
-  if (f === 'admin') return { role: 'admin', isActive: null }
-  if (f === 'agent') return { role: 'agent', isActive: null }
-  if (f === 'client') return { role: 'client', isActive: null }
-  if (f === 'inactive') return { role: null, isActive: false }
-  return { role: null, isActive: null } // '' y 'all' → sin filtro de rol/estado
-}
 
 const PAGE_SIZE = 10
 
@@ -38,14 +27,6 @@ export function UsersPage(): React.JSX.Element {
   // Auth
   const currentUserId = useStore((s) => s.user?.id ?? '')
   const categories = useStore((s) => s.categories)
-
-  // Hooks
-  const { users, totalCount, isFetching, error, fetch } = useListUsers()
-  const { execute: createUser, isLoading: isCreating, error: createError } = useCreateUser()
-  const { execute: updateRole, isLoading: isUpdatingRole } = useUpdateUserRole()
-  const { execute: updateSpecialty, isLoading: isUpdatingSpecialty, error: specialtyError } = useUpdateUserSpecialty()
-  const { execute: toggleStatus, isLoading: isTogglingStatus } = useToggleUserStatus()
-  const { loadCategories } = useTicketList()
 
   // Filter state
   const [search, setSearch] = useState('')
@@ -67,24 +48,27 @@ export function UsersPage(): React.JSX.Element {
   // Hay filtro activo cuando el usuario escribió algo o eligió una opción del dropdown
   const hasActiveFilters = debouncedSearch.trim() !== '' || combinedFilter !== ''
 
-  // ---------------------------------------------------------------------------
-  // Fetch effect — solo ejecuta cuando hay al menos un filtro activo
-  // ---------------------------------------------------------------------------
+  // Hooks
+  const { users, totalCount, isFetching, error, refetch } = useListUsers({
+    search: debouncedSearch.trim() === '' ? null : debouncedSearch.trim(),
+    role,
+    isActive,
+    page,
+    pageSize: PAGE_SIZE,
+    enabled: hasActiveFilters,
+  })
+  const { execute: createUser, isLoading: isCreating, error: createError } = useCreateUser()
+  const { execute: updateRole, isLoading: isUpdatingRole } = useUpdateUserRole()
+  const { execute: updateSpecialty, isLoading: isUpdatingSpecialty, error: specialtyError } = useUpdateUserSpecialty()
+  const { execute: toggleStatus, isLoading: isTogglingStatus } = useToggleUserStatus()
+  const { loadCategories } = useTicketList()
 
+  // TODO(PR4): loadCategories still comes from useTicketList — that hook will
+  // be split into useTicketList/useCategoryList/useAgentList; this page
+  // should call useCategoryList() directly once that lands.
   useEffect(() => {
     void loadCategories()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!hasActiveFilters) return
-    void fetch({
-      search: debouncedSearch.trim() === '' ? null : debouncedSearch.trim(),
-      role,
-      isActive,
-      page,
-      pageSize: PAGE_SIZE,
-    })
-  }, [debouncedSearch, combinedFilter, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset page when filters change (not when page itself changes)
   const handleFilterChange = (value: CombinedFilter): void => {
@@ -111,7 +95,7 @@ export function UsersPage(): React.JSX.Element {
     const ok = await createUser(input)
     if (ok) {
       setIsCreateModalOpen(false)
-      void fetch({ search: null, role, isActive, page, pageSize: PAGE_SIZE })
+      void refetch()
     }
   }
 
@@ -129,7 +113,7 @@ export function UsersPage(): React.JSX.Element {
     const ok = await updateRole(pendingRoleChange.user.id, newRole as UserRole, categoryId)
     if (ok) {
       setPendingRoleChange(null)
-      void fetch({ search: null, role, isActive, page, pageSize: PAGE_SIZE })
+      void refetch()
     }
   }
 
@@ -146,7 +130,7 @@ export function UsersPage(): React.JSX.Element {
     const ok = await updateSpecialty(pendingSpecialtyChange.id, categoryId)
     if (ok) {
       setPendingSpecialtyChange(null)
-      void fetch({ search: null, role, isActive, page, pageSize: PAGE_SIZE })
+      void refetch()
     }
   }
 
@@ -163,7 +147,7 @@ export function UsersPage(): React.JSX.Element {
     const ok = await toggleStatus(pendingStatusToggle.id, !pendingStatusToggle.isActive)
     if (ok) {
       setPendingStatusToggle(null)
-      void fetch({ search: null, role, isActive, page, pageSize: PAGE_SIZE })
+      void refetch()
     }
   }
 
