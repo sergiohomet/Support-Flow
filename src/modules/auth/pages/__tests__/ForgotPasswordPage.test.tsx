@@ -22,18 +22,11 @@ vi.mock('@/modules/auth/hooks/useForgotPassword', () => ({
   }),
 }))
 
-// --- supabase mock ---
-const mockGetSession = vi.fn()
+// --- recovery phase hook mock ---
+let mockPhase: 'request' | 'reset' = 'request'
 
-vi.mock('@/core/supabase/client', () => ({
-  supabase: {
-    auth: {
-      getSession: (...args: unknown[]) => mockGetSession(...args),
-      onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } },
-      })),
-    },
-  },
+vi.mock('@/modules/auth/hooks/useRecoveryPhase', () => ({
+  useRecoveryPhase: () => mockPhase,
 }))
 
 // --- react-router navigate mock ---
@@ -62,28 +55,21 @@ describe('ForgotPasswordPage', () => {
     mockExecuteReset.mockReset()
     mockExecuteReset.mockResolvedValue(true)
     mockNavigate.mockReset()
-    mockGetSession.mockReset()
     mockSent = false
     mockError = null
     // Default: no session → request phase
-    mockGetSession.mockResolvedValue({ data: { session: null }, error: null })
+    mockPhase = 'request'
   })
 
-  it('renders request phase by default when no session exists', async () => {
+  it('renders request phase by default when no session exists', () => {
     renderPage()
-    // Wait for the async getSession effect to settle
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /enviar enlace/i })).toBeInTheDocument()
-    })
+
+    expect(screen.getByRole('button', { name: /enviar enlace/i })).toBeInTheDocument()
     expect(screen.getByText('Recuperar contraseña')).toBeInTheDocument()
   })
 
 it('calls executeRequest when request form is submitted', async () => {
     renderPage()
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /enviar enlace/i })).toBeInTheDocument()
-    })
 
     fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
       target: { value: 'user@example.com' },
@@ -96,10 +82,7 @@ it('calls executeRequest when request form is submitted', async () => {
   })
 
   it('calls executeReset when reset form is submitted', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'user-1' } } },
-      error: null,
-    })
+    mockPhase = 'reset'
 
     renderPage()
 
@@ -119,10 +102,7 @@ it('calls executeRequest when request form is submitted', async () => {
   })
 
   it('navigates to /login with message after successful reset', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'user-1' } } },
-      error: null,
-    })
+    mockPhase = 'reset'
     mockExecuteReset.mockResolvedValue(true)
 
     renderPage()
@@ -145,10 +125,7 @@ it('calls executeRequest when request form is submitted', async () => {
   })
 
   it('does not navigate when executeReset returns false (error case)', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'user-1' } } },
-      error: null,
-    })
+    mockPhase = 'reset'
     mockExecuteReset.mockResolvedValue(false)
 
     renderPage()
