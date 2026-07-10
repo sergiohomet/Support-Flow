@@ -19,19 +19,38 @@ const fakeUserRow = {
   total_count: 42,
 }
 
+const baseParams = {
+  search: null,
+  role: null,
+  isActive: null,
+  page: 1,
+  pageSize: 10,
+  enabled: true,
+}
+
 describe('useListUsers', () => {
   beforeEach(() => {
     mockRpc.mockReset()
     mockRpc.mockResolvedValue({ data: [], error: null })
   })
 
-  it('calls rpc("admin_list_users") with correct default params on fetch()', async () => {
-    mockRpc.mockResolvedValue({ data: [fakeUserRow], error: null })
-
-    const { result } = renderHook(() => useListUsers())
+  it('does not call the RPC when enabled is false', async () => {
+    renderHook(() => useListUsers({ ...baseParams, enabled: false }))
 
     await act(async () => {
-      await result.current.fetch({})
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    expect(mockRpc).not.toHaveBeenCalled()
+  })
+
+  it('calls rpc("admin_list_users") with correct default params when enabled', async () => {
+    mockRpc.mockResolvedValue({ data: [fakeUserRow], error: null })
+
+    renderHook(() => useListUsers(baseParams))
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
     })
 
     expect(mockRpc).toHaveBeenCalledWith('admin_list_users', {
@@ -43,10 +62,10 @@ describe('useListUsers', () => {
   it('maps snake_case to camelCase in returned users', async () => {
     mockRpc.mockResolvedValue({ data: [fakeUserRow], error: null })
 
-    const { result } = renderHook(() => useListUsers())
+    const { result } = renderHook(() => useListUsers(baseParams))
 
     await act(async () => {
-      await result.current.fetch({})
+      await new Promise((r) => setTimeout(r, 0))
     })
 
     expect(result.current.users).toEqual([
@@ -72,18 +91,17 @@ describe('useListUsers', () => {
       })
     )
 
-    const { result } = renderHook(() => useListUsers())
+    const { result } = renderHook(() => useListUsers(baseParams))
 
-    let fetchPromise: Promise<void>
-    act(() => {
-      fetchPromise = result.current.fetch({})
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
     })
 
     expect(result.current.isFetching).toBe(true)
 
     await act(async () => {
-      resolveRpc({ data: [], error: null })
-      await fetchPromise
+      resolveRpc({ data: [fakeUserRow], error: null })
+      await new Promise((r) => setTimeout(r, 0))
     })
 
     expect(result.current.isFetching).toBe(false)
@@ -92,10 +110,10 @@ describe('useListUsers', () => {
   it('extracts total_count from first row and exposes as totalCount', async () => {
     mockRpc.mockResolvedValue({ data: [fakeUserRow], error: null })
 
-    const { result } = renderHook(() => useListUsers())
+    const { result } = renderHook(() => useListUsers(baseParams))
 
     await act(async () => {
-      await result.current.fetch({})
+      await new Promise((r) => setTimeout(r, 0))
     })
 
     expect(result.current.totalCount).toBe(42)
@@ -104,10 +122,10 @@ describe('useListUsers', () => {
   it('totalCount is 0 when data is empty', async () => {
     mockRpc.mockResolvedValue({ data: [], error: null })
 
-    const { result } = renderHook(() => useListUsers())
+    const { result } = renderHook(() => useListUsers(baseParams))
 
     await act(async () => {
-      await result.current.fetch({})
+      await new Promise((r) => setTimeout(r, 0))
     })
 
     expect(result.current.totalCount).toBe(0)
@@ -116,10 +134,10 @@ describe('useListUsers', () => {
   it('sets error string when RPC returns an error', async () => {
     mockRpc.mockResolvedValue({ data: null, error: { message: 'DB error' } })
 
-    const { result } = renderHook(() => useListUsers())
+    const { result } = renderHook(() => useListUsers(baseParams))
 
     await act(async () => {
-      await result.current.fetch({})
+      await new Promise((r) => setTimeout(r, 0))
     })
 
     expect(result.current.error).toBe('Error al procesar la solicitud. Intentá de nuevo.')
@@ -129,16 +147,19 @@ describe('useListUsers', () => {
   it('passes all filter params correctly to rpc', async () => {
     mockRpc.mockResolvedValue({ data: [], error: null })
 
-    const { result } = renderHook(() => useListUsers())
-
-    await act(async () => {
-      await result.current.fetch({
+    renderHook(() =>
+      useListUsers({
         search: 'alice',
         role: 'agent',
         isActive: false,
         page: 2,
         pageSize: 25,
+        enabled: true,
       })
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
     })
 
     expect(mockRpc).toHaveBeenCalledWith('admin_list_users', {
@@ -148,5 +169,73 @@ describe('useListUsers', () => {
       p_page: 2,
       p_page_size: 25,
     })
+  })
+
+  it('refetches when params change', async () => {
+    mockRpc.mockResolvedValue({ data: [fakeUserRow], error: null })
+
+    const { rerender } = renderHook(
+      ({ page }) => useListUsers({ ...baseParams, page }),
+      { initialProps: { page: 1 } }
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    expect(mockRpc).toHaveBeenCalledTimes(1)
+
+    rerender({ page: 2 })
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    expect(mockRpc).toHaveBeenCalledTimes(2)
+    expect(mockRpc).toHaveBeenLastCalledWith('admin_list_users', {
+      p_page: 2,
+      p_page_size: 10,
+    })
+  })
+
+  it('does not refetch when enabled flips true→false→true without other param changes triggering extra calls while disabled', async () => {
+    mockRpc.mockResolvedValue({ data: [], error: null })
+
+    const { rerender } = renderHook(
+      ({ enabled }) => useListUsers({ ...baseParams, enabled }),
+      { initialProps: { enabled: false } }
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    expect(mockRpc).not.toHaveBeenCalled()
+
+    rerender({ enabled: true })
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    expect(mockRpc).toHaveBeenCalledTimes(1)
+  })
+
+  it('refetch() manually re-calls the RPC', async () => {
+    mockRpc.mockResolvedValue({ data: [fakeUserRow], error: null })
+
+    const { result } = renderHook(() => useListUsers(baseParams))
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    expect(mockRpc).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      await result.current.refetch()
+    })
+
+    expect(mockRpc).toHaveBeenCalledTimes(2)
   })
 })
