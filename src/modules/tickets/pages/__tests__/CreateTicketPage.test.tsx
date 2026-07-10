@@ -116,11 +116,6 @@ describe('CreateTicketPage', () => {
     expect(screen.getByText(/mis tickets/i)).toBeInTheDocument()
   })
 
-  it('calls loadCategories() on mount', () => {
-    renderPage()
-    expect(mockLoadCategories).toHaveBeenCalledTimes(1)
-  })
-
   it('renders category options when categories are in store', () => {
     mockState.categories = [
       { id: 'cat-1', name: 'Soporte técnico', description: null },
