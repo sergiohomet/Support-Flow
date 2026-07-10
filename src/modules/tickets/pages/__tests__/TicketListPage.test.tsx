@@ -104,13 +104,14 @@ describe('TicketListPage', () => {
       user: null,
     }
 
+    vi.mocked(useTicketList).mockClear()
     vi.mocked(useTicketList).mockReturnValue(makeHookReturn())
   })
 
   describe('initial render — no active filters', () => {
-    it('does NOT call fetch on mount', () => {
+    it('calls useTicketList with enabled: false on mount', () => {
       renderPage()
-      expect(mockFetch).not.toHaveBeenCalled()
+      expect(vi.mocked(useTicketList)).toHaveBeenCalledWith(false)
     })
 
     it('shows the empty-state prompt instead of the ticket table', () => {
@@ -139,11 +140,11 @@ describe('TicketListPage', () => {
   })
 
   describe('tab interaction', () => {
-    it('calls fetch when a status tab is selected', async () => {
+    it('calls useTicketList with enabled: true when a status tab is selected', async () => {
       const user = userEvent.setup()
       renderPage()
       await user.click(screen.getByRole('tab', { name: 'Abierto' }))
-      expect(mockFetch).toHaveBeenCalledTimes(1)
+      expect(vi.mocked(useTicketList)).toHaveBeenCalledWith(true)
     })
 
     it('calls setFilters with the correct status when a tab is selected', async () => {
@@ -181,12 +182,12 @@ describe('TicketListPage', () => {
   })
 
   describe('search interaction', () => {
-    it('does NOT call fetch immediately on mount with empty search', () => {
+    it('does NOT call useTicketList with enabled: true immediately on mount with empty search', () => {
       renderPage()
-      expect(mockFetch).not.toHaveBeenCalled()
+      expect(vi.mocked(useTicketList)).not.toHaveBeenCalledWith(true)
     })
 
-    it('calls fetch after debounce when text is typed in search box', async () => {
+    it('calls useTicketList with enabled: true after debounce when text is typed in search box', async () => {
       vi.useFakeTimers({ shouldAdvanceTime: true })
       const user = userEvent.setup({ delay: null })
       renderPage()
@@ -196,7 +197,7 @@ describe('TicketListPage', () => {
       await act(async () => {
         vi.advanceTimersByTime(400)
       })
-      expect(mockFetch).toHaveBeenCalled()
+      expect(vi.mocked(useTicketList)).toHaveBeenCalledWith(true)
       vi.useRealTimers()
     })
   })

@@ -8,14 +8,15 @@ vi.mock('@/core/supabase/client', () => ({
 
 const mockSetTickets = vi.fn()
 
-let mockGetStateReturn = {
-  filters: { status: null, priority: null, categoryId: null, agentId: null, page: 1, pageSize: 10 },
+let mockState = {
+  setTickets: mockSetTickets,
+  filters: { status: null as string | null, priority: null, categoryId: null, agentId: null, page: 1, pageSize: 10 },
 }
 
 vi.mock('@/store', () => ({
   useStore: Object.assign(
-    vi.fn((selector: (s: unknown) => unknown) => selector({ setTickets: mockSetTickets })),
-    { getState: vi.fn(() => mockGetStateReturn) }
+    vi.fn((selector: (s: unknown) => unknown) => selector(mockState)),
+    { getState: vi.fn(() => mockState) }
   ),
 }))
 
@@ -42,98 +43,168 @@ describe('useTicketList', () => {
     mockRpc.mockReset()
     mockRpc.mockResolvedValue({ data: [], error: null })
     mockSetTickets.mockReset()
-    mockGetStateReturn = {
+    mockState = {
+      setTickets: mockSetTickets,
       filters: { status: null, priority: null, categoryId: null, agentId: null, page: 1, pageSize: 10 },
     }
   })
 
-  it('fetch() calls rpc("get_tickets") with params from filters', async () => {
-    mockRpc.mockResolvedValue({ data: [fakeTicketRow], error: null })
+  describe('fetch() (manual call, enabled defaults to false)', () => {
+    it('calls rpc("get_tickets") with params from filters', async () => {
+      mockRpc.mockResolvedValue({ data: [fakeTicketRow], error: null })
 
-    const { result } = renderHook(() => useTicketList())
+      const { result } = renderHook(() => useTicketList())
 
-    await act(async () => {
-      await result.current.fetch()
+      await act(async () => {
+        await result.current.fetch()
+      })
+
+      expect(mockRpc).toHaveBeenCalledWith('get_tickets', {
+        p_status: undefined,
+        p_priority: undefined,
+        p_category_id: undefined,
+        p_agent_id: undefined,
+        p_page: 1,
+        p_page_size: 10,
+      })
     })
 
-    expect(mockRpc).toHaveBeenCalledWith('get_tickets', {
-      p_status: undefined,
-      p_priority: undefined,
-      p_category_id: undefined,
-      p_agent_id: undefined,
-      p_page: 1,
-      p_page_size: 10,
+    it('calls setTickets with camelCase-mapped data and total_count from first row', async () => {
+      mockRpc.mockResolvedValue({ data: [fakeTicketRow], error: null })
+
+      const { result } = renderHook(() => useTicketList())
+
+      await act(async () => {
+        await result.current.fetch()
+      })
+
+      expect(mockSetTickets).toHaveBeenCalledWith(
+        [
+          {
+            id: 'ticket-1',
+            title: 'Test ticket',
+            status: 'abierto',
+            priority: 'media',
+            categoryId: 'cat-1',
+            categoryName: 'Soporte',
+            categoryIsActive: true,
+            clientId: 'user-1',
+            clientFullName: 'Juan Pérez',
+            agentId: null,
+            agentFullName: null,
+            createdAt: '2026-06-15T10:00:00Z',
+            updatedAt: '2026-06-15T10:00:00Z',
+            commentCount: 0,
+          },
+        ],
+        1
+      )
+    })
+
+    it('maps category_is_active: false → categoryIsActive: false', async () => {
+      mockRpc.mockResolvedValue({
+        data: [{ ...fakeTicketRow, category_is_active: false }],
+        error: null,
+      })
+
+      const { result } = renderHook(() => useTicketList())
+
+      await act(async () => {
+        await result.current.fetch()
+      })
+
+      const [mappedTickets] = mockSetTickets.mock.calls[0] as [Array<{ categoryIsActive: boolean }>]
+      expect(mappedTickets[0].categoryIsActive).toBe(false)
+    })
+
+    it('sets error when rpc returns an error and does NOT call setTickets', async () => {
+      mockRpc.mockResolvedValue({ data: null, error: { message: 'DB error' } })
+
+      const { result } = renderHook(() => useTicketList())
+
+      await act(async () => {
+        await result.current.fetch()
+      })
+
+      expect(result.current.error).toBe('DB error')
+      expect(mockSetTickets).not.toHaveBeenCalled()
+    })
+
+    it('isFetching is false after fetch() completes', async () => {
+      const { result } = renderHook(() => useTicketList())
+
+      await act(async () => {
+        await result.current.fetch()
+      })
+
+      expect(result.current.isFetching).toBe(false)
     })
   })
 
-  it('fetch() calls setTickets with camelCase-mapped data and total_count from first row', async () => {
-    mockRpc.mockResolvedValue({ data: [fakeTicketRow], error: null })
+  describe('auto-fetch effect (enabled=true)', () => {
+    it('does not call the RPC when enabled is false', async () => {
+      renderHook(() => useTicketList(false))
 
-    const { result } = renderHook(() => useTicketList())
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
 
-    await act(async () => {
-      await result.current.fetch()
+      expect(mockRpc).not.toHaveBeenCalled()
     })
 
-    expect(mockSetTickets).toHaveBeenCalledWith(
-      [
-        {
-          id: 'ticket-1',
-          title: 'Test ticket',
-          status: 'abierto',
-          priority: 'media',
-          categoryId: 'cat-1',
-          categoryName: 'Soporte',
-          categoryIsActive: true,
-          clientId: 'user-1',
-          clientFullName: 'Juan Pérez',
-          agentId: null,
-          agentFullName: null,
-          createdAt: '2026-06-15T10:00:00Z',
-          updatedAt: '2026-06-15T10:00:00Z',
-          commentCount: 0,
-        },
-      ],
-      1
-    )
-  })
+    it('fetches on mount when enabled is true', async () => {
+      mockRpc.mockResolvedValue({ data: [fakeTicketRow], error: null })
 
-  it('fetch() maps category_is_active: false → categoryIsActive: false', async () => {
-    mockRpc.mockResolvedValue({
-      data: [{ ...fakeTicketRow, category_is_active: false }],
-      error: null,
+      renderHook(() => useTicketList(true))
+
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      expect(mockRpc).toHaveBeenCalledTimes(1)
+      expect(mockSetTickets).toHaveBeenCalledTimes(1)
     })
 
-    const { result } = renderHook(() => useTicketList())
+    it('refetches when filters.status changes while enabled', async () => {
+      mockRpc.mockResolvedValue({ data: [], error: null })
 
-    await act(async () => {
-      await result.current.fetch()
+      const { rerender } = renderHook(() => useTicketList(true))
+
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      expect(mockRpc).toHaveBeenCalledTimes(1)
+
+      mockState = { ...mockState, filters: { ...mockState.filters, status: 'abierto' } }
+      rerender()
+
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      expect(mockRpc).toHaveBeenCalledTimes(2)
     })
 
-    const [mappedTickets] = mockSetTickets.mock.calls[0] as [Array<{ categoryIsActive: boolean }>]
-    expect(mappedTickets[0].categoryIsActive).toBe(false)
-  })
+    it('refetches when filters.page changes while enabled', async () => {
+      mockRpc.mockResolvedValue({ data: [], error: null })
 
-  it('fetch() sets error when rpc returns an error and does NOT call setTickets', async () => {
-    mockRpc.mockResolvedValue({ data: null, error: { message: 'DB error' } })
+      const { rerender } = renderHook(() => useTicketList(true))
 
-    const { result } = renderHook(() => useTicketList())
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
 
-    await act(async () => {
-      await result.current.fetch()
+      expect(mockRpc).toHaveBeenCalledTimes(1)
+
+      mockState = { ...mockState, filters: { ...mockState.filters, page: 2 } }
+      rerender()
+
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      expect(mockRpc).toHaveBeenCalledTimes(2)
     })
-
-    expect(result.current.error).toBe('DB error')
-    expect(mockSetTickets).not.toHaveBeenCalled()
-  })
-
-  it('isFetching is false after fetch() completes', async () => {
-    const { result } = renderHook(() => useTicketList())
-
-    await act(async () => {
-      await result.current.fetch()
-    })
-
-    expect(result.current.isFetching).toBe(false)
   })
 })

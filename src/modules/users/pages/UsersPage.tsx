@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useDebounce } from '@/core/hooks/useDebounce'
 import { useStore } from '@/store'
 import { useListUsers } from '@/modules/users/hooks/useListUsers'
@@ -61,11 +61,7 @@ export function UsersPage(): React.JSX.Element {
   const { execute: updateRole, isLoading: isUpdatingRole } = useUpdateUserRole()
   const { execute: updateSpecialty, isLoading: isUpdatingSpecialty, error: specialtyError } = useUpdateUserSpecialty()
   const { execute: toggleStatus, isLoading: isTogglingStatus } = useToggleUserStatus()
-  const { loadCategories } = useCategoryList()
-
-  useEffect(() => {
-    void loadCategories()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useCategoryList()
 
   // Reset page when filters change (not when page itself changes)
   const handleFilterChange = (value: CombinedFilter): void => {

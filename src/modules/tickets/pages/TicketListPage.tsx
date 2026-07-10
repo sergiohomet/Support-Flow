@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react'
+import React, { useRef, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/store'
 import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
@@ -8,7 +8,6 @@ import type { TicketStatus } from '@/modules/tickets/schemas'
 
 export function TicketListPage(): React.JSX.Element {
   const navigate = useNavigate()
-  const { isFetching, fetch } = useTicketList()
 
   const tickets = useStore((s) => s.tickets)
   const filters = useStore((s) => s.filters)
@@ -48,10 +47,7 @@ export function TicketListPage(): React.JSX.Element {
     setFilters({ page })
   }
 
-  useEffect(() => {
-    if (!hasActiveFilters) return
-    void fetch()
-  }, [statusTab, debouncedSearch, filters.page]) // eslint-disable-line react-hooks/exhaustive-deps
+  const { isFetching } = useTicketList(hasActiveFilters)
 
   const visibleTickets = useMemo(() => {
     const term = debouncedSearch.trim().toLowerCase()

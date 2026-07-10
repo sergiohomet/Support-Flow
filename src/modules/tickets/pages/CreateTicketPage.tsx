@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/store'
 import { useCategoryList } from '@/modules/tickets/hooks/useCategoryList'
@@ -8,14 +8,10 @@ import type { CreateTicketInput } from '@/modules/tickets/schemas'
 
 export function CreateTicketPage(): React.ReactElement {
   const navigate = useNavigate()
-  const { loadCategories } = useCategoryList()
+  useCategoryList()
   const { execute, isLoading, error } = useCreateTicket()
 
   const categories = useStore((s) => s.categories)
-
-  useEffect(() => {
-    void loadCategories()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (input: CreateTicketInput): Promise<void> => {
     const newId = await execute(input)
