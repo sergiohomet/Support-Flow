@@ -6,14 +6,13 @@ import { CreateTicketPage } from '../CreateTicketPage'
 
 const mockExecute = vi.fn()
 const mockLoadCategories = vi.fn()
-const mockLoadAgents = vi.fn()
 
 vi.mock('@/modules/tickets/hooks/useCreateTicket', () => ({
   useCreateTicket: vi.fn(),
 }))
 
-vi.mock('@/modules/tickets/hooks/useTicketList', () => ({
-  useTicketList: vi.fn(),
+vi.mock('@/modules/tickets/hooks/useCategoryList', () => ({
+  useCategoryList: vi.fn(),
 }))
 
 // --- store mock ---
@@ -33,10 +32,10 @@ vi.mock('@/store', () => ({
 // --- imports after mocks ---
 
 import { useCreateTicket } from '@/modules/tickets/hooks/useCreateTicket'
-import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
+import { useCategoryList } from '@/modules/tickets/hooks/useCategoryList'
 
 type CreateTicketHookReturn = ReturnType<typeof useCreateTicket>
-type TicketListHookReturn = ReturnType<typeof useTicketList>
+type CategoryListHookReturn = ReturnType<typeof useCategoryList>
 
 function makeCreateTicketReturn(overrides: Partial<CreateTicketHookReturn> = {}): CreateTicketHookReturn {
   return {
@@ -47,15 +46,11 @@ function makeCreateTicketReturn(overrides: Partial<CreateTicketHookReturn> = {})
   }
 }
 
-function makeTicketListReturn(overrides: Partial<TicketListHookReturn> = {}): TicketListHookReturn {
+function makeCategoryListReturn(overrides: Partial<CategoryListHookReturn> = {}): CategoryListHookReturn {
   return {
-    isFetching: false,
     isLoadingCategories: false,
-    isLoadingAgents: false,
     error: null,
-    fetch: vi.fn(),
     loadCategories: mockLoadCategories,
-    loadAgents: mockLoadAgents,
     ...overrides,
   }
 }
@@ -72,7 +67,6 @@ describe('CreateTicketPage', () => {
   beforeEach(() => {
     mockExecute.mockReset()
     mockLoadCategories.mockReset()
-    mockLoadAgents.mockReset()
 
     mockLoadCategories.mockResolvedValue(undefined)
     mockExecute.mockResolvedValue(null)
@@ -80,7 +74,7 @@ describe('CreateTicketPage', () => {
     mockState = { categories: [] }
 
     vi.mocked(useCreateTicket).mockReturnValue(makeCreateTicketReturn())
-    vi.mocked(useTicketList).mockReturnValue(makeTicketListReturn())
+    vi.mocked(useCategoryList).mockReturnValue(makeCategoryListReturn())
   })
 
   it('renders the page heading "Nuevo ticket"', () => {

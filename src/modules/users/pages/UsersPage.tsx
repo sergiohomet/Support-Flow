@@ -3,7 +3,7 @@ import { useDebounce } from '@/core/hooks/useDebounce'
 import { useStore } from '@/store'
 import { useListUsers } from '@/modules/users/hooks/useListUsers'
 import { useCreateUser } from '@/modules/users/hooks/useCreateUser'
-import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
+import { useCategoryList } from '@/modules/tickets/hooks/useCategoryList'
 import { useUpdateUserRole } from '@/modules/users/hooks/useUpdateUserRole'
 import { useUpdateUserSpecialty } from '@/modules/users/hooks/useUpdateUserSpecialty'
 import { useToggleUserStatus } from '@/modules/users/hooks/useToggleUserStatus'
@@ -61,11 +61,8 @@ export function UsersPage(): React.JSX.Element {
   const { execute: updateRole, isLoading: isUpdatingRole } = useUpdateUserRole()
   const { execute: updateSpecialty, isLoading: isUpdatingSpecialty, error: specialtyError } = useUpdateUserSpecialty()
   const { execute: toggleStatus, isLoading: isTogglingStatus } = useToggleUserStatus()
-  const { loadCategories } = useTicketList()
+  const { loadCategories } = useCategoryList()
 
-  // TODO(PR4): loadCategories still comes from useTicketList — that hook will
-  // be split into useTicketList/useCategoryList/useAgentList; this page
-  // should call useCategoryList() directly once that lands.
   useEffect(() => {
     void loadCategories()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps

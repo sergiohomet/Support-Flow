@@ -42,15 +42,11 @@ vi.mock('@/modules/users/hooks/useUpdateUserSpecialty', () => ({
 vi.mock('@/modules/users/hooks/useToggleUserStatus', () => ({
   useToggleUserStatus: vi.fn(),
 }))
-vi.mock('@/modules/tickets/hooks/useTicketList', () => ({
-  useTicketList: vi.fn(() => ({
-    isFetching: false,
+vi.mock('@/modules/tickets/hooks/useCategoryList', () => ({
+  useCategoryList: vi.fn(() => ({
     isLoadingCategories: false,
-    isLoadingAgents: false,
     error: null,
-    fetch: vi.fn(),
     loadCategories: mockLoadCategories,
-    loadAgents: vi.fn(),
   })),
 }))
 
