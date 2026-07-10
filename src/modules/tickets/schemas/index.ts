@@ -90,9 +90,9 @@ export const createTicketInputSchema = z.object({
 
 // Named action schemas (spec-required public API)
 export const CreateTicketSchema = z.object({
-  title: z.string().min(5, 'El título debe tener al menos 5 caracteres').max(120, 'El título no puede superar los 120 caracteres'),
-  description: z.string().min(10, 'La descripción debe tener al menos 10 caracteres'),
-  categoryId: z.string().min(1, 'Debe seleccionar una categoría'),
+  title: z.string().min(5, 'El título debe tener al menos 5 caracteres.').max(120, 'El título no puede superar los 120 caracteres.'),
+  description: z.string().min(10, 'La descripción debe tener al menos 10 caracteres.'),
+  categoryId: z.string().min(1, 'Seleccioná una categoría.'),
   priority: ticketPrioritySchema.optional().default('media'),
 })
 

@@ -1,11 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PasswordInput } from './PasswordInput'
-
-interface LoginFormData {
-  email: string
-  password: string
-}
+import { loginSchema, type LoginFormData } from '../schemas'
 
 interface LoginFormProps {
   onSubmit: (data: LoginFormData) => void
@@ -18,10 +14,6 @@ interface FieldErrors {
   password?: string
 }
 
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
 export function LoginForm({
   onSubmit,
   isLoading,
@@ -31,29 +23,23 @@ export function LoginForm({
   const [password, setPassword] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
-  const validate = (): FieldErrors => {
-    const errors: FieldErrors = {}
-
-    if (!email.trim()) {
-      errors.email = 'El email es requerido.'
-    } else if (!isValidEmail(email)) {
-      errors.email = 'Ingresá un email válido.'
-    }
-    if (!password) {
-      errors.password = 'La contraseña es requerida.'
-    }
-
-    return errors
-  }
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
-    const errors = validate()
-    setFieldErrors(errors)
 
-    if (Object.keys(errors).length > 0) return
+    const result = loginSchema.safeParse({ email: email.trim(), password })
 
-    onSubmit({ email: email.trim(), password })
+    if (!result.success) {
+      const errors: FieldErrors = {}
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as keyof FieldErrors
+        if (!errors[field]) errors[field] = issue.message
+      }
+      setFieldErrors(errors)
+      return
+    }
+
+    setFieldErrors({})
+    onSubmit(result.data)
   }
 
   return (

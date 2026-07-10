@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CreateTicketSchema } from '@/modules/tickets/schemas'
 import type { Category, CreateTicketInput } from '@/modules/tickets/schemas'
 
 interface CreateTicketFormProps {
@@ -58,41 +59,28 @@ export function CreateTicketForm({
   const [priority, setPriority] = useState<Priority>('media')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
-  const validate = (): FieldErrors => {
-    const errors: FieldErrors = {}
-
-    if (!title.trim()) {
-      errors.title = 'El título es requerido.'
-    } else if (title.trim().length < 5) {
-      errors.title = 'El título debe tener al menos 5 caracteres.'
-    }
-
-    if (!description.trim()) {
-      errors.description = 'La descripción es requerida.'
-    } else if (description.trim().length < 10) {
-      errors.description = 'La descripción debe tener al menos 10 caracteres.'
-    }
-
-    if (!categoryId) {
-      errors.categoryId = 'Seleccioná una categoría.'
-    }
-
-    return errors
-  }
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
-    const errors = validate()
-    setFieldErrors(errors)
 
-    if (Object.keys(errors).length > 0) return
-
-    onSubmit({
+    const result = CreateTicketSchema.safeParse({
       title: title.trim(),
       description: description.trim(),
       categoryId,
       priority,
     })
+
+    if (!result.success) {
+      const errors: FieldErrors = {}
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as keyof FieldErrors
+        if (!errors[field]) errors[field] = issue.message
+      }
+      setFieldErrors(errors)
+      return
+    }
+
+    setFieldErrors({})
+    onSubmit(result.data)
   }
 
   return (

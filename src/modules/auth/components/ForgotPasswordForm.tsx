@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { PasswordInput } from './PasswordInput'
+import { forgotPasswordRequestSchema, resetPasswordSchema } from '../schemas'
 
 type ForgotPasswordPhase = 'request' | 'reset'
 
@@ -43,12 +44,16 @@ export function ForgotPasswordForm({
 
     const handleRequestSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
       e.preventDefault()
-      if (!email.trim()) {
-        setEmailError('El email es requerido.')
+
+      const result = forgotPasswordRequestSchema.safeParse({ email: email.trim() })
+
+      if (!result.success) {
+        setEmailError(result.error.issues[0]?.message)
         return
       }
+
       setEmailError(undefined)
-      onSubmitRequest(email.trim())
+      onSubmitRequest(result.data.email)
     }
 
     return (
@@ -99,31 +104,23 @@ export function ForgotPasswordForm({
   }
 
   // phase === 'reset'
-  const validateReset = (): ResetFieldErrors => {
-    const errors: ResetFieldErrors = {}
-
-    if (!password) {
-      errors.password = 'La contraseña es requerida.'
-    } else if (password.length < 8) {
-      errors.password = 'La contraseña debe tener al menos 8 caracteres.'
-    }
-    if (!confirmPassword) {
-      errors.confirm_password = 'Confirmá tu contraseña.'
-    } else if (confirmPassword !== password) {
-      errors.confirm_password = 'Las contraseñas no coinciden.'
-    }
-
-    return errors
-  }
-
   const handleResetSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
-    const errors = validateReset()
-    setResetErrors(errors)
 
-    if (Object.keys(errors).length > 0) return
+    const result = resetPasswordSchema.safeParse({ password, confirm_password: confirmPassword })
 
-    onSubmitReset(password)
+    if (!result.success) {
+      const errors: ResetFieldErrors = {}
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as keyof ResetFieldErrors
+        if (!errors[field]) errors[field] = issue.message
+      }
+      setResetErrors(errors)
+      return
+    }
+
+    setResetErrors({})
+    onSubmitReset(result.data.password)
   }
 
   return (
