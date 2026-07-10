@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { useStore } from '@/store'
 import { useReassignTicket } from '@/modules/tickets/hooks/useReassignTicket'
+import { getEligibleAgents, isAgentAtCapacityLimit } from './eligibleAgents'
+import type { Agent } from '@/modules/tickets/schemas'
 
 interface ReassignTicketModalProps {
   ticketId: string
@@ -8,6 +9,8 @@ interface ReassignTicketModalProps {
   ticketCategoryId: string
   currentAgentId: string | null
   currentAgentName: string | null
+  agents: Agent[]
+  currentUserFullName: string | null
   onClose: () => void
   onSuccess: () => void
 }
@@ -18,19 +21,19 @@ export function ReassignTicketModal({
   ticketCategoryId,
   currentAgentId,
   currentAgentName,
+  agents,
+  currentUserFullName,
   onClose,
   onSuccess,
 }: ReassignTicketModalProps): React.JSX.Element {
-  const agents = useStore((s) => s.agents)
-  const user = useStore((s) => s.user)
   const { execute, isLoading, error } = useReassignTicket()
 
   const [selectedAgentId, setSelectedAgentId] = useState('')
   const firstFocusRef = useRef<HTMLButtonElement>(null)
 
-  const eligibleAgents = agents.filter((a) => a.categoryId === ticketCategoryId && a.activeTicketCount <= 4)
+  const eligibleAgents = getEligibleAgents(agents, ticketCategoryId)
   const selectedAgent = eligibleAgents.find((a) => a.id === selectedAgentId) ?? null
-  const isAtLimit = selectedAgent?.activeTicketCount === 4
+  const isAtLimit = isAgentAtCapacityLimit(selectedAgent)
   const isDisabled = selectedAgentId === '' || selectedAgentId === currentAgentId || isLoading
 
   useEffect(() => {
@@ -50,7 +53,7 @@ export function ReassignTicketModal({
   }
 
   const previewText = selectedAgent
-    ? `Ticket reasignado de ${currentAgentName ?? 'Sin asignar'} a ${selectedAgent.fullName} por ${user?.full_name ?? 'Administrador'}.`
+    ? `Ticket reasignado de ${currentAgentName ?? 'Sin asignar'} a ${selectedAgent.fullName} por ${currentUserFullName ?? 'Administrador'}.`
     : null
 
   return (

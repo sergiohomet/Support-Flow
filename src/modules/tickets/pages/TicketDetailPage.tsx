@@ -115,6 +115,7 @@ export function TicketDetailPage(): React.ReactElement {
   const { loadAgents } = useAgentList()
 
   const user = useStore((s) => s.user)
+  const agents = useStore((s) => s.agents)
 
   useEffect(() => {
     if (!id) return
@@ -400,6 +401,8 @@ export function TicketDetailPage(): React.ReactElement {
                       currentAgentId={ticket.agentId}
                       currentAgentName={ticket.agentFullName ?? null}
                       ticketCategoryId={ticket.categoryId}
+                      agents={agents}
+                      currentUserFullName={user?.full_name ?? null}
                       onClose={() => setIsReassignOpen(false)}
                       onSuccess={() => {
                         setIsReassignOpen(false)
