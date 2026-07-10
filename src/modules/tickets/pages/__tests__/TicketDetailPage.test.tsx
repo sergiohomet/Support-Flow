@@ -108,7 +108,7 @@ function makeDetailReturn(overrides: Partial<ReturnType<typeof useTicketDetail>>
     statusLog: [],
     isLoading: false,
     error: null,
-    fetch: mockFetchDetail,
+    refetch: mockFetchDetail,
     ...overrides,
   }
 }
@@ -142,6 +142,7 @@ describe('TicketDetailPage', () => {
       agents: [],
     }
 
+    vi.mocked(useTicketDetail).mockClear()
     vi.mocked(useTicketDetail).mockReturnValue(makeDetailReturn())
     vi.mocked(useUnassignTicket).mockReturnValue({ execute: mockAssignTicket, isLoading: false, error: null })
     vi.mocked(useUpdateTicketStatus).mockReturnValue({ execute: mockUpdateStatus, isLoading: false, error: null })
@@ -207,9 +208,9 @@ describe('TicketDetailPage', () => {
     expect(screen.getAllByText('Juan Pérez').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('calls fetch() with the ticket id on mount', () => {
+  it('calls useTicketDetail with the ticket id from the route', () => {
     renderPage()
-    expect(mockFetchDetail).toHaveBeenCalledWith('ticket-uuid-123')
+    expect(vi.mocked(useTicketDetail)).toHaveBeenCalledWith('ticket-uuid-123')
   })
 
   it('calls loadAgents() on mount', () => {
