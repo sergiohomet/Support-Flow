@@ -1,6 +1,7 @@
 import type { AtRiskTicket } from '@/modules/sla/schemas'
 import { EmptyState } from '@/ui/EmptyState'
 import { formatMinutesRemaining } from './formatMinutesRemaining'
+import { isTicketUrgent } from './slaThresholds'
 
 interface AtRiskTicketsTableProps {
   tickets: AtRiskTicket[]
@@ -40,7 +41,7 @@ export function AtRiskTicketsTable({ tickets }: AtRiskTicketsTableProps): React.
         </thead>
         <tbody className="divide-y divide-gray-100">
           {tickets.map((ticket) => {
-            const isUrgent = ticket.minutesRemaining < 60
+            const isUrgent = isTicketUrgent(ticket.minutesRemaining)
             return (
               <tr key={ticket.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">
