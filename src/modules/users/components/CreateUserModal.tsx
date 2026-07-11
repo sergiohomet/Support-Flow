@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createUserInputSchema } from '@/modules/users/schemas'
 import type { CreateUserInput } from '@/modules/users/schemas'
 import type { Category } from '@/store/ticketsSlice'
+import { useValidatedSubmit } from '@/core/hooks/useValidatedSubmit'
 
 interface CreateUserModalProps {
   isOpen: boolean
@@ -10,14 +11,6 @@ interface CreateUserModalProps {
   categories: Category[]
   onSubmit: (input: CreateUserInput) => void
   onClose: () => void
-}
-
-interface FormErrors {
-  fullName?: string
-  email?: string
-  temporaryPassword?: string
-  role?: string
-  categoryId?: string
 }
 
 export function CreateUserModal({
@@ -35,7 +28,7 @@ export function CreateUserModal({
   const [temporaryPassword, setTemporaryPassword] = useState('')
   const [role, setRole] = useState<'agent' | 'admin'>('agent')
   const [categoryId, setCategoryId] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<FormErrors>({})
+  const { fieldErrors, submit } = useValidatedSubmit(createUserInputSchema, onSubmit)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -51,31 +44,14 @@ export function CreateUserModal({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    const formData = {
+    submit({
       fullName,
       email,
       temporaryPassword,
       role,
       // Specialty only applies to agents — never submit one for other roles.
       categoryId: role === 'agent' && categoryId.trim() !== '' ? categoryId.trim() : null,
-    }
-
-    const result = createUserInputSchema.safeParse(formData)
-
-    if (!result.success) {
-      const errors: FormErrors = {}
-      for (const issue of result.error.issues) {
-        const field = issue.path[0] as keyof FormErrors
-        if (!errors[field]) {
-          errors[field] = issue.message
-        }
-      }
-      setFieldErrors(errors)
-      return
-    }
-
-    setFieldErrors({})
-    onSubmit(result.data)
+    })
   }
 
   return (
