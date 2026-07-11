@@ -126,4 +126,46 @@ describe('useListNotifications', () => {
 
     expect(result.current.data).toEqual([])
   })
+
+  it('marks a notification as read locally, without waiting for a refetch', async () => {
+    mockRpc.mockResolvedValue({ data: [fakeNotificationRow], error: null })
+
+    const { result } = renderHook(() => useListNotifications('all'))
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    expect(result.current.data[0].isRead).toBe(false)
+
+    act(() => {
+      result.current.markLocallyRead('notif-1')
+    })
+
+    expect(result.current.data[0].isRead).toBe(true)
+    // Only the RPC call from the initial fetch — marking locally read must not trigger a fetch.
+    expect(mockRpc).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps a notification marked as locally read across a subsequent refetch that still reports it unread', async () => {
+    mockRpc.mockResolvedValue({ data: [fakeNotificationRow], error: null })
+
+    const { result } = renderHook(() => useListNotifications('all'))
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    act(() => {
+      result.current.markLocallyRead('notif-1')
+    })
+
+    expect(result.current.data[0].isRead).toBe(true)
+
+    await act(async () => {
+      await result.current.refetch()
+    })
+
+    expect(result.current.data[0].isRead).toBe(true)
+  })
 })

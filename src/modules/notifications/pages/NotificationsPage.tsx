@@ -9,24 +9,14 @@ import type { NotificationFilter, NotificationRow } from '@/modules/notification
 
 export function NotificationsPage(): React.JSX.Element {
   const [filter, setFilter] = useState<NotificationFilter>('unread')
-  // Tracks ids marked read during this session so the card can flip to "read"
-  // immediately on click, without waiting for a refetch — the list is only
-  // refetched explicitly (e.g. after "Marcar todas como leídas"), so this
-  // local override is the simplest way to reflect the optimistic read state
-  // on top of whatever `data` currently holds.
-  const [locallyReadIds, setLocallyReadIds] = useState<Set<string>>(new Set())
 
-  const { data, isLoading, refetch } = useListNotifications(filter)
+  const { data: notifications, isLoading, refetch, markLocallyRead } = useListNotifications(filter)
   const { execute: markNotificationRead } = useMarkNotificationRead()
   const { execute: markAllNotificationsRead } = useMarkAllNotificationsRead()
   const navigate = useNavigate()
 
-  const notifications = data.map((notification) =>
-    locallyReadIds.has(notification.id) ? { ...notification, isRead: true } : notification
-  )
-
   const handleNotificationClick = (notification: NotificationRow): void => {
-    setLocallyReadIds((prev) => new Set(prev).add(notification.id))
+    markLocallyRead(notification.id)
     navigate('/tickets/' + notification.ticketId)
     // Fire-and-forget: navigation must not block on the mark-as-read call.
     void markNotificationRead(notification.id)
