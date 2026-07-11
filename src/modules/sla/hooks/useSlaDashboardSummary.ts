@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/core/supabase/client'
 import { parseRpcError } from '@/core/utils/parseRpcError'
 import { mapSlaDashboardSummary } from '../schemas'
@@ -9,6 +9,12 @@ interface UseSlaDashboardSummaryResult {
   isLoading: boolean
   error: string | null
   refetch: () => Promise<void>
+  resolvedPct: number
+  escalatedPct: number
+}
+
+function computePct(count: number, totalTickets: number): number {
+  return totalTickets > 0 ? Math.round((count / totalTickets) * 100) : 0
 }
 
 interface FetchResult {
@@ -80,5 +86,14 @@ export function useSlaDashboardSummary(dateFrom: string, dateTo: string): UseSla
     }
   }, [dateFrom, dateTo])
 
-  return { data, isLoading, error, refetch }
+  const resolvedPct = useMemo(
+    () => computePct(data?.resolvedInSla ?? 0, data?.totalTickets ?? 0),
+    [data]
+  )
+  const escalatedPct = useMemo(
+    () => computePct(data?.escalatedCount ?? 0, data?.totalTickets ?? 0),
+    [data]
+  )
+
+  return { data, isLoading, error, refetch, resolvedPct, escalatedPct }
 }

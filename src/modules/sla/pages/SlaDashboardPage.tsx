@@ -18,10 +18,6 @@ function computeDateRange(days: number): { dateFrom: string; dateTo: string } {
   return { dateFrom: from.toISOString(), dateTo: now.toISOString() }
 }
 
-function round(value: number): number {
-  return Math.round(value)
-}
-
 export function SlaDashboardPage(): React.JSX.Element {
   const [days, setDays] = useState(7)
   // Compute the range once per `days` change — recomputing on every render
@@ -29,10 +25,13 @@ export function SlaDashboardPage(): React.JSX.Element {
   // kept re-triggering the fetch effects below in an infinite loop.
   const { dateFrom, dateTo } = useMemo(() => computeDateRange(days), [days])
 
-  const { data: summary, isLoading: isSummaryLoading, error: summaryError } = useSlaDashboardSummary(
-    dateFrom,
-    dateTo
-  )
+  const {
+    data: summary,
+    isLoading: isSummaryLoading,
+    error: summaryError,
+    resolvedPct,
+    escalatedPct,
+  } = useSlaDashboardSummary(dateFrom, dateTo)
   const {
     data: categoryCompliance,
     isLoading: isCategoryLoading,
@@ -41,8 +40,6 @@ export function SlaDashboardPage(): React.JSX.Element {
   const { data: atRiskTickets, isLoading: isAtRiskLoading, error: atRiskError } = useSlaAtRiskTickets()
 
   const totalTickets = summary?.totalTickets ?? 0
-  const resolvedPct = totalTickets > 0 ? round((summary!.resolvedInSla / totalTickets) * 100) : 0
-  const escalatedPct = totalTickets > 0 ? round((summary!.escalatedCount / totalTickets) * 100) : 0
 
   const error = summaryError ?? categoryError ?? atRiskError
   const isInitialLoading =
