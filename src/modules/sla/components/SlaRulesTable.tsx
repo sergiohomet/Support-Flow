@@ -3,6 +3,7 @@ import type { SlaConfigRow } from '@/modules/sla/schemas'
 import { updateSlaConfigSchema } from '@/modules/sla/schemas'
 import { EmptyState } from '@/ui/EmptyState'
 import { formatDate } from '@/core/utils/format'
+import { parseWithFirstError } from '@/core/hooks/useValidatedSubmit'
 
 export interface SlaConfigChange {
   categoryId: string
@@ -90,13 +91,13 @@ export function SlaRulesTable({ rows, onSaveAll, isSaving }: SlaRulesTableProps)
 
     for (const row of dirtyRows) {
       const state = getState(row)
-      const result = updateSlaConfigSchema.safeParse({
+      const result = parseWithFirstError(updateSlaConfigSchema, {
         maxResolutionHours: Number(state.maxResolutionHours),
         escalationEnabled: state.escalationEnabled,
       })
 
       if (!result.success) {
-        nextErrors[row.categoryId] = result.error.issues[0]?.message ?? 'Valor inválido'
+        nextErrors[row.categoryId] = result.message
         continue
       }
 

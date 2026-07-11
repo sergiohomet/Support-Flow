@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CreateTicketSchema } from '@/modules/tickets/schemas'
 import type { Category, CreateTicketInput } from '@/modules/tickets/schemas'
+import { useValidatedSubmit } from '@/core/hooks/useValidatedSubmit'
 
 interface CreateTicketFormProps {
   categories: Category[]
@@ -8,12 +9,6 @@ interface CreateTicketFormProps {
   onCancel: () => void
   isLoading: boolean
   error: string | null
-}
-
-interface FieldErrors {
-  title?: string
-  description?: string
-  categoryId?: string
 }
 
 type Priority = 'baja' | 'media' | 'alta' | 'critica'
@@ -57,30 +52,17 @@ export function CreateTicketForm({
   const [description, setDescription] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [priority, setPriority] = useState<Priority>('media')
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const { fieldErrors, submit } = useValidatedSubmit(CreateTicketSchema, onSubmit)
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
 
-    const result = CreateTicketSchema.safeParse({
+    submit({
       title: title.trim(),
       description: description.trim(),
       categoryId,
       priority,
     })
-
-    if (!result.success) {
-      const errors: FieldErrors = {}
-      for (const issue of result.error.issues) {
-        const field = issue.path[0] as keyof FieldErrors
-        if (!errors[field]) errors[field] = issue.message
-      }
-      setFieldErrors(errors)
-      return
-    }
-
-    setFieldErrors({})
-    onSubmit(result.data)
   }
 
   return (

@@ -2,16 +2,12 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PasswordInput } from './PasswordInput'
 import { loginSchema, type LoginFormData } from '../schemas'
+import { useValidatedSubmit } from '@/core/hooks/useValidatedSubmit'
 
 interface LoginFormProps {
   onSubmit: (data: LoginFormData) => void
   isLoading: boolean
   error: string | null
-}
-
-interface FieldErrors {
-  email?: string
-  password?: string
 }
 
 export function LoginForm({
@@ -21,25 +17,11 @@ export function LoginForm({
 }: LoginFormProps): React.JSX.Element {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const { fieldErrors, submit } = useValidatedSubmit(loginSchema, onSubmit)
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
-
-    const result = loginSchema.safeParse({ email: email.trim(), password })
-
-    if (!result.success) {
-      const errors: FieldErrors = {}
-      for (const issue of result.error.issues) {
-        const field = issue.path[0] as keyof FieldErrors
-        if (!errors[field]) errors[field] = issue.message
-      }
-      setFieldErrors(errors)
-      return
-    }
-
-    setFieldErrors({})
-    onSubmit(result.data)
+    submit({ email: email.trim(), password })
   }
 
   return (
