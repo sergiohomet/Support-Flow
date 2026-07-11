@@ -15,6 +15,7 @@ beforeAll(() => {
 })
 
 const mockUser = {
+  id: 'user-1',
   fullName: 'Alice Smith',
   role: 'agent',
 }

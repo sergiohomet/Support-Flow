@@ -3,7 +3,7 @@ import type { Category } from '@/store/ticketsSlice'
 
 type SpecialtyChangeModalProps = {
   isOpen: boolean
-  user: { fullName: string; categoryId: string | null } | null
+  user: { id: string; fullName: string; categoryId: string | null } | null
   categories: Category[]
   isLoading: boolean
   error: string | null
@@ -21,14 +21,6 @@ export function SpecialtyChangeModal({
   onClose,
 }: SpecialtyChangeModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const [selectedCategoryId, setSelectedCategoryId] = useState('')
-
-  // Sync selectedCategoryId when modal opens with a new user
-  useEffect(() => {
-    if (isOpen && user) {
-      setSelectedCategoryId(user.categoryId ?? '')
-    }
-  }, [isOpen, user])
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -55,6 +47,42 @@ export function SpecialtyChangeModal({
         </p>
       )}
 
+      {/* Keyed by the user being edited so switching targets remounts local
+          selection state, instead of needing a manual reset effect. */}
+      <SpecialtyChangeFields
+        key={user?.id ?? 'none'}
+        user={user}
+        categories={categories}
+        isLoading={isLoading}
+        error={error}
+        onConfirm={onConfirm}
+        onClose={onClose}
+      />
+    </dialog>
+  )
+}
+
+interface SpecialtyChangeFieldsProps {
+  user: { categoryId: string | null } | null
+  categories: Category[]
+  isLoading: boolean
+  error: string | null
+  onConfirm: (categoryId: string) => void
+  onClose: () => void
+}
+
+function SpecialtyChangeFields({
+  user,
+  categories,
+  isLoading,
+  error,
+  onConfirm,
+  onClose,
+}: SpecialtyChangeFieldsProps) {
+  const [selectedCategoryId, setSelectedCategoryId] = useState(user?.categoryId ?? '')
+
+  return (
+    <>
       <div className="mt-4">
         <select
           value={selectedCategoryId}
@@ -96,6 +124,6 @@ export function SpecialtyChangeModal({
           Confirmar
         </button>
       </div>
-    </dialog>
+    </>
   )
 }

@@ -222,7 +222,7 @@ export function UsersPage(): React.JSX.Element {
       {/* Role change modal */}
       <RoleChangeModal
         isOpen={!!pendingRoleChange}
-        user={pendingRoleChange ? { fullName: pendingRoleChange.user.fullName, role: pendingRoleChange.user.role } : null}
+        user={pendingRoleChange ? { id: pendingRoleChange.user.id, fullName: pendingRoleChange.user.fullName, role: pendingRoleChange.user.role } : null}
         categories={categories}
         isLoading={isUpdatingRole}
         error={null}
@@ -233,7 +233,7 @@ export function UsersPage(): React.JSX.Element {
       {/* Specialty change modal */}
       <SpecialtyChangeModal
         isOpen={!!pendingSpecialtyChange}
-        user={pendingSpecialtyChange ? { fullName: pendingSpecialtyChange.fullName, categoryId: pendingSpecialtyChange.categoryId } : null}
+        user={pendingSpecialtyChange ? { id: pendingSpecialtyChange.id, fullName: pendingSpecialtyChange.fullName, categoryId: pendingSpecialtyChange.categoryId } : null}
         categories={categories}
         isLoading={isUpdatingSpecialty}
         error={specialtyError}
