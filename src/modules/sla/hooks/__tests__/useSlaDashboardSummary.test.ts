@@ -142,4 +142,48 @@ describe('useSlaDashboardSummary', () => {
 
     expect(mockRpc).toHaveBeenCalledTimes(2)
   })
+
+  it('computes resolvedPct and escalatedPct from the summary counts', async () => {
+    mockRpc.mockResolvedValue({ data: [fakeSummaryRow], error: null })
+
+    const { result } = renderHook(() => useSlaDashboardSummary('2026-06-24', '2026-07-01'))
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    // 118/142 -> 83.09... rounds to 83; 24/142 -> 16.9... rounds to 17
+    expect(result.current.resolvedPct).toBe(83)
+    expect(result.current.escalatedPct).toBe(17)
+  })
+
+  it('resolvedPct and escalatedPct are 0 when totalTickets is 0 (no data)', async () => {
+    mockRpc.mockResolvedValue({ data: [], error: null })
+
+    const { result } = renderHook(() => useSlaDashboardSummary('2026-06-24', '2026-07-01'))
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    expect(result.current.data).toBeNull()
+    expect(result.current.resolvedPct).toBe(0)
+    expect(result.current.escalatedPct).toBe(0)
+  })
+
+  it('resolvedPct and escalatedPct are 0 when totalTickets is 0 (explicit zero row)', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{ total_tickets: 0, resolved_in_sla: 0, escalated_count: 0 }],
+      error: null,
+    })
+
+    const { result } = renderHook(() => useSlaDashboardSummary('2026-06-24', '2026-07-01'))
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    expect(result.current.resolvedPct).toBe(0)
+    expect(result.current.escalatedPct).toBe(0)
+  })
 })
