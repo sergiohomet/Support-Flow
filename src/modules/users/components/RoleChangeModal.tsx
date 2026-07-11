@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Category } from '@/store/ticketsSlice'
+import { isAgentCategoryValid } from '@/modules/users/schemas'
 
 type RoleChangeModalProps = {
   isOpen: boolean
-  user: { fullName: string; role: string } | null
+  user: { id: string; fullName: string; role: string } | null
   categories: Category[]
   isLoading: boolean
   error: string | null
@@ -21,17 +22,6 @@ export function RoleChangeModal({
   onClose,
 }: RoleChangeModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const [selectedRole, setSelectedRole] = useState<'agent' | 'admin'>('agent')
-  const [selectedCategoryId, setSelectedCategoryId] = useState('')
-
-  // Sync selectedRole when modal opens with a new user
-  useEffect(() => {
-    if (isOpen && user) {
-      const role = user.role === 'admin' ? 'admin' : 'agent'
-      setSelectedRole(role)
-      setSelectedCategoryId('')
-    }
-  }, [isOpen, user])
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -58,6 +48,45 @@ export function RoleChangeModal({
         </p>
       )}
 
+      {/* Keyed by the user being edited so switching targets remounts local
+          selection state, instead of needing a manual reset effect. */}
+      <RoleChangeFields
+        key={user?.id ?? 'none'}
+        user={user}
+        categories={categories}
+        isLoading={isLoading}
+        error={error}
+        onConfirm={onConfirm}
+        onClose={onClose}
+      />
+    </dialog>
+  )
+}
+
+interface RoleChangeFieldsProps {
+  user: { role: string } | null
+  categories: Category[]
+  isLoading: boolean
+  error: string | null
+  onConfirm: (newRole: 'agent' | 'admin', categoryId?: string) => void
+  onClose: () => void
+}
+
+function RoleChangeFields({
+  user,
+  categories,
+  isLoading,
+  error,
+  onConfirm,
+  onClose,
+}: RoleChangeFieldsProps) {
+  const [selectedRole, setSelectedRole] = useState<'agent' | 'admin'>(
+    user?.role === 'admin' ? 'admin' : 'agent',
+  )
+  const [selectedCategoryId, setSelectedCategoryId] = useState('')
+
+  return (
+    <>
       <div className="mt-4">
         <select
           value={selectedRole}
@@ -108,7 +137,7 @@ export function RoleChangeModal({
         <button
           type="button"
           onClick={() => onConfirm(selectedRole, selectedRole === 'agent' ? selectedCategoryId : undefined)}
-          disabled={isLoading || (selectedRole === 'agent' && selectedCategoryId === '')}
+          disabled={isLoading || !isAgentCategoryValid(selectedRole, selectedCategoryId)}
           className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading && (
@@ -117,6 +146,6 @@ export function RoleChangeModal({
           Confirmar
         </button>
       </div>
-    </dialog>
+    </>
   )
 }

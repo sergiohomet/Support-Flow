@@ -30,6 +30,15 @@ export type AdminUser = z.infer<typeof adminUserSchema>
 
 // ── CreateUserInput — used by Edge Function ───────────────────────────────────
 
+/**
+ * Single source of truth for the "agent requires a category" business rule.
+ * Shared by createUserInputSchema's refine and by UI components that need to
+ * derive a valid/disabled state without duplicating the rule inline.
+ */
+export function isAgentCategoryValid(role: 'agent' | 'admin', categoryId: string | null): boolean {
+  return role !== 'agent' || (categoryId !== null && categoryId !== '')
+}
+
 export const createUserInputSchema = z
   .object({
     fullName: z.string().min(1),
@@ -38,7 +47,7 @@ export const createUserInputSchema = z
     role: z.enum(['agent', 'admin']),
     categoryId: z.string().nullable(),
   })
-  .refine((data) => data.role !== 'agent' || (data.categoryId !== null && data.categoryId !== ''), {
+  .refine((data) => isAgentCategoryValid(data.role, data.categoryId), {
     message: 'La especialidad es obligatoria para agentes',
     path: ['categoryId'],
   })
