@@ -2,19 +2,13 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PasswordInput } from './PasswordInput'
 import { registerSchema, type RegisterFormData } from '../schemas'
+import { useValidatedSubmit } from '@/core/hooks/useValidatedSubmit'
 
 interface RegisterFormProps {
   onSubmit: (data: RegisterFormData) => void
   isLoading: boolean
   error: string | null
   success: boolean
-}
-
-interface FieldErrors {
-  full_name?: string
-  email?: string
-  password?: string
-  confirm_password?: string
 }
 
 export function RegisterForm({
@@ -27,7 +21,7 @@ export function RegisterForm({
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const { fieldErrors, submit } = useValidatedSubmit(registerSchema, onSubmit)
 
   if (success) {
     return (
@@ -40,25 +34,12 @@ export function RegisterForm({
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
 
-    const result = registerSchema.safeParse({
+    submit({
       full_name: fullName.trim(),
       email: email.trim(),
       password,
       confirm_password: confirmPassword,
     })
-
-    if (!result.success) {
-      const errors: FieldErrors = {}
-      for (const issue of result.error.issues) {
-        const field = issue.path[0] as keyof FieldErrors
-        if (!errors[field]) errors[field] = issue.message
-      }
-      setFieldErrors(errors)
-      return
-    }
-
-    setFieldErrors({})
-    onSubmit(result.data)
   }
 
   return (

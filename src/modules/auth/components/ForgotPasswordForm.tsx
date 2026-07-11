@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { PasswordInput } from './PasswordInput'
 import { forgotPasswordRequestSchema, resetPasswordSchema } from '../schemas'
+import { useValidatedSubmit } from '@/core/hooks/useValidatedSubmit'
 
 type ForgotPasswordPhase = 'request' | 'reset'
 
@@ -13,11 +14,6 @@ interface ForgotPasswordFormProps {
   sent: boolean
 }
 
-interface ResetFieldErrors {
-  password?: string
-  confirm_password?: string
-}
-
 export function ForgotPasswordForm({
   phase,
   onSubmitRequest,
@@ -27,11 +23,17 @@ export function ForgotPasswordForm({
   sent,
 }: ForgotPasswordFormProps): React.JSX.Element {
   const [email, setEmail] = useState('')
-  const [emailError, setEmailError] = useState<string | undefined>()
-
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [resetErrors, setResetErrors] = useState<ResetFieldErrors>({})
+
+  // Two phases share this component; hooks must be called unconditionally,
+  // so both validators are set up here and the relevant one is used below.
+  const requestValidator = useValidatedSubmit(forgotPasswordRequestSchema, (data) =>
+    onSubmitRequest(data.email),
+  )
+  const resetValidator = useValidatedSubmit(resetPasswordSchema, (data) =>
+    onSubmitReset(data.password),
+  )
 
   if (phase === 'request') {
     if (sent) {
@@ -42,18 +44,11 @@ export function ForgotPasswordForm({
       )
     }
 
+    const emailError = requestValidator.fieldErrors.email
+
     const handleRequestSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
       e.preventDefault()
-
-      const result = forgotPasswordRequestSchema.safeParse({ email: email.trim() })
-
-      if (!result.success) {
-        setEmailError(result.error.issues[0]?.message)
-        return
-      }
-
-      setEmailError(undefined)
-      onSubmitRequest(result.data.email)
+      requestValidator.submit({ email: email.trim() })
     }
 
     return (
@@ -106,21 +101,7 @@ export function ForgotPasswordForm({
   // phase === 'reset'
   const handleResetSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
-
-    const result = resetPasswordSchema.safeParse({ password, confirm_password: confirmPassword })
-
-    if (!result.success) {
-      const errors: ResetFieldErrors = {}
-      for (const issue of result.error.issues) {
-        const field = issue.path[0] as keyof ResetFieldErrors
-        if (!errors[field]) errors[field] = issue.message
-      }
-      setResetErrors(errors)
-      return
-    }
-
-    setResetErrors({})
-    onSubmitReset(result.data.password)
+    resetValidator.submit({ password, confirm_password: confirmPassword })
   }
 
   return (
@@ -137,7 +118,7 @@ export function ForgotPasswordForm({
           disabled={isLoading}
           autoComplete="new-password"
           placeholder="Mínimo 8 caracteres"
-          error={resetErrors.password}
+          error={resetValidator.fieldErrors.password}
         />
       </div>
 
@@ -153,7 +134,7 @@ export function ForgotPasswordForm({
           disabled={isLoading}
           autoComplete="new-password"
           placeholder="Repetí tu contraseña"
-          error={resetErrors.confirm_password}
+          error={resetValidator.fieldErrors.confirm_password}
         />
       </div>
 
