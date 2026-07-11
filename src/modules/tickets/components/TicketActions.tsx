@@ -1,11 +1,5 @@
 import type { TicketStatus } from '@/modules/tickets/schemas'
-
-const AGENT_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
-  abierto: ['en_proceso', 'resuelto'],
-  en_proceso: ['resuelto', 'abierto'],
-  resuelto: ['reabierto'],
-  reabierto: ['en_proceso', 'resuelto'],
-}
+import { AGENT_TRANSITIONS } from './ticketTransitions'
 
 interface TicketActionsProps {
   status: TicketStatus
