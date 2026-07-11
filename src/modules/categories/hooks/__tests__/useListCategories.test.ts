@@ -24,7 +24,7 @@ describe('useListCategories', () => {
   it('calls rpc("admin_list_categories") with no params on mount', async () => {
     mockRpc.mockResolvedValue({ data: [fakeCategoryRow], error: null })
 
-    const { result } = renderHook(() => useListCategories())
+    renderHook(() => useListCategories())
 
     await act(async () => {
       // wait for mount effect to complete
