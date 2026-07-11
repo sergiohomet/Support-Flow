@@ -1,5 +1,6 @@
 import type { TicketsByCategory } from '@/modules/reports/schemas'
 import { EmptyState } from '@/ui/EmptyState'
+import { computeBarWidthPct } from './chartMath'
 
 interface TicketsByCategoryBreakdownProps {
   data: TicketsByCategory[]
@@ -15,7 +16,7 @@ export function TicketsByCategoryBreakdown({ data }: TicketsByCategoryBreakdownP
   return (
     <div className="flex flex-col gap-4 rounded-md border border-gray-200 bg-white p-4">
       {data.map((row) => {
-        const widthPct = maxCount > 0 ? Math.round((row.ticketCount / maxCount) * 100) : 0
+        const widthPct = computeBarWidthPct(row.ticketCount, maxCount)
         return (
           <div key={row.categoryId}>
             <div className="mb-2 flex justify-between text-sm">
