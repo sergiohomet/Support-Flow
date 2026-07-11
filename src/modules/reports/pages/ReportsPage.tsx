@@ -1,10 +1,9 @@
-import { useMemo, useState } from 'react'
 import { useReportsSummary } from '@/modules/reports/hooks/useReportsSummary'
 import { useReportsTicketsByCategory } from '@/modules/reports/hooks/useReportsTicketsByCategory'
 import { useReportsTicketsByWeek } from '@/modules/reports/hooks/useReportsTicketsByWeek'
 import { useReportsAgentPerformance } from '@/modules/reports/hooks/useReportsAgentPerformance'
+import { useReportsPageState } from '@/modules/reports/hooks/useReportsPageState'
 import { ReportsDateRangeFilter } from '@/modules/reports/components/ReportsDateRangeFilter'
-import { computeReportsDateRange, type ReportsRangePreset } from '@/modules/reports/components/dateRange'
 import { TicketsByWeekChart } from '@/modules/reports/components/TicketsByWeekChart'
 import { TicketsByCategoryBreakdown } from '@/modules/reports/components/TicketsByCategoryBreakdown'
 import { AgentPerformanceTable } from '@/modules/reports/components/AgentPerformanceTable'
@@ -17,12 +16,8 @@ function round(value: number): number {
 }
 
 export function ReportsPage(): React.JSX.Element {
-  const [preset, setPreset] = useState<ReportsRangePreset>('last30')
-  // Compute the range once per `preset` change — recomputing on every render
-  // would produce a new millisecond-precision timestamp each time, which
-  // would re-trigger the fetch effects below in an infinite loop (see PR #23
-  // regression on SlaDashboardPage).
-  const { dateFrom, dateTo } = useMemo(() => computeReportsDateRange(preset), [preset])
+  const { preset, setPreset, dateFrom, dateTo, csvHeaders, computeEscalatedPct, buildCsvRows } =
+    useReportsPageState()
 
   const { data: summary, isLoading: isSummaryLoading, error: summaryError } = useReportsSummary(
     dateFrom,
@@ -46,7 +41,7 @@ export function ReportsPage(): React.JSX.Element {
 
   const totalTickets = summary?.totalTickets ?? 0
   const escalatedCount = summary?.escalatedCount ?? 0
-  const escalatedPct = totalTickets > 0 ? round((escalatedCount / totalTickets) * 100) : 0
+  const escalatedPct = computeEscalatedPct(totalTickets, escalatedCount)
 
   const error = summaryError ?? categoryError ?? weekError ?? agentError
   const isInitialLoading =
@@ -55,13 +50,7 @@ export function ReportsPage(): React.JSX.Element {
     (isWeekLoading && ticketsByWeek.length === 0) ||
     (isAgentLoading && agentPerformance.length === 0)
 
-  const csvHeaders = ['Agente', 'Tickets resueltos', 'Tiempo prom. (horas)', 'SLA cumplido (%)']
-  const csvRows = agentPerformance.map((agent) => [
-    agent.agentFullName,
-    agent.resolvedCount,
-    agent.avgWorkingHours ?? '',
-    agent.slaCompliancePct ?? '',
-  ])
+  const csvRows = buildCsvRows(agentPerformance)
 
   return (
     <div className="max-w-[1280px] mx-auto px-4 py-6">
