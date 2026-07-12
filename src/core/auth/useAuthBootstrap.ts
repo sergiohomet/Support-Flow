@@ -12,7 +12,14 @@ async function loadProfile(): Promise<AuthUser | null> {
     await supabase.auth.signOut()
     return null
   }
-  return { id: p.id, email: p.email, full_name: p.full_name, role: p.role }
+  return {
+    id: p.id,
+    email: p.email,
+    full_name: p.full_name,
+    role: p.role,
+    category_id: p.category_id,
+    category_name: p.category_name,
+  }
 }
 
 // Bootstraps auth state on app load: restores the session on mount, keeps

@@ -29,6 +29,8 @@ const fakeProfile = {
   full_name: 'Test User',
   role: 'client' as const,
   is_active: true,
+  category_id: null,
+  category_name: null,
 }
 
 describe('useLogin', () => {
@@ -57,6 +59,8 @@ describe('useLogin', () => {
       email: fakeProfile.email,
       full_name: fakeProfile.full_name,
       role: fakeProfile.role,
+      category_id: null,
+      category_name: null,
     })
     expect(result.current.error).toBeNull()
     expect(result.current.isLoading).toBe(false)
@@ -166,6 +170,8 @@ describe('useLogin', () => {
       email: fakeProfile.email,
       full_name: fakeProfile.full_name,
       role: fakeProfile.role,
+      category_id: null,
+      category_name: null,
     })
     expect(result.current.error).toBeNull()
   })
