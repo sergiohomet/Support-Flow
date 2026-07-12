@@ -592,6 +592,8 @@ export type Database = {
       get_my_profile: {
         Args: never
         Returns: {
+          category_id: string
+          category_name: string
           email: string
           full_name: string
           id: string
@@ -661,8 +663,10 @@ export type Database = {
       }
       get_tickets: {
         Args: {
+          p_active_only?: boolean
           p_agent_id?: string
           p_category_id?: string
+          p_only_unassigned?: boolean
           p_page?: number
           p_page_size?: number
           p_priority?: Database["public"]["Enums"]["ticket_priority"]
@@ -678,8 +682,10 @@ export type Database = {
           client_id: string
           comment_count: number
           created_at: string
+          escalated_at: string
           id: string
           priority: Database["public"]["Enums"]["ticket_priority"]
+          sla_hours: number
           status: Database["public"]["Enums"]["ticket_status"]
           title: string
           total_count: number
