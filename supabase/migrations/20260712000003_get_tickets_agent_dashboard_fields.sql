@@ -104,4 +104,5 @@ BEGIN
 END;
 $$;
 
+REVOKE EXECUTE ON FUNCTION public.get_tickets(ticket_status, ticket_priority, uuid, uuid, integer, integer, boolean, boolean) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_tickets(ticket_status, ticket_priority, uuid, uuid, integer, integer, boolean, boolean) TO authenticated;

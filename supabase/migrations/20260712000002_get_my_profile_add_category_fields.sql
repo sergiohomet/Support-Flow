@@ -40,4 +40,5 @@ AS $$
   WHERE u.id = auth.uid();
 $$;
 
+REVOKE EXECUTE ON FUNCTION public.get_my_profile() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_my_profile() TO authenticated;
