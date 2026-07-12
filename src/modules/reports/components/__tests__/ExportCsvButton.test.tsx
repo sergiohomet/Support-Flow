@@ -44,7 +44,7 @@ describe('ExportCsvButton', () => {
     vi.unstubAllGlobals()
   })
 
-  it('escapes fields containing commas, quotes, or newlines per CSV convention', async () => {
+  it('escapes fields containing semicolons, quotes, or newlines per CSV convention', async () => {
     const user = userEvent.setup()
     const createObjectURL = vi.fn().mockReturnValue('blob:mock-url')
     const revokeObjectURL = vi.fn()
@@ -55,7 +55,7 @@ describe('ExportCsvButton', () => {
       <ExportCsvButton
         filename="report.csv"
         headers={['Nombre', 'Nota']}
-        rows={[['Doe, John', 'Dijo "hola"']]}
+        rows={[['Doe; John', 'Dijo "hola"']]}
       />
     )
 
@@ -63,8 +63,33 @@ describe('ExportCsvButton', () => {
 
     const blobArg = createObjectURL.mock.calls[0][0] as Blob
     const text = await blobArg.text()
-    expect(text).toContain('"Doe, John"')
+    expect(text).toContain('"Doe; John"')
     expect(text).toContain('"Dijo ""hola"""')
+
+    clickSpy.mockRestore()
+    vi.unstubAllGlobals()
+  })
+
+  it('formats decimal numbers with a comma decimal separator (Excel locale convention)', async () => {
+    const user = userEvent.setup()
+    const createObjectURL = vi.fn().mockReturnValue('blob:mock-url')
+    const revokeObjectURL = vi.fn()
+    vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL })
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+
+    render(
+      <ExportCsvButton
+        filename="report.csv"
+        headers={['Agente', 'Tiempo prom. (horas)']}
+        rows={[['Sergio Software', 21.2]]}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: /exportar csv/i }))
+
+    const blobArg = createObjectURL.mock.calls[0][0] as Blob
+    const text = await blobArg.text()
+    expect(text).toContain('Sergio Software;21,2')
 
     clickSpy.mockRestore()
     vi.unstubAllGlobals()

@@ -22,7 +22,7 @@ function buildCsvRows(agentPerformance: AgentPerformance[]): (string | number)[]
   return agentPerformance.map((agent) => [
     agent.agentFullName,
     agent.resolvedCount,
-    agent.avgWorkingHours ?? '',
+    agent.avgWorkingHours !== null ? Math.round(agent.avgWorkingHours * 10) / 10 : '',
     agent.slaCompliancePct ?? '',
   ])
 }
