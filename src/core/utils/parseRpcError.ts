@@ -5,6 +5,8 @@ export function parseRpcError(message: string): string {
     'invalid_transition:',
     'agent_limit_exceeded:',
     'invalid_agent_role:',
+    'already_assigned:',
+    'category_mismatch:',
   ]
   for (const prefix of prefixes) {
     if (message.startsWith(prefix)) return message.slice(prefix.length).trim()
