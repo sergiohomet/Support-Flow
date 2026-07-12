@@ -47,7 +47,14 @@ export function useLogin(): UseLoginResult {
         return
       }
 
-      setUser({ id: p.id, email: p.email, full_name: p.full_name, role: p.role })
+      setUser({
+        id: p.id,
+        email: p.email,
+        full_name: p.full_name,
+        role: p.role,
+        category_id: p.category_id,
+        category_name: p.category_name,
+      })
     } finally {
       setIsLoading(false)
     }

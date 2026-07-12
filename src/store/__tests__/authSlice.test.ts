@@ -6,6 +6,8 @@ const fakeUser: AuthUser = {
   email: 'user@example.com',
   full_name: 'Test User',
   role: 'client',
+  category_id: null,
+  category_name: null,
 }
 
 describe('authSlice', () => {

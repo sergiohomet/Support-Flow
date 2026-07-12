@@ -38,6 +38,18 @@ const fakeProfile = {
   full_name: 'Test User',
   role: 'client' as const,
   is_active: true,
+  category_id: null,
+  category_name: null,
+}
+
+const fakeAgentProfile = {
+  id: '660e8400-e29b-41d4-a716-446655440001',
+  email: 'agent@example.com',
+  full_name: 'Agent User',
+  role: 'agent' as const,
+  is_active: true,
+  category_id: 'cat-1',
+  category_name: 'Billing',
 }
 
 async function flush(): Promise<void> {
@@ -73,8 +85,27 @@ describe('useAuthBootstrap', () => {
       email: fakeProfile.email,
       full_name: fakeProfile.full_name,
       role: fakeProfile.role,
+      category_id: null,
+      category_name: null,
     })
     expect(mockSetAuthReady).toHaveBeenCalledWith(true)
+  })
+
+  it('maps category_id and category_name when the profile has a category', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { user: { id: fakeAgentProfile.id } } } })
+    mockRpc.mockResolvedValue({ data: [fakeAgentProfile], error: null })
+
+    renderHook(() => useAuthBootstrap())
+    await flush()
+
+    expect(mockSetUser).toHaveBeenCalledWith({
+      id: fakeAgentProfile.id,
+      email: fakeAgentProfile.email,
+      full_name: fakeAgentProfile.full_name,
+      role: fakeAgentProfile.role,
+      category_id: fakeAgentProfile.category_id,
+      category_name: fakeAgentProfile.category_name,
+    })
   })
 
   it('sets user to null and marks auth ready when there is no session on mount', async () => {
@@ -128,6 +159,8 @@ describe('useAuthBootstrap', () => {
       email: fakeProfile.email,
       full_name: fakeProfile.full_name,
       role: fakeProfile.role,
+      category_id: null,
+      category_name: null,
     })
   })
 

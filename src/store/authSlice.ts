@@ -7,6 +7,8 @@ export interface AuthUser {
   email: string
   full_name: string
   role: UserRole
+  category_id: string | null
+  category_name: string | null
 }
 
 export interface AuthSlice {

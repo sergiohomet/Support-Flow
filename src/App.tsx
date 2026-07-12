@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/core/auth/AuthProvider";
 import { PublicOnlyGuard } from "@/core/auth/guards/PublicOnlyGuard";
 import { RoleGuard } from "@/core/auth/guards/RoleGuard";
+import { RootRedirect } from "@/core/auth/guards/RootRedirect";
 import { AppShell } from "@/layouts/AppShell";
 import { SettingsLayout } from "@/layouts/SettingsLayout";
 import { LoginPage } from "@/modules/auth/pages/LoginPage";
@@ -138,7 +139,7 @@ export default function App() {
             </Route>
           </Route>
 
-          <Route path="/" element={<Navigate to="/tickets" replace />} />
+          <Route path="/" element={<RootRedirect />} />
           <Route path="/unauthorized" element={<div>Sin acceso</div>} />
         </Routes>
       </AuthProvider>
