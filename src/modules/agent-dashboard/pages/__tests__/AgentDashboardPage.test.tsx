@@ -166,7 +166,7 @@ describe('AgentDashboardPage', () => {
     )
     const user = userEvent.setup()
     renderPage()
-    await user.click(screen.getByRole('button', { name: /tomar ticket/i }))
+    await user.click(screen.getByRole('button', { name: /^tomar ticket$/i }))
     expect(mockClaim).toHaveBeenCalledWith('avail-uuid-1')
   })
 
@@ -196,7 +196,7 @@ describe('AgentDashboardPage', () => {
     )
     const user = userEvent.setup()
     renderPage()
-    await user.click(screen.getByRole('button', { name: /tomar ticket/i }))
+    await user.click(screen.getByRole('button', { name: /^tomar ticket$/i }))
     expect(mockClaim).toHaveBeenCalledWith('avail-uuid-1')
     expect(mockRefetchAssigned).toHaveBeenCalledTimes(1)
   })
@@ -208,7 +208,7 @@ describe('AgentDashboardPage', () => {
     )
     const user = userEvent.setup()
     renderPage()
-    await user.click(screen.getByRole('button', { name: /tomar ticket/i }))
+    await user.click(screen.getByRole('button', { name: /^tomar ticket$/i }))
     expect(mockRefetchAssigned).not.toHaveBeenCalled()
   })
 
@@ -246,7 +246,7 @@ describe('AgentDashboardPage', () => {
     renderPage()
     expect(screen.getByText(/cerca del límite de capacidad/i)).toBeInTheDocument()
     // per resolved design decision: warn, don't hard-disable
-    expect(screen.getByRole('button', { name: /tomar ticket/i })).not.toBeDisabled()
+    expect(screen.getByRole('button', { name: /^tomar ticket$/i })).not.toBeDisabled()
   })
 
   it('shows an inline error banner when the available tickets hook errors', () => {

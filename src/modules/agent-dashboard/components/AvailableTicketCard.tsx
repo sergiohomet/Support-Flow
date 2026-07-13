@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { getCompactSlaStatus } from './slaCountdown'
 import { TicketCardShell } from '@/ui/TicketCardShell'
 import type { AgentDashboardTicket } from '../schemas'
@@ -44,12 +45,19 @@ export function AvailableTicketCard({
     slaHours: ticket.slaHours,
     createdAt: ticket.createdAt,
   })
+  const navigate = useNavigate()
+
+  const handleClaimClick = (event: React.MouseEvent<HTMLButtonElement>): void => {
+    event.stopPropagation()
+    onClaim()
+  }
 
   return (
     <TicketCardShell
       id={ticket.id}
       title={ticket.title}
       description={ticket.description}
+      onClick={() => navigate(`/tickets/${ticket.id}`)}
       badges={
         <>
           <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
@@ -85,7 +93,7 @@ export function AvailableTicketCard({
     >
       <button
         type="button"
-        onClick={onClaim}
+        onClick={handleClaimClick}
         disabled={isClaiming}
         className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
