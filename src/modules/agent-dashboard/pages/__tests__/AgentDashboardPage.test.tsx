@@ -249,6 +249,19 @@ describe('AgentDashboardPage', () => {
     expect(screen.getByRole('button', { name: /^tomar ticket$/i })).not.toBeDisabled()
   })
 
+  it('still shows the capacity warning when the agent is fully AT capacity (5 assigned)', () => {
+    const fiveTickets = Array.from({ length: 5 }, (_, i) => ({
+      ...ASSIGNED_TICKET,
+      id: `assigned-${i}`,
+    }))
+    vi.mocked(useAvailableTickets).mockReturnValue(
+      makeAvailableReturn({ tickets: [AVAILABLE_TICKET] })
+    )
+    vi.mocked(useMyAssignedTickets).mockReturnValue(makeAssignedReturn({ tickets: fiveTickets }))
+    renderPage()
+    expect(screen.getByText(/cerca del límite de capacidad/i)).toBeInTheDocument()
+  })
+
   it('shows an inline error banner when the available tickets hook errors', () => {
     vi.mocked(useAvailableTickets).mockReturnValue(
       makeAvailableReturn({ error: 'Error al procesar la solicitud. Intentá de nuevo.' })
