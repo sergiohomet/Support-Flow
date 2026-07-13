@@ -16,6 +16,7 @@ import { CategoriesPage } from "@/modules/categories";
 import { SlaConfigPage, SlaDashboardPage } from "@/modules/sla";
 import { NotificationsPage } from "@/modules/notifications";
 import { ReportsPage } from "@/modules/reports";
+import { AgentDashboardPage } from "@/modules/agent-dashboard";
 
 export default function App() {
   return (
@@ -43,6 +44,14 @@ export default function App() {
 
           {/* Protected routes */}
           <Route element={<AppShell />}>
+            <Route
+              path="/agent/dashboard"
+              element={
+                <RoleGuard allowedRoles={['agent']}>
+                  <AgentDashboardPage />
+                </RoleGuard>
+              }
+            />
             <Route
               path="/tickets"
               element={
