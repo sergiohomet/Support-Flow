@@ -37,6 +37,10 @@ describe('isAgentAtCapacityLimit', () => {
     expect(isAgentAtCapacityLimit(makeAgent({ activeTicketCount: MAX_ACTIVE_TICKETS_PER_AGENT - 1 }))).toBe(true)
   })
 
+  it('returns true when the agent is already AT the limit (no callers pre-filter this out)', () => {
+    expect(isAgentAtCapacityLimit(makeAgent({ activeTicketCount: MAX_ACTIVE_TICKETS_PER_AGENT }))).toBe(true)
+  })
+
   it('returns false when the agent has more than one slot free', () => {
     expect(isAgentAtCapacityLimit(makeAgent({ activeTicketCount: 0 }))).toBe(false)
   })

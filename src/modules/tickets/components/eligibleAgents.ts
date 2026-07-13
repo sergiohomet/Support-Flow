@@ -10,6 +10,10 @@ export function getEligibleAgents(agents: Agent[], categoryId: string): Agent[] 
   )
 }
 
+// `>=` (not `===`) because callers vary: ReassignTicketModal's candidates
+// come pre-filtered by getEligibleAgents (never reach MAX), but
+// AgentDashboardPage's own agent has no such filter and can legitimately
+// be sitting AT the limit, not just one slot away from it.
 export function isAgentAtCapacityLimit(agent: { activeTicketCount: number } | null): boolean {
-  return agent?.activeTicketCount === MAX_ACTIVE_TICKETS_PER_AGENT - 1
+  return agent !== null && agent.activeTicketCount >= MAX_ACTIVE_TICKETS_PER_AGENT - 1
 }
