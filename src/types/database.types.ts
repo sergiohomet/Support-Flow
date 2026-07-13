@@ -374,6 +374,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_ai_triage_category: {
+        Args: { p_category_id: string; p_ticket_id: string }
+        Returns: {
+          category_id: string
+          id: string
+          updated_at: string
+        }[]
+      }
+      accept_ai_triage_priority: {
+        Args: {
+          p_priority: Database["public"]["Enums"]["ticket_priority"]
+          p_ticket_id: string
+        }
+        Returns: {
+          id: string
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          updated_at: string
+        }[]
+      }
       add_ticket_comment: {
         Args: { p_content: string; p_ticket_id: string }
         Returns: {
