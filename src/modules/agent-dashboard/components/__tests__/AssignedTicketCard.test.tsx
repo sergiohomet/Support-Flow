@@ -6,6 +6,7 @@ import type { AgentDashboardTicket } from '../../schemas'
 const SAMPLE_TICKET: AgentDashboardTicket = {
   id: 'abcdef12-beef-0000-0000-000000000000',
   title: 'Factura duplicada',
+  description: 'El cliente reporta un cobro duplicado en su última factura.',
   status: 'abierto',
   priority: 'media',
   categoryId: 'cat-2',

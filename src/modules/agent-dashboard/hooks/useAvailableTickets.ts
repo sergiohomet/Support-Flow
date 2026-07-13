@@ -100,6 +100,7 @@ export function useAvailableTickets(
   }, [categoryId])
 
   const claim = async (ticketId: string): Promise<boolean> => {
+    if (!agentId) return false
     setClaimError(null)
     const { error: rpcError } = await supabase.rpc('assign_ticket', {
       p_ticket_id: ticketId,

@@ -64,6 +64,7 @@ export function AvailableTicketCard({
       </div>
 
       <p className="text-blue-700 font-medium leading-snug">{ticket.title}</p>
+      <p className="text-sm text-gray-600 line-clamp-2">{ticket.description}</p>
 
       <div className="flex items-center justify-between mt-auto pt-1">
         <span

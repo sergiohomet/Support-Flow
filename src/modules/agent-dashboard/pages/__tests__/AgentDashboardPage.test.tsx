@@ -57,6 +57,7 @@ function makeAssignedReturn(
 const AVAILABLE_TICKET: AgentDashboardTicket = {
   id: 'avail-uuid-1',
   title: 'No puedo acceder a mi cuenta',
+  description: 'El usuario no puede iniciar sesión desde ayer a la tarde.',
   status: 'abierto',
   priority: 'alta',
   categoryId: 'cat-1',
@@ -73,6 +74,7 @@ const AVAILABLE_TICKET: AgentDashboardTicket = {
 const ASSIGNED_TICKET: AgentDashboardTicket = {
   id: 'assigned-uuid-1',
   title: 'Factura duplicada',
+  description: 'El cliente reporta un cobro duplicado en su última factura.',
   status: 'en_proceso',
   priority: 'media',
   categoryId: 'cat-1',

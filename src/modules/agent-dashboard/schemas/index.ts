@@ -21,6 +21,7 @@ export type AgentDashboardTicketPriority = z.infer<typeof agentDashboardTicketPr
 export const agentDashboardTicketSchema = z.object({
   id: z.string(),
   title: z.string(),
+  description: z.string(),
   status: agentDashboardTicketStatusSchema,
   priority: agentDashboardTicketPrioritySchema,
   categoryId: z.string(),
@@ -41,6 +42,7 @@ export type AgentDashboardTicket = z.infer<typeof agentDashboardTicketSchema>
 export function mapAgentDashboardTicket(row: {
   id: string
   title: string
+  description: string
   status: string
   priority: string
   category_id: string
@@ -56,6 +58,7 @@ export function mapAgentDashboardTicket(row: {
   return {
     id: row.id,
     title: row.title,
+    description: row.description,
     status: row.status as AgentDashboardTicketStatus,
     priority: row.priority as AgentDashboardTicketPriority,
     categoryId: row.category_id,

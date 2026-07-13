@@ -682,6 +682,7 @@ export type Database = {
           client_id: string
           comment_count: number
           created_at: string
+          description: string
           escalated_at: string
           id: string
           priority: Database["public"]["Enums"]["ticket_priority"]

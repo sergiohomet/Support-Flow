@@ -6,6 +6,7 @@ import type { AgentDashboardTicket } from '../../schemas'
 const SAMPLE_TICKET: AgentDashboardTicket = {
   id: 'abcdef12-beef-0000-0000-000000000000',
   title: 'No puedo acceder a mi cuenta',
+  description: 'El usuario no puede iniciar sesión desde ayer a la tarde.',
   status: 'abierto',
   priority: 'alta',
   categoryId: 'cat-1',
@@ -35,6 +36,13 @@ describe('AvailableTicketCard', () => {
   it('renders the ticket title', () => {
     renderCard()
     expect(screen.getByText('No puedo acceder a mi cuenta')).toBeInTheDocument()
+  })
+
+  it('renders the description snippet', () => {
+    renderCard()
+    expect(
+      screen.getByText('El usuario no puede iniciar sesión desde ayer a la tarde.')
+    ).toBeInTheDocument()
   })
 
   it('renders the category badge', () => {
