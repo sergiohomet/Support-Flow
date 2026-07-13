@@ -25,10 +25,16 @@ export function AgentDashboardPage(): React.JSX.Element {
   // is the actual enforcement, this is just a heads-up.
   const isAtCapacity = isAgentAtCapacityLimit({ activeTicketCount: assigned.tickets.length })
 
+  // `available.claim()` / `assigned.returnToPool()` already refetch their OWN
+  // list internally on success. Neither refetches the OTHER hook's list, so
+  // without this the ticket vanishes from one panel but never appears (or
+  // disappears) in the other, nor does the CapacityBar update, until a
+  // manual page reload. Only refetch the sibling list on a confirmed success.
   const handleClaim = async (ticketId: string): Promise<void> => {
     setClaimingId(ticketId)
     try {
-      await available.claim(ticketId)
+      const claimed = await available.claim(ticketId)
+      if (claimed) await assigned.refetch()
     } finally {
       setClaimingId(null)
     }
@@ -46,7 +52,8 @@ export function AgentDashboardPage(): React.JSX.Element {
   const handleReturnToPool = async (ticketId: string): Promise<void> => {
     setReturningId(ticketId)
     try {
-      await assigned.returnToPool(ticketId)
+      const returned = await assigned.returnToPool(ticketId)
+      if (returned) await available.refetch()
     } finally {
       setReturningId(null)
     }

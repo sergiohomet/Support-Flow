@@ -8,6 +8,7 @@ export const ticketPrioritySchema = z.enum(['baja', 'media', 'alta', 'critica'])
 export const ticketListItemSchema = z.object({
   id: z.string(),
   title: z.string(),
+  description: z.string(),
   status: ticketStatusSchema,
   priority: ticketPrioritySchema,
   categoryId: z.string(),

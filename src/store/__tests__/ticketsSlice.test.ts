@@ -4,6 +4,7 @@ import type { TicketListItem } from '../ticketsSlice'
 const fakeTicket: TicketListItem = {
   id: 'ticket-1',
   title: 'Test ticket',
+  description: 'A description for the test ticket.',
   status: 'abierto',
   priority: 'media',
   categoryId: 'cat-1',

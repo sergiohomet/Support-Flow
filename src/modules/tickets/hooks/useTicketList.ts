@@ -33,6 +33,7 @@ async function fetchTickets(filters: TicketFilters): Promise<FetchResult> {
   const mapped: TicketListItem[] = (data ?? []).map((row) => ({
     id: row.id,
     title: row.title,
+    description: row.description,
     status: row.status,
     priority: row.priority,
     categoryId: row.category_id,

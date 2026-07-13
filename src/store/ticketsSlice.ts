@@ -6,6 +6,7 @@ export type TicketPriority = 'baja' | 'media' | 'alta' | 'critica'
 export interface TicketListItem {
   id: string
   title: string
+  description: string
   status: TicketStatus
   priority: TicketPriority
   categoryId: string

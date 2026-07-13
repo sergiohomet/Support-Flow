@@ -3,6 +3,16 @@ import userEvent from '@testing-library/user-event'
 import { AssignedTicketCard } from '../AssignedTicketCard'
 import type { AgentDashboardTicket } from '../../schemas'
 
+const mockNavigate = vi.fn()
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  }
+})
+
 const SAMPLE_TICKET: AgentDashboardTicket = {
   id: 'abcdef12-beef-0000-0000-000000000000',
   title: 'Factura duplicada',
@@ -34,6 +44,10 @@ function renderCard(props: Partial<React.ComponentProps<typeof AssignedTicketCar
 }
 
 describe('AssignedTicketCard', () => {
+  beforeEach(() => {
+    mockNavigate.mockReset()
+  })
+
   it('renders the ticket title', () => {
     renderCard()
     expect(screen.getByText('Factura duplicada')).toBeInTheDocument()
@@ -46,7 +60,7 @@ describe('AssignedTicketCard', () => {
 
   it('renders a "Devolver al pool" button regardless of status', () => {
     renderCard({ ticket: { ...SAMPLE_TICKET, status: 'resuelto' } })
-    expect(screen.getByRole('button', { name: /devolver al pool/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^devolver al pool$/i })).toBeInTheDocument()
   })
 
   it('renders a "Resolver" button when resuelto is a valid transition for the current status', () => {
@@ -71,7 +85,7 @@ describe('AssignedTicketCard', () => {
     const onReturnToPool = vi.fn()
     const user = userEvent.setup()
     renderCard({ onReturnToPool })
-    await user.click(screen.getByRole('button', { name: /devolver al pool/i }))
+    await user.click(screen.getByRole('button', { name: /^devolver al pool$/i }))
     expect(onReturnToPool).toHaveBeenCalledTimes(1)
   })
 
@@ -82,7 +96,7 @@ describe('AssignedTicketCard', () => {
 
   it('disables the Devolver al pool button while isReturning is true', () => {
     renderCard({ isReturning: true })
-    expect(screen.getByRole('button', { name: /devolver al pool/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /^devolver al pool$/i })).toBeDisabled()
   })
 
   it('renders a relative "hace" time based on the last update', () => {
@@ -94,5 +108,37 @@ describe('AssignedTicketCard', () => {
     expect(screen.getByText(/hace 2 horas/i)).toBeInTheDocument()
 
     vi.useRealTimers()
+  })
+
+  it('renders the ticket description', () => {
+    renderCard()
+    expect(
+      screen.getByText('El cliente reporta un cobro duplicado en su última factura.')
+    ).toBeInTheDocument()
+  })
+
+  it('navigates to the ticket detail page when the card is clicked', async () => {
+    const user = userEvent.setup()
+    renderCard()
+    await user.click(screen.getByRole('button', { name: /ver detalle/i }))
+    expect(mockNavigate).toHaveBeenCalledWith('/tickets/abcdef12-beef-0000-0000-000000000000')
+  })
+
+  it('does NOT navigate when the "Resolver" button is clicked', async () => {
+    const onResolve = vi.fn()
+    const user = userEvent.setup()
+    renderCard({ onResolve })
+    await user.click(screen.getByRole('button', { name: /^resolver$/i }))
+    expect(onResolve).toHaveBeenCalledTimes(1)
+    expect(mockNavigate).not.toHaveBeenCalled()
+  })
+
+  it('does NOT navigate when the "Devolver al pool" button is clicked', async () => {
+    const onReturnToPool = vi.fn()
+    const user = userEvent.setup()
+    renderCard({ onReturnToPool })
+    await user.click(screen.getByRole('button', { name: /^devolver al pool$/i }))
+    expect(onReturnToPool).toHaveBeenCalledTimes(1)
+    expect(mockNavigate).not.toHaveBeenCalled()
   })
 })

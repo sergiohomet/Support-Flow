@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { AgentDashboardPage } from '../AgentDashboardPage'
 import { useAvailableTickets } from '../../hooks/useAvailableTickets'
 import { useMyAssignedTickets } from '../../hooks/useMyAssignedTickets'
@@ -89,7 +90,11 @@ const ASSIGNED_TICKET: AgentDashboardTicket = {
 }
 
 function renderPage() {
-  return render(<AgentDashboardPage />)
+  return render(
+    <MemoryRouter>
+      <AgentDashboardPage />
+    </MemoryRouter>
+  )
 }
 
 describe('AgentDashboardPage', () => {
@@ -161,7 +166,7 @@ describe('AgentDashboardPage', () => {
     )
     const user = userEvent.setup()
     renderPage()
-    await user.click(screen.getByRole('button', { name: /tomar ticket/i }))
+    await user.click(screen.getByRole('button', { name: /^tomar ticket$/i }))
     expect(mockClaim).toHaveBeenCalledWith('avail-uuid-1')
   })
 
@@ -181,8 +186,52 @@ describe('AgentDashboardPage', () => {
     )
     const user = userEvent.setup()
     renderPage()
-    await user.click(screen.getByRole('button', { name: /devolver al pool/i }))
+    await user.click(screen.getByRole('button', { name: /^devolver al pool$/i }))
     expect(mockReturnToPool).toHaveBeenCalledWith('assigned-uuid-1')
+  })
+
+  it('refetches the assigned list after a successful claim (cross-panel staleness fix)', async () => {
+    vi.mocked(useAvailableTickets).mockReturnValue(
+      makeAvailableReturn({ tickets: [AVAILABLE_TICKET] })
+    )
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('button', { name: /^tomar ticket$/i }))
+    expect(mockClaim).toHaveBeenCalledWith('avail-uuid-1')
+    expect(mockRefetchAssigned).toHaveBeenCalledTimes(1)
+  })
+
+  it('does NOT refetch the assigned list when claim fails', async () => {
+    mockClaim.mockResolvedValue(false)
+    vi.mocked(useAvailableTickets).mockReturnValue(
+      makeAvailableReturn({ tickets: [AVAILABLE_TICKET] })
+    )
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('button', { name: /^tomar ticket$/i }))
+    expect(mockRefetchAssigned).not.toHaveBeenCalled()
+  })
+
+  it('refetches the available list after a successful returnToPool (cross-panel staleness fix)', async () => {
+    vi.mocked(useMyAssignedTickets).mockReturnValue(
+      makeAssignedReturn({ tickets: [ASSIGNED_TICKET] })
+    )
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('button', { name: /^devolver al pool$/i }))
+    expect(mockReturnToPool).toHaveBeenCalledWith('assigned-uuid-1')
+    expect(mockRefetchAvailable).toHaveBeenCalledTimes(1)
+  })
+
+  it('does NOT refetch the available list when returnToPool fails', async () => {
+    mockReturnToPool.mockResolvedValue(false)
+    vi.mocked(useMyAssignedTickets).mockReturnValue(
+      makeAssignedReturn({ tickets: [ASSIGNED_TICKET] })
+    )
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByRole('button', { name: /^devolver al pool$/i }))
+    expect(mockRefetchAvailable).not.toHaveBeenCalled()
   })
 
   it('passes disabled=true to available cards (warning, not hard-disable) when the agent is near capacity (4 assigned)', () => {
@@ -197,7 +246,7 @@ describe('AgentDashboardPage', () => {
     renderPage()
     expect(screen.getByText(/cerca del límite de capacidad/i)).toBeInTheDocument()
     // per resolved design decision: warn, don't hard-disable
-    expect(screen.getByRole('button', { name: /tomar ticket/i })).not.toBeDisabled()
+    expect(screen.getByRole('button', { name: /^tomar ticket$/i })).not.toBeDisabled()
   })
 
   it('shows an inline error banner when the available tickets hook errors', () => {

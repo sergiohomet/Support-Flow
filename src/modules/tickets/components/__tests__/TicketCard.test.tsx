@@ -6,6 +6,7 @@ import type { TicketListItem } from '@/modules/tickets/schemas'
 const SAMPLE_TICKET: TicketListItem = {
   id: 'abcdef12-beef-0000-0000-000000000000',
   title: 'Error al generar factura',
+  description: 'El cliente reporta un error al generar la factura mensual.',
   status: 'abierto',
   priority: 'alta',
   categoryId: 'cat-1',
@@ -53,6 +54,13 @@ describe('TicketCard', () => {
     renderCard()
     // 2026-06-15 → 15/06/2026
     expect(screen.getByText('15/06/2026')).toBeInTheDocument()
+  })
+
+  it('renders the ticket description when present', () => {
+    renderCard()
+    expect(
+      screen.getByText('El cliente reporta un error al generar la factura mensual.')
+    ).toBeInTheDocument()
   })
 
   it('calls onClick when the card is clicked', async () => {
