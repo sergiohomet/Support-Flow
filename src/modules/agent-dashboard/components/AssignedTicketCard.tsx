@@ -1,4 +1,6 @@
+import { useNavigate } from 'react-router-dom'
 import { StatusBadge } from '@/ui/StatusBadge'
+import { TicketCardShell } from '@/ui/TicketCardShell'
 import { AGENT_TRANSITIONS } from '@/modules/tickets/components/ticketTransitions'
 import type { AgentDashboardTicket } from '../schemas'
 
@@ -36,49 +38,64 @@ export function AssignedTicketCard({
   onReturnToPool,
 }: AssignedTicketCardProps): React.JSX.Element {
   const canResolve = AGENT_TRANSITIONS[ticket.status].includes('resuelto')
+  const navigate = useNavigate()
+
+  // Navigation lives locally in this leaf component (rather than being lifted
+  // to a prop plumbed through AgentDashboardPage, as TicketCard/TicketListPage
+  // do) because AgentDashboardPage has no existing click-routing wiring for
+  // this card and adding one here is simpler. Flagged as a deviation.
+  const handleNavigate = (): void => {
+    navigate(`/tickets/${ticket.id}`)
+  }
+
+  const handleReturnToPoolClick = (event: React.MouseEvent<HTMLButtonElement>): void => {
+    event.stopPropagation()
+    onReturnToPool()
+  }
+
+  const handleResolveClick = (event: React.MouseEvent<HTMLButtonElement>): void => {
+    event.stopPropagation()
+    onResolve()
+  }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col gap-2">
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-xs text-gray-400">#{ticket.id.slice(0, 8)}</span>
-        <StatusBadge status={ticket.status} />
-      </div>
+    <TicketCardShell
+      id={ticket.id}
+      title={ticket.title}
+      description={ticket.description}
+      onClick={handleNavigate}
+      badges={<StatusBadge status={ticket.status} />}
+      meta={<span className="text-xs text-gray-400">{formatRelativeTime(ticket.updatedAt)}</span>}
+    >
+      <button
+        type="button"
+        onClick={handleReturnToPoolClick}
+        disabled={isReturning}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isReturning && (
+          <span className="material-icons text-[14px] animate-spin" aria-hidden="true">
+            refresh
+          </span>
+        )}
+        Devolver al pool
+      </button>
 
-      <p className="text-blue-700 font-medium leading-snug">{ticket.title}</p>
-
-      <span className="text-xs text-gray-400">{formatRelativeTime(ticket.updatedAt)}</span>
-
-      <div className="flex items-center justify-end gap-2 mt-auto pt-1">
+      {canResolve && (
         <button
           type="button"
-          onClick={onReturnToPool}
-          disabled={isReturning}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleResolveClick}
+          disabled={isResolving}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isReturning && (
+          {isResolving && (
             <span className="material-icons text-[14px] animate-spin" aria-hidden="true">
               refresh
             </span>
           )}
-          Devolver al pool
+          Resolver
         </button>
-
-        {canResolve && (
-          <button
-            type="button"
-            onClick={onResolve}
-            disabled={isResolving}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isResolving && (
-              <span className="material-icons text-[14px] animate-spin" aria-hidden="true">
-                refresh
-              </span>
-            )}
-            Resolver
-          </button>
-        )}
-      </div>
-    </div>
+      )}
+    </TicketCardShell>
   )
 }

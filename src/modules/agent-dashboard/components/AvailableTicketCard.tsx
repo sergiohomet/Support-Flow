@@ -1,4 +1,5 @@
 import { getCompactSlaStatus } from './slaCountdown'
+import { TicketCardShell } from '@/ui/TicketCardShell'
 import type { AgentDashboardTicket } from '../schemas'
 
 interface AvailableTicketCardProps {
@@ -45,10 +46,12 @@ export function AvailableTicketCard({
   })
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col gap-2">
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-xs text-gray-400">#{ticket.id.slice(0, 8)}</span>
-        <div className="flex items-center gap-2 shrink-0">
+    <TicketCardShell
+      id={ticket.id}
+      title={ticket.title}
+      description={ticket.description}
+      badges={
+        <>
           <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
             {ticket.categoryName}
           </span>
@@ -60,13 +63,9 @@ export function AvailableTicketCard({
           >
             {priorityLabelMap[ticket.priority]}
           </span>
-        </div>
-      </div>
-
-      <p className="text-blue-700 font-medium leading-snug">{ticket.title}</p>
-      <p className="text-sm text-gray-600 line-clamp-2">{ticket.description}</p>
-
-      <div className="flex items-center justify-between mt-auto pt-1">
+        </>
+      }
+      meta={
         <span
           className={['inline-flex items-center gap-1 text-xs font-medium', slaToneClassMap[slaStatus.tone]].join(
             ' '
@@ -75,27 +74,28 @@ export function AvailableTicketCard({
           <span className="material-icons text-[14px]">{slaStatus.icon}</span>
           {slaStatus.label}
         </span>
-
-        <button
-          type="button"
-          onClick={onClaim}
-          disabled={isClaiming}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isClaiming && (
-            <span className="material-icons text-[14px] animate-spin" aria-hidden="true">
-              refresh
-            </span>
-          )}
-          Tomar Ticket
-        </button>
-      </div>
-
-      {disabled && (
-        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 mt-1">
-          Estás cerca del límite de capacidad. Podés tomar este ticket, pero revisá tu carga actual.
-        </p>
-      )}
-    </div>
+      }
+      footer={
+        disabled && (
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 mt-1">
+            Estás cerca del límite de capacidad. Podés tomar este ticket, pero revisá tu carga actual.
+          </p>
+        )
+      }
+    >
+      <button
+        type="button"
+        onClick={onClaim}
+        disabled={isClaiming}
+        className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isClaiming && (
+          <span className="material-icons text-[14px] animate-spin" aria-hidden="true">
+            refresh
+          </span>
+        )}
+        Tomar Ticket
+      </button>
+    </TicketCardShell>
   )
 }
