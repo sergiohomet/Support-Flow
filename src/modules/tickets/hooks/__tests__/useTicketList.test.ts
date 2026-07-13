@@ -23,6 +23,7 @@ vi.mock('@/store', () => ({
 const fakeTicketRow = {
   id: 'ticket-1',
   title: 'Test ticket',
+  description: 'A description for the test ticket.',
   status: 'abierto',
   priority: 'media',
   category_id: 'cat-1',
@@ -83,6 +84,7 @@ describe('useTicketList', () => {
           {
             id: 'ticket-1',
             title: 'Test ticket',
+            description: 'A description for the test ticket.',
             status: 'abierto',
             priority: 'media',
             categoryId: 'cat-1',
