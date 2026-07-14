@@ -1,0 +1,47 @@
+-- ============================================================
+-- MIGRATION 20260713000002 — ai-triage trigger secret (Vault doc-only)
+-- SupportFlow Helpdesk
+--
+-- PR2 of the "ai-triage" change. This migration is intentionally a NO-OP
+-- (comments only, no executable SQL) — its purpose is to record, in
+-- migration history, the exact out-of-band steps required to provision
+-- AI_TRIAGE_TRIGGER_SECRET, following the same "create the Vault secret
+-- out-of-band, reference it by name from committed SQL" convention
+-- established by migration 20260701000008 (sla_cron_schedule) for
+-- 'sla_service_role_key'.
+--
+-- WHY A SEPARATE SECRET FROM THE SLA CRON'S: this project already hit a
+-- real incident (see migration 20260701000009) where a Vault-stored copy
+-- of a secret drifted out of sync with the value Supabase auto-injects
+-- into deployed Edge Functions — two different strings for what was
+-- nominally "the same" credential. AI_TRIAGE_TRIGGER_SECRET deliberately
+-- has its OWN independent lifecycle (a value chosen and set once, not
+-- derived from any Supabase-managed key that can silently change format)
+-- to avoid that same class of drift.
+--
+-- Nothing in this PR (PR2, the ai-triage Edge Function itself) reads
+-- this Vault secret — the Edge Function only validates the
+-- AI_TRIAGE_TRIGGER_SECRET *environment variable* directly via
+-- Deno.env.get, exactly like sla-escalation-check validates
+-- SUPABASE_SERVICE_ROLE_KEY. The Vault copy exists so that PR3's AFTER
+-- INSERT trigger can send the same secret as an Authorization header via
+-- net.http_post, the same way the SLA cron job does today.
+--
+-- STILL TO DO, LIVE, OUTSIDE OF GIT (see PR description):
+--   1. Choose a strong random value for the shared secret.
+--   2. SELECT vault.create_secret(
+--        '<the chosen secret value>',
+--        'ai_triage_trigger_secret',
+--        'Shared secret the PR3 ai-triage AFTER INSERT trigger presents
+--         to the ai-triage Edge Function as an Authorization bearer
+--         token.'
+--      );
+--   3. supabase secrets set AI_TRIAGE_TRIGGER_SECRET=<the same value>
+--   4. supabase secrets set OPENROUTER_API_KEY=<the real OpenRouter API key>
+--   5. supabase functions deploy ai-triage
+--
+-- PR3 will add the trigger + a migration that references the Vault
+-- secret by name via `vault.decrypted_secrets WHERE name =
+-- 'ai_triage_trigger_secret'` inside the trigger's net.http_post call,
+-- mirroring migration 20260701000008 exactly.
+-- ============================================================
