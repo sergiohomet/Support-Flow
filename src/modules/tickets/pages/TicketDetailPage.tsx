@@ -5,10 +5,13 @@ import { useTicketDetail } from '@/modules/tickets/hooks/useTicketDetail'
 import { useUpdateTicketStatus } from '@/modules/tickets/hooks/useUpdateTicketStatus'
 import { useAddComment } from '@/modules/tickets/hooks/useAddComment'
 import { useAgentList } from '@/modules/tickets/hooks/useAgentList'
+import { useAcceptAiTriage } from '@/modules/tickets/hooks/useAcceptAiTriage'
+import { useCategoryList } from '@/modules/tickets/hooks/useCategoryList'
 import { TicketComments } from '@/modules/tickets/components/TicketComments'
 import { TicketStatusLog } from '@/modules/tickets/components/TicketStatusLog'
 import { TicketActions } from '@/modules/tickets/components/TicketActions'
 import { ReassignTicketModal } from '@/modules/tickets/components/ReassignTicketModal'
+import { AITriagePanel } from '@/modules/tickets/components/AITriagePanel'
 import { StatusBadge } from '@/ui/StatusBadge'
 import { PriorityBadge } from '@/ui/PriorityBadge'
 import { Spinner } from '@/ui/Spinner'
@@ -27,9 +30,28 @@ export function TicketDetailPage(): React.ReactElement {
   const { execute: unassignTicket, isLoading: unassignLoading, error: unassignError } = useUnassignTicket()
   const { execute: addComment, isLoading: commentLoading, error: commentError } = useAddComment()
   const { loadAgents } = useAgentList()
+  const {
+    acceptCategory,
+    acceptPriority,
+    dismissTriage,
+    isAcceptingCategory,
+    isAcceptingPriority,
+    isDismissing,
+  } = useAcceptAiTriage()
+  useCategoryList()
+
+  const [prefillContent, setPrefillContent] = useState<string | undefined>(undefined)
+  // Set the moment "Usar como respuesta" is clicked; consumed (and the
+  // suggestion dismissed) once that reply is actually sent — see
+  // handleAddComment. The suggestion is generated once from the ticket's
+  // original description, never regenerated from later comments, so once
+  // it's been acted on (ignored, or used as the basis for a sent reply) it
+  // must not reappear.
+  const [usedSuggestionAsResponse, setUsedSuggestionAsResponse] = useState(false)
 
   const user = useStore((s) => s.user)
   const agents = useStore((s) => s.agents)
+  const categories = useStore((s) => s.categories)
 
   useEffect(() => {
     void loadAgents()
@@ -49,8 +71,40 @@ export function TicketDetailPage(): React.ReactElement {
 
   const handleAddComment = async (content: string): Promise<void> => {
     if (!id) return
-    await addComment(id, content)
+    const comment = await addComment(id, content)
+    if (comment && usedSuggestionAsResponse) {
+      setUsedSuggestionAsResponse(false)
+      await dismissTriage(id)
+    }
     void fetchDetail()
+  }
+
+  const handleAcceptCategory = async (): Promise<void> => {
+    if (!ticket?.aiTriage) return
+    const ok = await acceptCategory(ticket.id, ticket.aiTriage.suggestedCategoryId)
+    if (ok) void fetchDetail()
+  }
+
+  const handleAcceptPriority = async (): Promise<void> => {
+    if (!ticket?.aiTriage) return
+    const ok = await acceptPriority(ticket.id, ticket.aiTriage.suggestedPriority)
+    if (ok) void fetchDetail()
+  }
+
+  const handleUseAsResponse = (): void => {
+    if (!ticket?.aiTriage) return
+    setPrefillContent(ticket.aiTriage.suggestedResponse)
+    setUsedSuggestionAsResponse(true)
+  }
+
+  const handlePrefillConsumed = (): void => {
+    setPrefillContent(undefined)
+  }
+
+  const handleDismissTriage = async (): Promise<void> => {
+    if (!ticket) return
+    const ok = await dismissTriage(ticket.id)
+    if (ok) void fetchDetail()
   }
 
   const isAgentOrAdmin = user?.role === 'agent' || user?.role === 'admin'
@@ -138,11 +192,30 @@ export function TicketDetailPage(): React.ReactElement {
                 isLoading={commentLoading}
                 error={commentError}
                 ticketStatus={ticket.status}
+                prefillContent={prefillContent}
+                onPrefillConsumed={handlePrefillConsumed}
               />
             </div>
 
             {/* Sidebar — 35% */}
             <div className="flex-[0_0_35%] min-w-0 flex flex-col gap-5">
+              {/* Sugerencias IA — agent/admin only */}
+              {isAgentOrAdmin && ticket.aiTriage && (
+                <AITriagePanel
+                  aiTriage={ticket.aiTriage}
+                  currentCategoryId={ticket.categoryId}
+                  currentPriority={ticket.priority}
+                  categoryName={categories.find((c) => c.id === ticket.aiTriage?.suggestedCategoryId)?.name ?? null}
+                  onAcceptCategory={() => void handleAcceptCategory()}
+                  onAcceptPriority={() => void handleAcceptPriority()}
+                  onUseAsResponse={handleUseAsResponse}
+                  onDismiss={() => void handleDismissTriage()}
+                  isAcceptingCategory={isAcceptingCategory}
+                  isAcceptingPriority={isAcceptingPriority}
+                  isDismissing={isDismissing}
+                />
+              )}
+
               {/* Detalles */}
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <h3 className="text-base font-semibold text-gray-900 mb-4">Detalles</h3>

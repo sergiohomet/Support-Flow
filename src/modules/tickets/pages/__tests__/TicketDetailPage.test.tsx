@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { TicketDetailPage } from '../TicketDetailPage'
 
@@ -37,16 +38,32 @@ vi.mock('@/modules/tickets/hooks/useAgentList', () => ({
   useAgentList: vi.fn(),
 }))
 
+const mockAcceptCategory = vi.fn()
+const mockAcceptPriority = vi.fn()
+const mockDismissTriage = vi.fn()
+
+vi.mock('@/modules/tickets/hooks/useAcceptAiTriage', () => ({
+  useAcceptAiTriage: vi.fn(),
+}))
+
+const mockLoadCategories = vi.fn()
+
+vi.mock('@/modules/tickets/hooks/useCategoryList', () => ({
+  useCategoryList: vi.fn(),
+}))
+
 // --- store mock ---
 
 type MockState = {
   user: { id: string; email: string; full_name: string; role: 'client' | 'agent' | 'admin' } | null
   agents: unknown[]
+  categories: { id: string; name: string; description: string | null }[]
 }
 
 let mockState: MockState = {
   user: { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' },
   agents: [],
+  categories: [],
 }
 
 vi.mock('@/store', () => ({
@@ -60,7 +77,9 @@ import { useUnassignTicket } from '@/modules/tickets/hooks/useUnassignTicket'
 import { useUpdateTicketStatus } from '@/modules/tickets/hooks/useUpdateTicketStatus'
 import { useAddComment } from '@/modules/tickets/hooks/useAddComment'
 import { useAgentList } from '@/modules/tickets/hooks/useAgentList'
-import type { TicketDetail, StatusLogEntry } from '@/modules/tickets/schemas'
+import { useAcceptAiTriage } from '@/modules/tickets/hooks/useAcceptAiTriage'
+import { useCategoryList } from '@/modules/tickets/hooks/useCategoryList'
+import type { TicketDetail, StatusLogEntry, AiTriage } from '@/modules/tickets/schemas'
 
 const fakeTicket: TicketDetail = {
   id: 'ticket-uuid-123',
@@ -88,6 +107,19 @@ const fakeTicketWithAgent: TicketDetail = {
   agentFullName: 'Laura García',
   status: 'en_proceso',
 }
+
+const fakeAiTriage: AiTriage = {
+  suggestedCategoryId: 'cat-2',
+  suggestedPriority: 'alta',
+  suggestedResponse: 'Hola, recibimos tu consulta sobre un problema de hardware.',
+  confidence: 0.87,
+  generatedAt: '2026-06-15T10:00:00Z',
+}
+
+const fakeCategories = [
+  { id: 'cat-1', name: 'Soporte técnico', description: null },
+  { id: 'cat-2', name: 'Hardware', description: null },
+]
 
 const fakeStatusLog: StatusLogEntry[] = [
   {
@@ -130,16 +162,24 @@ describe('TicketDetailPage', () => {
     mockUpdateStatus.mockReset()
     mockAddComment.mockReset()
     mockLoadAgents.mockReset()
+    mockAcceptCategory.mockReset()
+    mockAcceptPriority.mockReset()
+    mockDismissTriage.mockReset()
+    mockLoadCategories.mockReset()
 
     mockFetchDetail.mockResolvedValue(undefined)
     mockAssignTicket.mockResolvedValue(true)
     mockUpdateStatus.mockResolvedValue(true)
     mockAddComment.mockResolvedValue(null)
     mockLoadAgents.mockResolvedValue(undefined)
+    mockAcceptCategory.mockResolvedValue(true)
+    mockAcceptPriority.mockResolvedValue(true)
+    mockDismissTriage.mockResolvedValue(true)
 
     mockState = {
       user: { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' },
       agents: [],
+      categories: fakeCategories,
     }
 
     vi.mocked(useTicketDetail).mockClear()
@@ -151,6 +191,22 @@ describe('TicketDetailPage', () => {
       isLoadingAgents: false,
       error: null,
       loadAgents: mockLoadAgents,
+    })
+    vi.mocked(useAcceptAiTriage).mockReturnValue({
+      acceptCategory: mockAcceptCategory,
+      acceptPriority: mockAcceptPriority,
+      dismissTriage: mockDismissTriage,
+      isAcceptingCategory: false,
+      isAcceptingPriority: false,
+      isDismissing: false,
+      categoryError: null,
+      priorityError: null,
+      dismissError: null,
+    })
+    vi.mocked(useCategoryList).mockReturnValue({
+      isLoadingCategories: false,
+      error: null,
+      loadCategories: mockLoadCategories,
     })
   })
 
@@ -367,5 +423,185 @@ describe('TicketDetailPage', () => {
     )
     renderPage()
     expect(screen.getByRole('button', { name: /reabrir ticket/i })).toBeInTheDocument()
+  })
+
+  // --- AI Triage panel (PR5) ---
+
+  describe('AI triage panel', () => {
+    it('renders the panel when aiTriage is present and user is agent', () => {
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+      expect(screen.getByText('Sugerencias IA')).toBeInTheDocument()
+    })
+
+    it('renders the panel when aiTriage is present and user is admin', () => {
+      mockState.user = { id: 'admin-1', email: 'admin@test.com', full_name: 'Admin User', role: 'admin' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicket, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+      expect(screen.getByText('Sugerencias IA')).toBeInTheDocument()
+    })
+
+    it('does NOT render the panel for a client role even with aiTriage present', () => {
+      mockState.user = { id: 'user-1', email: 'client@test.com', full_name: 'Client User', role: 'client' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicket, clientId: 'user-1', aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+      expect(screen.queryByText('Sugerencias IA')).not.toBeInTheDocument()
+    })
+
+    it('does NOT render the panel when aiTriage is null', () => {
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: null } })
+      )
+      renderPage()
+      expect(screen.queryByText('Sugerencias IA')).not.toBeInTheDocument()
+    })
+
+    it('resolves the suggested category name from the loaded categories list', () => {
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+      expect(screen.getByText('Hardware')).toBeInTheDocument()
+    })
+
+    it('accepting the suggested category calls acceptCategory with correct args and refetches on success', async () => {
+      const user = userEvent.setup()
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+
+      await user.click(screen.getByRole('button', { name: /aceptar categoría/i }))
+
+      expect(mockAcceptCategory).toHaveBeenCalledWith('ticket-uuid-123', 'cat-2')
+      expect(mockFetchDetail).toHaveBeenCalled()
+    })
+
+    it('accepting the suggested priority calls acceptPriority with correct args and refetches on success', async () => {
+      const user = userEvent.setup()
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+
+      await user.click(screen.getByRole('button', { name: /aceptar prioridad/i }))
+
+      expect(mockAcceptPriority).toHaveBeenCalledWith('ticket-uuid-123', 'alta')
+      expect(mockFetchDetail).toHaveBeenCalled()
+    })
+
+    it('does NOT refetch when accepting the category fails', async () => {
+      const user = userEvent.setup()
+      mockAcceptCategory.mockResolvedValue(false)
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+
+      await user.click(screen.getByRole('button', { name: /aceptar categoría/i }))
+
+      expect(mockAcceptCategory).toHaveBeenCalledOnce()
+      expect(mockFetchDetail).not.toHaveBeenCalled()
+    })
+
+    it('"Usar como respuesta" prefills the comment textarea with the suggested response', async () => {
+      const user = userEvent.setup()
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+
+      await user.click(screen.getByRole('button', { name: /usar como respuesta/i }))
+
+      expect(screen.getByLabelText('Nuevo comentario')).toHaveValue(fakeAiTriage.suggestedResponse)
+    })
+
+    it('clicking "Ignorar" calls dismissTriage with the ticket id and refetches on success', async () => {
+      const user = userEvent.setup()
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+
+      await user.click(screen.getByRole('button', { name: /ignorar/i }))
+
+      expect(mockDismissTriage).toHaveBeenCalledWith('ticket-uuid-123')
+      expect(mockFetchDetail).toHaveBeenCalled()
+    })
+
+    it('does NOT refetch when dismissing the suggestion fails', async () => {
+      const user = userEvent.setup()
+      mockDismissTriage.mockResolvedValue(false)
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+
+      await user.click(screen.getByRole('button', { name: /ignorar/i }))
+
+      expect(mockDismissTriage).toHaveBeenCalledOnce()
+      expect(mockFetchDetail).not.toHaveBeenCalled()
+    })
+
+    it('sending a comment after "Usar como respuesta" also dismisses the suggestion (it is single-use, tied to the original description)', async () => {
+      const user = userEvent.setup()
+      mockAddComment.mockResolvedValue({
+        id: 'c-new',
+        ticketId: 'ticket-uuid-123',
+        userId: 'agent-42',
+        userFullName: 'Laura García',
+        content: fakeAiTriage.suggestedResponse,
+        createdAt: '2026-07-14T00:00:00Z',
+      })
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+
+      await user.click(screen.getByRole('button', { name: /usar como respuesta/i }))
+      await user.click(screen.getByRole('button', { name: /^enviar$/i }))
+
+      expect(mockAddComment).toHaveBeenCalledWith('ticket-uuid-123', fakeAiTriage.suggestedResponse)
+      expect(mockDismissTriage).toHaveBeenCalledWith('ticket-uuid-123')
+    })
+
+    it('sending a comment WITHOUT using the suggestion first does NOT dismiss it', async () => {
+      const user = userEvent.setup()
+      mockAddComment.mockResolvedValue({
+        id: 'c-new',
+        ticketId: 'ticket-uuid-123',
+        userId: 'agent-42',
+        userFullName: 'Laura García',
+        content: 'Un comentario cualquiera, no relacionado con la sugerencia.',
+        createdAt: '2026-07-14T00:00:00Z',
+      })
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+
+      await user.type(screen.getByLabelText('Nuevo comentario'), 'Un comentario cualquiera, no relacionado con la sugerencia.')
+      await user.click(screen.getByRole('button', { name: /^enviar$/i }))
+
+      expect(mockAddComment).toHaveBeenCalled()
+      expect(mockDismissTriage).not.toHaveBeenCalled()
+    })
   })
 })

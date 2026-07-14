@@ -590,6 +590,14 @@ export type Database = {
           title: string
         }[]
       }
+      dismiss_ai_triage: {
+        Args: { p_ticket_id: string }
+        Returns: {
+          ai_triage: Json | null
+          id: string
+          updated_at: string
+        }[]
+      }
       get_agents: {
         Args: never
         Returns: {
