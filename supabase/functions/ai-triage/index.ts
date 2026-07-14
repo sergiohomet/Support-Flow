@@ -1,9 +1,10 @@
 // Edge Function: ai-triage
 //
 // PR2 of the "ai-triage" change. Given a ticketId, fetches the ticket and
-// the full category list, asks Gemini for a structured triage suggestion
-// (category, priority, first-response draft, confidence), and — only on
-// full success — writes the validated result to tickets.ai_triage.
+// the full category list, asks an LLM (via OpenRouter) for a structured
+// triage suggestion (category, priority, first-response draft,
+// confidence), and — only on full success — writes the validated result
+// to tickets.ai_triage.
 //
 // Standalone/manually-invocable for now: nothing calls this function
 // automatically yet. PR3 adds the AFTER INSERT trigger that invokes it
@@ -19,6 +20,17 @@
 // single-purpose secret with a single source of truth avoids that class
 // of bug entirely).
 //
+// LLM PROVIDER: uses OpenRouter (model `openai/gpt-oss-20b:free`) rather
+// than Google Gemini directly. This PR originally targeted Gemini's
+// `/v1beta/interactions` endpoint, but Google AI Studio now gates new
+// accounts behind prepaid billing, which blocked provisioning a working
+// key. OpenRouter's `chat/completions` endpoint is the standard
+// OpenAI-compatible API (well-documented, stable structured-output
+// support via `response_format.json_schema`) and requires no prepaid
+// billing for this free-tier model. If you see references to Gemini in
+// git history/blame, that's why — the code below never called it in a
+// deployed/working state.
+//
 // REQUIRED SECRETS (see PR description for the exact live commands
 // needed — none of these can be set from this repo):
 //   - AI_TRIAGE_TRIGGER_SECRET: shared secret the (future, PR3) DB
@@ -26,8 +38,8 @@
 //     in Supabase Vault (as 'ai_triage_trigger_secret') so PR3's trigger
 //     can read it via `vault.decrypted_secrets` the same way the SLA cron
 //     job does (see migration 20260701000008).
-//   - GEMINI_API_KEY: function-only, read directly via Deno.env.get, no
-//     Vault copy — nothing else in this project ever needs it.
+//   - OPENROUTER_API_KEY: function-only, read directly via Deno.env.get,
+//     no Vault copy — nothing else in this project ever needs it.
 //   - SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY: auto-injected by Supabase
 //     into every deployed Edge Function, same as the other two functions
 //     in this repo.
@@ -35,11 +47,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import {
   buildTriagePrompt,
   isAuthorizedCaller,
-  parseTriageInteractionResponse,
+  parseOpenRouterChatCompletion,
   type CategoryOption,
 } from './triage-logic.ts'
 
-const GEMINI_TIMEOUT_MS = 10_000
+const OPENROUTER_TIMEOUT_MS = 10_000
 
 Deno.serve(async (req: Request) => {
   try {
@@ -72,7 +84,7 @@ Deno.serve(async (req: Request) => {
 
     // Triage itself is best-effort and must NEVER surface a failure to
     // whoever called this function (the future fire-and-forget trigger,
-    // or a manual invocation) — any error anywhere in fetch/Gemini
+    // or a manual invocation) — any error anywhere in fetch/OpenRouter
     // call/parse/validate collapses to a silent no-op below.
     try {
       // ── 3. Fetch the ticket + the full category list ──────────────────
@@ -97,65 +109,64 @@ Deno.serve(async (req: Request) => {
       const categoryOptions = categories as CategoryOption[]
       const validCategoryIds = categoryOptions.map((c) => c.id)
 
-      // ── 4. Call Gemini with a timeout ──────────────────────────────────
-      const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
-      if (!geminiApiKey) {
-        throw new Error('GEMINI_API_KEY is not configured')
+      // ── 4. Call OpenRouter with a timeout ───────────────────────────────
+      const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY')
+      if (!openRouterApiKey) {
+        throw new Error('OPENROUTER_API_KEY is not configured')
       }
 
       const prompt = buildTriagePrompt({ title: ticket.title, description: ticket.description }, categoryOptions)
 
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS)
+      const timeout = setTimeout(() => controller.abort(), OPENROUTER_TIMEOUT_MS)
 
-      let geminiJson: unknown
+      let openRouterJson: unknown
       try {
-        const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
+        const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
-            'x-goog-api-key': geminiApiKey,
+            Authorization: `Bearer ${openRouterApiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gemini-3.5-flash',
-            input: prompt,
+            model: 'openai/gpt-oss-20b:free',
+            messages: [{ role: 'user', content: prompt }],
             response_format: {
-              type: 'text',
-              mime_type: 'application/json',
-              schema: {
-                type: 'object',
-                properties: {
-                  suggestedCategoryId: { type: 'string', enum: validCategoryIds },
-                  suggestedPriority: { type: 'string', enum: ['baja', 'media', 'alta', 'critica'] },
-                  suggestedResponse: { type: 'string' },
-                  confidence: { type: 'number' },
+              type: 'json_schema',
+              json_schema: {
+                name: 'ticket_triage',
+                strict: true,
+                schema: {
+                  type: 'object',
+                  properties: {
+                    suggestedCategoryId: { type: 'string', enum: validCategoryIds },
+                    suggestedPriority: { type: 'string', enum: ['baja', 'media', 'alta', 'critica'] },
+                    suggestedResponse: { type: 'string' },
+                    confidence: { type: 'number' },
+                  },
+                  required: ['suggestedCategoryId', 'suggestedPriority', 'suggestedResponse', 'confidence'],
+                  additionalProperties: false,
                 },
-                required: ['suggestedCategoryId', 'suggestedPriority', 'suggestedResponse', 'confidence'],
               },
             },
           }),
           signal: controller.signal,
         })
 
-        if (!geminiResponse.ok) {
-          throw new Error(`Gemini responded with non-2xx status ${geminiResponse.status}`)
+        if (!openRouterResponse.ok) {
+          throw new Error(`OpenRouter responded with non-2xx status ${openRouterResponse.status}`)
         }
 
-        geminiJson = await geminiResponse.json()
+        openRouterJson = await openRouterResponse.json()
       } finally {
         clearTimeout(timeout)
       }
 
-      const interaction = geminiJson as { status?: string }
-      if (interaction?.status !== 'completed') {
-        throw new Error(`Gemini interaction status was not 'completed': ${String(interaction?.status)}`)
-      }
-
       // ── 5. Parse + zod-validate the structured result ──────────────────
-      const triageResult = parseTriageInteractionResponse(geminiJson, validCategoryIds)
+      const triageResult = parseOpenRouterChatCompletion(openRouterJson, validCategoryIds)
 
       if (!triageResult) {
-        throw new Error('Gemini response failed parsing/validation — see parseTriageInteractionResponse')
+        throw new Error('OpenRouter response failed parsing/validation — see parseOpenRouterChatCompletion')
       }
 
       // ── 6. Persist on full success only ────────────────────────────────

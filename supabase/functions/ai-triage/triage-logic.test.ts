@@ -1,5 +1,5 @@
 import {
-  parseTriageInteractionResponse,
+  parseOpenRouterChatCompletion,
   isAuthorizedCaller,
   buildTriagePrompt,
 } from './triage-logic'
@@ -9,24 +9,27 @@ const CATEGORY_B = '223e4567-e89b-12d3-a456-426614174001'
 const VALID_CATEGORY_IDS = [CATEGORY_A, CATEGORY_B]
 
 function buildResponse(overrides: {
-  steps?: unknown
-  status?: string
+  content?: unknown
+  noChoices?: boolean
 } = {}) {
-  return {
-    id: 'interaction-1',
-    status: overrides.status ?? 'completed',
-    usage: {},
-    created: '2026-07-13T00:00:00Z',
-    steps: overrides.steps,
-    object: 'interaction',
-    model: 'gemini-3.5-flash',
+  if (overrides.noChoices) {
+    return {
+      id: 'gen-1',
+      model: 'openai/gpt-oss-20b:free',
+      choices: undefined,
+    }
   }
-}
 
-function modelOutputStep(text: string) {
   return {
-    type: 'model_output',
-    content: [{ type: 'text', text }],
+    id: 'gen-1',
+    model: 'openai/gpt-oss-20b:free',
+    choices: [
+      {
+        index: 0,
+        message: { role: 'assistant', content: overrides.content },
+        finish_reason: 'stop',
+      },
+    ],
   }
 }
 
@@ -37,81 +40,61 @@ const VALID_INNER_RESULT = {
   confidence: 0.87,
 }
 
-describe('parseTriageInteractionResponse', () => {
+describe('parseOpenRouterChatCompletion', () => {
   it('parses a valid full response into the correct object', () => {
-    const raw = buildResponse({
-      steps: [
-        { type: 'thought', signature: 'sig-1' },
-        modelOutputStep(JSON.stringify(VALID_INNER_RESULT)),
-      ],
-    })
+    const raw = buildResponse({ content: JSON.stringify(VALID_INNER_RESULT) })
 
-    const result = parseTriageInteractionResponse(raw, VALID_CATEGORY_IDS)
-
-    expect(result).toEqual(VALID_INNER_RESULT)
-  })
-
-  it('finds the model_output step regardless of position (thought step absent)', () => {
-    const raw = buildResponse({
-      steps: [modelOutputStep(JSON.stringify(VALID_INNER_RESULT))],
-    })
-
-    const result = parseTriageInteractionResponse(raw, VALID_CATEGORY_IDS)
-
-    expect(result).toEqual(VALID_INNER_RESULT)
-  })
-
-  it('finds the model_output step when it is not the last entry', () => {
-    const raw = buildResponse({
-      steps: [
-        modelOutputStep(JSON.stringify(VALID_INNER_RESULT)),
-        { type: 'thought', signature: 'sig-after' },
-      ],
-    })
-
-    const result = parseTriageInteractionResponse(raw, VALID_CATEGORY_IDS)
+    const result = parseOpenRouterChatCompletion(raw, VALID_CATEGORY_IDS)
 
     expect(result).toEqual(VALID_INNER_RESULT)
   })
 
   it('rejects (null) when suggestedCategoryId is not in the given category list', () => {
     const raw = buildResponse({
-      steps: [
-        modelOutputStep(
-          JSON.stringify({ ...VALID_INNER_RESULT, suggestedCategoryId: '999e4567-e89b-12d3-a456-426614174999' }),
-        ),
-      ],
+      content: JSON.stringify({ ...VALID_INNER_RESULT, suggestedCategoryId: '999e4567-e89b-12d3-a456-426614174999' }),
     })
 
-    const result = parseTriageInteractionResponse(raw, VALID_CATEGORY_IDS)
+    const result = parseOpenRouterChatCompletion(raw, VALID_CATEGORY_IDS)
 
     expect(result).toBeNull()
   })
 
-  it('rejects (null) when the model_output step is missing entirely', () => {
-    const raw = buildResponse({
-      steps: [{ type: 'thought', signature: 'sig-only' }],
-    })
+  it('rejects (null) when choices is missing entirely', () => {
+    const raw = buildResponse({ noChoices: true })
 
-    const result = parseTriageInteractionResponse(raw, VALID_CATEGORY_IDS)
+    const result = parseOpenRouterChatCompletion(raw, VALID_CATEGORY_IDS)
 
     expect(result).toBeNull()
   })
 
-  it('rejects (null) when steps is missing/not an array', () => {
-    const raw = buildResponse({ steps: undefined })
+  it('rejects (null) when choices is an empty array', () => {
+    const raw = { id: 'gen-1', model: 'openai/gpt-oss-20b:free', choices: [] }
 
-    const result = parseTriageInteractionResponse(raw, VALID_CATEGORY_IDS)
+    const result = parseOpenRouterChatCompletion(raw, VALID_CATEGORY_IDS)
 
     expect(result).toBeNull()
   })
 
-  it('rejects (null) when the inner text is not parseable JSON', () => {
-    const raw = buildResponse({
-      steps: [modelOutputStep('{not valid json')],
-    })
+  it('rejects (null) when message is missing on choices[0]', () => {
+    const raw = { id: 'gen-1', model: 'openai/gpt-oss-20b:free', choices: [{ index: 0, finish_reason: 'stop' }] }
 
-    const result = parseTriageInteractionResponse(raw, VALID_CATEGORY_IDS)
+    const result = parseOpenRouterChatCompletion(raw, VALID_CATEGORY_IDS)
+
+    expect(result).toBeNull()
+  })
+
+  it('rejects (null) when message.content is not a string', () => {
+    const raw = buildResponse({ content: { not: 'a string' } })
+
+    const result = parseOpenRouterChatCompletion(raw, VALID_CATEGORY_IDS)
+
+    expect(result).toBeNull()
+  })
+
+  it('rejects (null) when the inner content is not parseable JSON', () => {
+    const raw = buildResponse({ content: '{not valid json' })
+
+    const result = parseOpenRouterChatCompletion(raw, VALID_CATEGORY_IDS)
 
     expect(result).toBeNull()
   })
@@ -122,49 +105,41 @@ describe('parseTriageInteractionResponse', () => {
       suggestedPriority: VALID_INNER_RESULT.suggestedPriority,
       confidence: VALID_INNER_RESULT.confidence,
     }
-    const raw = buildResponse({
-      steps: [modelOutputStep(JSON.stringify(missingField))],
-    })
+    const raw = buildResponse({ content: JSON.stringify(missingField) })
 
-    const result = parseTriageInteractionResponse(raw, VALID_CATEGORY_IDS)
+    const result = parseOpenRouterChatCompletion(raw, VALID_CATEGORY_IDS)
 
     expect(result).toBeNull()
   })
 
   it('rejects (null) when confidence is out of the 0-1 range', () => {
-    const raw = buildResponse({
-      steps: [modelOutputStep(JSON.stringify({ ...VALID_INNER_RESULT, confidence: 1.5 }))],
-    })
+    const raw = buildResponse({ content: JSON.stringify({ ...VALID_INNER_RESULT, confidence: 1.5 }) })
 
-    const result = parseTriageInteractionResponse(raw, VALID_CATEGORY_IDS)
+    const result = parseOpenRouterChatCompletion(raw, VALID_CATEGORY_IDS)
 
     expect(result).toBeNull()
   })
 
   it('rejects (null) when confidence is negative', () => {
-    const raw = buildResponse({
-      steps: [modelOutputStep(JSON.stringify({ ...VALID_INNER_RESULT, confidence: -0.1 }))],
-    })
+    const raw = buildResponse({ content: JSON.stringify({ ...VALID_INNER_RESULT, confidence: -0.1 }) })
 
-    const result = parseTriageInteractionResponse(raw, VALID_CATEGORY_IDS)
+    const result = parseOpenRouterChatCompletion(raw, VALID_CATEGORY_IDS)
 
     expect(result).toBeNull()
   })
 
   it('rejects (null) when suggestedPriority is not one of the valid enum values', () => {
-    const raw = buildResponse({
-      steps: [modelOutputStep(JSON.stringify({ ...VALID_INNER_RESULT, suggestedPriority: 'urgente' }))],
-    })
+    const raw = buildResponse({ content: JSON.stringify({ ...VALID_INNER_RESULT, suggestedPriority: 'urgente' }) })
 
-    const result = parseTriageInteractionResponse(raw, VALID_CATEGORY_IDS)
+    const result = parseOpenRouterChatCompletion(raw, VALID_CATEGORY_IDS)
 
     expect(result).toBeNull()
   })
 
   it('rejects (null) when the raw response is not an object', () => {
-    expect(parseTriageInteractionResponse(null, VALID_CATEGORY_IDS)).toBeNull()
-    expect(parseTriageInteractionResponse('a string', VALID_CATEGORY_IDS)).toBeNull()
-    expect(parseTriageInteractionResponse(undefined, VALID_CATEGORY_IDS)).toBeNull()
+    expect(parseOpenRouterChatCompletion(null, VALID_CATEGORY_IDS)).toBeNull()
+    expect(parseOpenRouterChatCompletion('a string', VALID_CATEGORY_IDS)).toBeNull()
+    expect(parseOpenRouterChatCompletion(undefined, VALID_CATEGORY_IDS)).toBeNull()
   })
 })
 

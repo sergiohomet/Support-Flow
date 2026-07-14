@@ -1,10 +1,11 @@
 // ai-triage / triage-logic.ts
 //
 // Deno-agnostic logic for the ai-triage Edge Function: prompt building,
-// caller authorization, and parsing + validating the Gemini `interactions`
-// response. Deliberately has ZERO Deno-specific APIs (no Deno.serve,
-// Deno.env, etc.) so it can be imported and unit-tested directly under
-// vitest (this project's real test runner) — see triage-logic.test.ts.
+// caller authorization, and parsing + validating the OpenRouter
+// `chat/completions` response. Deliberately has ZERO Deno-specific APIs
+// (no Deno.serve, Deno.env, etc.) so it can be imported and unit-tested
+// directly under vitest (this project's real test runner) — see
+// triage-logic.test.ts.
 //
 // The only external dependency is zod, imported the same way the rest of
 // this repo's Edge Functions import third-party packages (esm.sh URL
@@ -57,9 +58,10 @@ export function buildTriageResultSchema(validCategoryIds: string[]) {
 }
 
 /**
- * Builds the exact prompt string sent as `input` to the Gemini
- * `interactions` endpoint. Kept here (not inline in index.ts) so it's
- * reviewable and can be referenced verbatim from the PR description.
+ * Builds the exact prompt string sent as the user message to the
+ * OpenRouter `chat/completions` endpoint. Kept here (not inline in
+ * index.ts) so it's reviewable and can be referenced verbatim from the
+ * PR description.
  */
 export function buildTriagePrompt(ticket: TicketForTriage, categories: CategoryOption[]): string {
   const categoryList = categories.map((c) => `- ${c.id}: ${c.name}`).join('\n')
@@ -91,49 +93,44 @@ export function isAuthorizedCaller(authHeader: string | null, expectedSecret: st
   return authHeader === `Bearer ${expectedSecret}`
 }
 
-interface InteractionStep {
-  type?: unknown
-  content?: Array<{ type?: unknown; text?: unknown }>
+interface ChatCompletionChoice {
+  message?: { role?: unknown; content?: unknown }
 }
 
-interface InteractionResponse {
-  status?: unknown
-  steps?: unknown
+interface ChatCompletionResponse {
+  choices?: unknown
 }
 
 /**
- * Finds the `model_output` step in a Gemini `interactions` response
- * (searched by `type`, never by fixed index — the `thought` step may be
- * absent or appear in a different position), JSON.parses its inner
- * `content[0].text` string, and validates the result against the triage
- * schema constrained to `validCategoryIds`.
+ * Parses an OpenRouter `chat/completions` response (the standard
+ * OpenAI-compatible envelope), JSON.parses the inner `choices[0].message.content`
+ * string, and validates the result against the triage schema constrained
+ * to `validCategoryIds`.
  *
- * Returns `null` on ANY failure — unexpected top-level shape, non-array
- * `steps`, missing `model_output` step, missing/non-string inner text,
- * unparseable JSON, or schema validation failure (including an
- * out-of-range confidence or a category id not in `validCategoryIds`).
- * Never throws — the caller (index.ts) treats `null` as "no triage
- * result produced" and silently no-ops.
+ * Returns `null` on ANY failure — unexpected top-level shape, missing or
+ * empty `choices` array, missing `message`, missing/non-string
+ * `message.content`, unparseable JSON, or schema validation failure
+ * (including an out-of-range confidence or a category id not in
+ * `validCategoryIds`). Never throws — the caller (index.ts) treats `null`
+ * as "no triage result produced" and silently no-ops.
  */
-export function parseTriageInteractionResponse(
+export function parseOpenRouterChatCompletion(
   rawResponse: unknown,
   validCategoryIds: string[],
 ): TriageResult | null {
   try {
     if (typeof rawResponse !== 'object' || rawResponse === null) return null
 
-    const response = rawResponse as InteractionResponse
-    if (!Array.isArray(response.steps)) return null
+    const response = rawResponse as ChatCompletionResponse
+    if (!Array.isArray(response.choices) || response.choices.length === 0) return null
 
-    const modelOutputStep = (response.steps as InteractionStep[]).find(
-      (step) => typeof step === 'object' && step !== null && step.type === 'model_output',
-    )
-    if (!modelOutputStep) return null
+    const firstChoice = response.choices[0] as ChatCompletionChoice
+    if (typeof firstChoice !== 'object' || firstChoice === null) return null
 
-    const innerText = modelOutputStep.content?.[0]?.text
-    if (typeof innerText !== 'string') return null
+    const content = firstChoice.message?.content
+    if (typeof content !== 'string') return null
 
-    const parsedInner: unknown = JSON.parse(innerText)
+    const parsedInner: unknown = JSON.parse(content)
 
     const schema = buildTriageResultSchema(validCategoryIds)
     const result = schema.safeParse(parsedInner)

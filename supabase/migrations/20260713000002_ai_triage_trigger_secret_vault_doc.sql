@@ -37,7 +37,7 @@
 --         token.'
 --      );
 --   3. supabase secrets set AI_TRIAGE_TRIGGER_SECRET=<the same value>
---   4. supabase secrets set GEMINI_API_KEY=<the real Gemini API key>
+--   4. supabase secrets set OPENROUTER_API_KEY=<the real OpenRouter API key>
 --   5. supabase functions deploy ai-triage
 --
 -- PR3 will add the trigger + a migration that references the Vault
