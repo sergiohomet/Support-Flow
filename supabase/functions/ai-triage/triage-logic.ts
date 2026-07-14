@@ -59,9 +59,17 @@ export interface TriageResult {
  */
 export function buildTriageResultSchema(validCategoryIds: string[]) {
   return z.object({
+    // Deliberately NOT `.uuid()` — Zod's strict format check enforces the
+    // RFC 4122 version/variant nibbles, but this project's category ids
+    // (e.g. `11111111-1111-1111-1111-111111111111`) don't comply with
+    // that format despite being real, valid rows in `public.categories`.
+    // Live-verified this silently rejected every correct suggestion —
+    // the `.refine()` below (exact membership in the real category id
+    // list fetched for this call) is strictly stronger than any format
+    // check could be anyway, so the format check was redundant on top of
+    // being actively wrong for this project's id shapes.
     suggestedCategoryId: z
       .string()
-      .uuid()
       .refine((id) => validCategoryIds.includes(id), {
         message: 'suggestedCategoryId must be one of the categories provided to the model',
       }),

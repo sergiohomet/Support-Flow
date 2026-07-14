@@ -58,6 +58,18 @@ describe('parseOpenRouterChatCompletion', () => {
     expect(result).toEqual({ ...withoutConfidence, confidence: null })
   })
 
+  it('accepts a category id that is a real match but not RFC 4122-strict (real seed-data shape, e.g. 11111111-1111-1111-1111-111111111111)', () => {
+    const seedStyleId = '11111111-1111-1111-1111-111111111111'
+    const raw = buildResponse({
+      content: JSON.stringify({ ...VALID_INNER_RESULT, suggestedCategoryId: seedStyleId }),
+    })
+
+    const result = parseOpenRouterChatCompletion(raw, [seedStyleId, CATEGORY_B])
+
+    expect(result).not.toBeNull()
+    expect(result?.suggestedCategoryId).toBe(seedStyleId)
+  })
+
   it('rejects (null) when suggestedCategoryId is not in the given category list', () => {
     const raw = buildResponse({
       content: JSON.stringify({ ...VALID_INNER_RESULT, suggestedCategoryId: '999e4567-e89b-12d3-a456-426614174999' }),
