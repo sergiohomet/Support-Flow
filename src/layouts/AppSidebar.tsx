@@ -28,7 +28,6 @@ function getNavItems(role: UserRole): NavItem[] {
     return [
       { label: 'Dashboard', to: '/agent/dashboard', icon: 'dashboard' },
       ...common,
-      { label: 'Reportes', to: '/reports', icon: 'bar_chart' },
     ]
   }
 
