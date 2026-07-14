@@ -6,6 +6,7 @@ import { AITriagePanel } from '../AITriagePanel'
 const mockOnAcceptCategory = vi.fn()
 const mockOnAcceptPriority = vi.fn()
 const mockOnUseAsResponse = vi.fn()
+const mockOnDismiss = vi.fn()
 
 const baseTriage: AiTriage = {
   suggestedCategoryId: 'cat-2',
@@ -22,6 +23,7 @@ interface RenderOptions {
   categoryName?: string | null
   isAcceptingCategory?: boolean
   isAcceptingPriority?: boolean
+  isDismissing?: boolean
 }
 
 function renderPanel(overrides: RenderOptions = {}) {
@@ -34,8 +36,10 @@ function renderPanel(overrides: RenderOptions = {}) {
       onAcceptCategory={mockOnAcceptCategory}
       onAcceptPriority={mockOnAcceptPriority}
       onUseAsResponse={mockOnUseAsResponse}
+      onDismiss={mockOnDismiss}
       isAcceptingCategory={overrides.isAcceptingCategory ?? false}
       isAcceptingPriority={overrides.isAcceptingPriority ?? false}
+      isDismissing={overrides.isDismissing ?? false}
     />,
   )
 }
@@ -45,6 +49,7 @@ describe('AITriagePanel', () => {
     mockOnAcceptCategory.mockReset()
     mockOnAcceptPriority.mockReset()
     mockOnUseAsResponse.mockReset()
+    mockOnDismiss.mockReset()
   })
 
   it('renders the confidence badge when confidence is present', () => {
@@ -122,13 +127,17 @@ describe('AITriagePanel', () => {
     expect(mockOnUseAsResponse).toHaveBeenCalledOnce()
   })
 
-  it('clicking "Ignorar" hides the suggested response section', async () => {
+  it('clicking "Ignorar" calls onDismiss (dismissal is a parent-level, persisted concern — this component has no local hide-myself state)', async () => {
     const user = userEvent.setup()
     renderPanel()
-    expect(screen.getByText(baseTriage.suggestedResponse)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /ignorar/i }))
-    expect(screen.queryByText(baseTriage.suggestedResponse)).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /usar como respuesta/i })).not.toBeInTheDocument()
+    expect(mockOnDismiss).toHaveBeenCalledOnce()
+  })
+
+  it('disables both "Usar como respuesta" and "Ignorar" while isDismissing is true', () => {
+    renderPanel({ isDismissing: true })
+    expect(screen.getByRole('button', { name: /usar como respuesta/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /ignorar/i })).toBeDisabled()
   })
 
   it('always renders the footer disclaimer', () => {

@@ -33,12 +33,21 @@ export function TicketDetailPage(): React.ReactElement {
   const {
     acceptCategory,
     acceptPriority,
+    dismissTriage,
     isAcceptingCategory,
     isAcceptingPriority,
+    isDismissing,
   } = useAcceptAiTriage()
   useCategoryList()
 
   const [prefillContent, setPrefillContent] = useState<string | undefined>(undefined)
+  // Set the moment "Usar como respuesta" is clicked; consumed (and the
+  // suggestion dismissed) once that reply is actually sent — see
+  // handleAddComment. The suggestion is generated once from the ticket's
+  // original description, never regenerated from later comments, so once
+  // it's been acted on (ignored, or used as the basis for a sent reply) it
+  // must not reappear.
+  const [usedSuggestionAsResponse, setUsedSuggestionAsResponse] = useState(false)
 
   const user = useStore((s) => s.user)
   const agents = useStore((s) => s.agents)
@@ -62,7 +71,11 @@ export function TicketDetailPage(): React.ReactElement {
 
   const handleAddComment = async (content: string): Promise<void> => {
     if (!id) return
-    await addComment(id, content)
+    const comment = await addComment(id, content)
+    if (comment && usedSuggestionAsResponse) {
+      setUsedSuggestionAsResponse(false)
+      await dismissTriage(id)
+    }
     void fetchDetail()
   }
 
@@ -81,10 +94,17 @@ export function TicketDetailPage(): React.ReactElement {
   const handleUseAsResponse = (): void => {
     if (!ticket?.aiTriage) return
     setPrefillContent(ticket.aiTriage.suggestedResponse)
+    setUsedSuggestionAsResponse(true)
   }
 
   const handlePrefillConsumed = (): void => {
     setPrefillContent(undefined)
+  }
+
+  const handleDismissTriage = async (): Promise<void> => {
+    if (!ticket) return
+    const ok = await dismissTriage(ticket.id)
+    if (ok) void fetchDetail()
   }
 
   const isAgentOrAdmin = user?.role === 'agent' || user?.role === 'admin'
@@ -189,8 +209,10 @@ export function TicketDetailPage(): React.ReactElement {
                   onAcceptCategory={() => void handleAcceptCategory()}
                   onAcceptPriority={() => void handleAcceptPriority()}
                   onUseAsResponse={handleUseAsResponse}
+                  onDismiss={() => void handleDismissTriage()}
                   isAcceptingCategory={isAcceptingCategory}
                   isAcceptingPriority={isAcceptingPriority}
+                  isDismissing={isDismissing}
                 />
               )}
 

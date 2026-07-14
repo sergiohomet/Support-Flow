@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { TicketComment, StatusLogEntry, TicketStatus } from '@/modules/tickets/schemas'
 import { StatusBadge } from '@/ui/StatusBadge'
 
@@ -50,6 +50,7 @@ export function TicketComments({
   onPrefillConsumed,
 }: TicketCommentsProps): React.JSX.Element {
   const [content, setContent] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isResolved = ticketStatus === 'resuelto'
   const canComment =
     currentUserId !== null &&
@@ -70,6 +71,29 @@ export function TicketComments({
     applyPrefill()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefillContent])
+
+  // Auto-grow the textarea to fit its content instead of scrolling
+  // internally. Runs on every content change, including a one-shot
+  // prefill (e.g. a long AI-suggested response), not just per keystroke.
+  //
+  // When content is empty (initial mount, or right after submitting —
+  // handleSubmit resets content to ''), clear any inline height override
+  // instead of measuring scrollHeight: measuring an empty box on mount is
+  // unreliable (layout/webfonts may not be fully settled yet at that
+  // point), and live-testing showed it can bake in a wrong, oversized
+  // height that then never corrects itself since the effect never reruns
+  // until content next changes. Clearing lets the rows={3} CSS default
+  // take over, which is always correct for an empty box.
+  useEffect(() => {
+    const el = textareaRef.current
+    if (!el) return
+    if (!content) {
+      el.style.height = ''
+      return
+    }
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [content])
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
@@ -205,13 +229,14 @@ export function TicketComments({
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-2">
             <textarea
+              ref={textareaRef}
               value={content}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
               disabled={isLoading}
               rows={3}
               placeholder="Escribí un comentario..."
               aria-label="Nuevo comentario"
-              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 resize-none"
+              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 resize-none overflow-hidden"
             />
             <div className="flex justify-end">
               <button

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { AiTriage, TicketPriority } from '@/modules/tickets/schemas'
 import { PriorityBadge } from '@/ui/PriorityBadge'
 
@@ -10,14 +9,25 @@ interface AITriagePanelProps {
   onAcceptCategory: () => void
   onAcceptPriority: () => void
   onUseAsResponse: () => void
+  onDismiss: () => void
   isAcceptingCategory: boolean
   isAcceptingPriority: boolean
+  isDismissing: boolean
 }
 
 // Pure presentational panel for the ai_triage suggestion surfaced on the
-// ticket detail page. Owns zero Supabase calls — accept/use-as-response
-// intents are reported upward via callbacks; TicketDetailPage (composition
-// root) wires them to useAcceptAiTriage/useTicketDetail.
+// ticket detail page. Owns zero Supabase calls — accept/use-as-response/
+// dismiss intents are reported upward via callbacks; TicketDetailPage
+// (composition root) wires them to useAcceptAiTriage/useTicketDetail.
+//
+// "Ignorar" dismisses the WHOLE panel (not just the response section) via
+// onDismiss — the suggestion is generated once from the ticket's original
+// description, never regenerated from later comments, so once the agent
+// has decided to ignore it there's nothing left worth keeping around.
+// Dismissal is persisted server-side (dismiss_ai_triage sets ai_triage
+// back to null), so TicketDetailPage simply stops rendering this
+// component entirely once that succeeds — no local "hide myself" state
+// needed here.
 //
 // Judgment call (not spec-mandated either way): when the suggested
 // category/priority already matches the ticket's current value, the
@@ -32,11 +42,11 @@ export function AITriagePanel({
   onAcceptCategory,
   onAcceptPriority,
   onUseAsResponse,
+  onDismiss,
   isAcceptingCategory,
   isAcceptingPriority,
+  isDismissing,
 }: AITriagePanelProps): React.JSX.Element {
-  const [isResponseDismissed, setIsResponseDismissed] = useState(false)
-
   const categoryMatchesCurrent = aiTriage.suggestedCategoryId === currentCategoryId
   const priorityMatchesCurrent = aiTriage.suggestedPriority === currentPriority
 
@@ -112,42 +122,45 @@ export function AITriagePanel({
           </div>
         </div>
 
-        {/* Respuesta inicial sugerida — locally dismissible, not persisted */}
-        {!isResponseDismissed && (
-          <>
-            <hr className="border-gray-100" />
-            <div>
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
-                <span className="material-icons text-[14px]" aria-hidden="true">
-                  description
-                </span>
-                Respuesta inicial sugerida
+        {/* Respuesta inicial sugerida */}
+        <hr className="border-gray-100" />
+          <div>
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+              <span className="material-icons text-[14px]" aria-hidden="true">
+                description
               </span>
-              <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700 whitespace-pre-wrap">
-                {aiTriage.suggestedResponse}
-              </div>
-              <div className="flex flex-col gap-2 mt-3">
-                <button
-                  type="button"
-                  onClick={onUseAsResponse}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-                >
-                  <span className="material-icons text-[16px]" aria-hidden="true">
-                    send
-                  </span>
-                  Usar como respuesta
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsResponseDismissed(true)}
-                  className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Ignorar
-                </button>
-              </div>
+              Respuesta inicial sugerida
+            </span>
+            <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700 whitespace-pre-wrap">
+              {aiTriage.suggestedResponse}
             </div>
-          </>
-        )}
+            <div className="flex flex-col gap-2 mt-3">
+              <button
+                type="button"
+                onClick={onUseAsResponse}
+                disabled={isDismissing}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="material-icons text-[16px]" aria-hidden="true">
+                  send
+                </span>
+                Usar como respuesta
+              </button>
+              <button
+                type="button"
+                onClick={onDismiss}
+                disabled={isDismissing}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDismissing && (
+                  <span className="material-icons text-[14px] animate-spin" aria-hidden="true">
+                    refresh
+                  </span>
+                )}
+                Ignorar
+              </button>
+            </div>
+          </div>
       </div>
 
       <p className="text-xs text-gray-400 mt-4">Generado automáticamente. Revisá antes de enviar.</p>

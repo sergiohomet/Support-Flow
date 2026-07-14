@@ -40,6 +40,7 @@ vi.mock('@/modules/tickets/hooks/useAgentList', () => ({
 
 const mockAcceptCategory = vi.fn()
 const mockAcceptPriority = vi.fn()
+const mockDismissTriage = vi.fn()
 
 vi.mock('@/modules/tickets/hooks/useAcceptAiTriage', () => ({
   useAcceptAiTriage: vi.fn(),
@@ -163,6 +164,7 @@ describe('TicketDetailPage', () => {
     mockLoadAgents.mockReset()
     mockAcceptCategory.mockReset()
     mockAcceptPriority.mockReset()
+    mockDismissTriage.mockReset()
     mockLoadCategories.mockReset()
 
     mockFetchDetail.mockResolvedValue(undefined)
@@ -172,6 +174,7 @@ describe('TicketDetailPage', () => {
     mockLoadAgents.mockResolvedValue(undefined)
     mockAcceptCategory.mockResolvedValue(true)
     mockAcceptPriority.mockResolvedValue(true)
+    mockDismissTriage.mockResolvedValue(true)
 
     mockState = {
       user: { id: 'u1', email: 'client@test.com', full_name: 'Client User', role: 'client' },
@@ -192,10 +195,13 @@ describe('TicketDetailPage', () => {
     vi.mocked(useAcceptAiTriage).mockReturnValue({
       acceptCategory: mockAcceptCategory,
       acceptPriority: mockAcceptPriority,
+      dismissTriage: mockDismissTriage,
       isAcceptingCategory: false,
       isAcceptingPriority: false,
+      isDismissing: false,
       categoryError: null,
       priorityError: null,
+      dismissError: null,
     })
     vi.mocked(useCategoryList).mockReturnValue({
       isLoadingCategories: false,
@@ -521,6 +527,81 @@ describe('TicketDetailPage', () => {
       await user.click(screen.getByRole('button', { name: /usar como respuesta/i }))
 
       expect(screen.getByLabelText('Nuevo comentario')).toHaveValue(fakeAiTriage.suggestedResponse)
+    })
+
+    it('clicking "Ignorar" calls dismissTriage with the ticket id and refetches on success', async () => {
+      const user = userEvent.setup()
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+
+      await user.click(screen.getByRole('button', { name: /ignorar/i }))
+
+      expect(mockDismissTriage).toHaveBeenCalledWith('ticket-uuid-123')
+      expect(mockFetchDetail).toHaveBeenCalled()
+    })
+
+    it('does NOT refetch when dismissing the suggestion fails', async () => {
+      const user = userEvent.setup()
+      mockDismissTriage.mockResolvedValue(false)
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+
+      await user.click(screen.getByRole('button', { name: /ignorar/i }))
+
+      expect(mockDismissTriage).toHaveBeenCalledOnce()
+      expect(mockFetchDetail).not.toHaveBeenCalled()
+    })
+
+    it('sending a comment after "Usar como respuesta" also dismisses the suggestion (it is single-use, tied to the original description)', async () => {
+      const user = userEvent.setup()
+      mockAddComment.mockResolvedValue({
+        id: 'c-new',
+        ticketId: 'ticket-uuid-123',
+        userId: 'agent-42',
+        userFullName: 'Laura García',
+        content: fakeAiTriage.suggestedResponse,
+        createdAt: '2026-07-14T00:00:00Z',
+      })
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+
+      await user.click(screen.getByRole('button', { name: /usar como respuesta/i }))
+      await user.click(screen.getByRole('button', { name: /^enviar$/i }))
+
+      expect(mockAddComment).toHaveBeenCalledWith('ticket-uuid-123', fakeAiTriage.suggestedResponse)
+      expect(mockDismissTriage).toHaveBeenCalledWith('ticket-uuid-123')
+    })
+
+    it('sending a comment WITHOUT using the suggestion first does NOT dismiss it', async () => {
+      const user = userEvent.setup()
+      mockAddComment.mockResolvedValue({
+        id: 'c-new',
+        ticketId: 'ticket-uuid-123',
+        userId: 'agent-42',
+        userFullName: 'Laura García',
+        content: 'Un comentario cualquiera, no relacionado con la sugerencia.',
+        createdAt: '2026-07-14T00:00:00Z',
+      })
+      mockState.user = { id: 'agent-42', email: 'agent@test.com', full_name: 'Laura García', role: 'agent' }
+      vi.mocked(useTicketDetail).mockReturnValue(
+        makeDetailReturn({ ticket: { ...fakeTicketWithAgent, aiTriage: fakeAiTriage } })
+      )
+      renderPage()
+
+      await user.type(screen.getByLabelText('Nuevo comentario'), 'Un comentario cualquiera, no relacionado con la sugerencia.')
+      await user.click(screen.getByRole('button', { name: /^enviar$/i }))
+
+      expect(mockAddComment).toHaveBeenCalled()
+      expect(mockDismissTriage).not.toHaveBeenCalled()
     })
   })
 })

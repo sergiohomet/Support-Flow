@@ -6,10 +6,13 @@ import { parseRpcError } from '@/core/utils/parseRpcError'
 interface UseAcceptAiTriageResult {
   acceptCategory: (ticketId: string, categoryId: string) => Promise<boolean>
   acceptPriority: (ticketId: string, priority: TicketPriority) => Promise<boolean>
+  dismissTriage: (ticketId: string) => Promise<boolean>
   isAcceptingCategory: boolean
   isAcceptingPriority: boolean
+  isDismissing: boolean
   categoryError: string | null
   priorityError: string | null
+  dismissError: string | null
 }
 
 // Owns both ai_triage "accept" actions (accept_ai_triage_category and
@@ -24,8 +27,10 @@ interface UseAcceptAiTriageResult {
 export function useAcceptAiTriage(): UseAcceptAiTriageResult {
   const [isAcceptingCategory, setIsAcceptingCategory] = useState(false)
   const [isAcceptingPriority, setIsAcceptingPriority] = useState(false)
+  const [isDismissing, setIsDismissing] = useState(false)
   const [categoryError, setCategoryError] = useState<string | null>(null)
   const [priorityError, setPriorityError] = useState<string | null>(null)
+  const [dismissError, setDismissError] = useState<string | null>(null)
 
   const acceptCategory = async (ticketId: string, categoryId: string): Promise<boolean> => {
     setIsAcceptingCategory(true)
@@ -69,12 +74,42 @@ export function useAcceptAiTriage(): UseAcceptAiTriageResult {
     }
   }
 
+  // Permanently discards the suggestion (agent ignored it, or already used
+  // it as the basis for their reply) — the ai_triage suggestion is
+  // generated once from the ticket's original description and is never
+  // regenerated from later comments, so once acted on it must not
+  // reappear, including after a reload. Sets tickets.ai_triage back to
+  // null server-side; the panel's own render-gate ("show only when
+  // ai_triage is non-null") makes that sufficient to hide it for good.
+  const dismissTriage = async (ticketId: string): Promise<boolean> => {
+    setIsDismissing(true)
+    setDismissError(null)
+
+    try {
+      const { error: rpcError } = await supabase.rpc('dismiss_ai_triage', {
+        p_ticket_id: ticketId,
+      })
+
+      if (rpcError) {
+        setDismissError(parseRpcError(rpcError.message))
+        return false
+      }
+
+      return true
+    } finally {
+      setIsDismissing(false)
+    }
+  }
+
   return {
     acceptCategory,
     acceptPriority,
+    dismissTriage,
     isAcceptingCategory,
     isAcceptingPriority,
+    isDismissing,
     categoryError,
     priorityError,
+    dismissError,
   }
 }

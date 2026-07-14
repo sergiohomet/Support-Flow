@@ -125,6 +125,74 @@ describe('useAcceptAiTriage', () => {
     })
   })
 
+  describe('dismissTriage', () => {
+    it('calls rpc("dismiss_ai_triage") with correct params', async () => {
+      mockRpc.mockResolvedValue({ data: [{ id: 'ticket-1', ai_triage: null, updated_at: '2026-07-14T10:00:00Z' }], error: null })
+
+      const { result } = renderHook(() => useAcceptAiTriage())
+
+      await act(async () => {
+        await result.current.dismissTriage('ticket-1')
+      })
+
+      expect(mockRpc).toHaveBeenCalledWith('dismiss_ai_triage', { p_ticket_id: 'ticket-1' })
+    })
+
+    it('resolves true on success', async () => {
+      mockRpc.mockResolvedValue({ data: [{ id: 'ticket-1', ai_triage: null, updated_at: '2026-07-14T10:00:00Z' }], error: null })
+
+      const { result } = renderHook(() => useAcceptAiTriage())
+
+      let returned: boolean | undefined
+      await act(async () => {
+        returned = await result.current.dismissTriage('ticket-1')
+      })
+
+      expect(returned).toBe(true)
+      expect(result.current.dismissError).toBeNull()
+    })
+
+    it('resolves false and sets dismissError on rpc failure', async () => {
+      mockRpc.mockResolvedValue({ data: null, error: { message: 'not_found: Ticket not found' } })
+
+      const { result } = renderHook(() => useAcceptAiTriage())
+
+      let returned: boolean | undefined
+      await act(async () => {
+        returned = await result.current.dismissTriage('ticket-1')
+      })
+
+      expect(returned).toBe(false)
+      expect(result.current.dismissError).toBe('Ticket not found')
+    })
+
+    it('isDismissing is false after the call completes', async () => {
+      mockRpc.mockResolvedValue({ data: [{ id: 'ticket-1', ai_triage: null, updated_at: '2026-07-14T10:00:00Z' }], error: null })
+
+      const { result } = renderHook(() => useAcceptAiTriage())
+
+      await act(async () => {
+        await result.current.dismissTriage('ticket-1')
+      })
+
+      expect(result.current.isDismissing).toBe(false)
+    })
+
+    it('does not affect categoryError/priorityError', async () => {
+      mockRpc.mockResolvedValue({ data: null, error: { message: 'not_found: Ticket not found' } })
+
+      const { result } = renderHook(() => useAcceptAiTriage())
+
+      await act(async () => {
+        await result.current.dismissTriage('ticket-1')
+      })
+
+      expect(result.current.dismissError).toBe('Ticket not found')
+      expect(result.current.categoryError).toBeNull()
+      expect(result.current.priorityError).toBeNull()
+    })
+  })
+
   describe('independence between acceptCategory and acceptPriority', () => {
     it('a category error does not affect priorityError', async () => {
       mockRpc.mockResolvedValue({ data: null, error: { message: 'not_found: Ticket not found' } })
