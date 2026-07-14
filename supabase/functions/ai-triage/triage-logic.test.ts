@@ -49,6 +49,15 @@ describe('parseOpenRouterChatCompletion', () => {
     expect(result).toEqual(VALID_INNER_RESULT)
   })
 
+  it('defaults confidence to null when the model omits it entirely (live-verified gap in gpt-oss-20b:free strict-mode compliance)', () => {
+    const { confidence: _confidence, ...withoutConfidence } = VALID_INNER_RESULT
+    const raw = buildResponse({ content: JSON.stringify(withoutConfidence) })
+
+    const result = parseOpenRouterChatCompletion(raw, VALID_CATEGORY_IDS)
+
+    expect(result).toEqual({ ...withoutConfidence, confidence: null })
+  })
+
   it('rejects (null) when suggestedCategoryId is not in the given category list', () => {
     const raw = buildResponse({
       content: JSON.stringify({ ...VALID_INNER_RESULT, suggestedCategoryId: '999e4567-e89b-12d3-a456-426614174999' }),

@@ -34,7 +34,7 @@ export interface TriageResult {
   suggestedCategoryId: string
   suggestedPriority: SuggestedPriority
   suggestedResponse: string
-  confidence: number
+  confidence: number | null
 }
 
 /**
@@ -42,6 +42,20 @@ export interface TriageResult {
  * real category ids fetched from `public.categories` for this call — a
  * syntactically valid UUID that names a category NOT in that list is
  * still rejected.
+ *
+ * `confidence` is optional/nullable with a `null` default — live-verified
+ * against the real openai/gpt-oss-20b:free endpoint: it does not always
+ * include `confidence` in its structured output despite the schema
+ * marking it `required` (a known reliability gap of this free-tier
+ * model's strict-mode compliance). Rather than discarding an otherwise
+ * complete, usable suggestion (valid category, priority, and response
+ * draft) over one missing cosmetic field, `null` means "the model didn't
+ * report a confidence" — the review panel simply omits the confidence
+ * badge in that case, consistent with how any other missing suggestion
+ * field is handled (render only the parts that are present). This is
+ * NOT the same as fabricating a fake number when the model gave none.
+ * A confidence value that IS present but out of the 0-1 range is still
+ * rejected as invalid.
  */
 export function buildTriageResultSchema(validCategoryIds: string[]) {
   return z.object({
@@ -53,7 +67,7 @@ export function buildTriageResultSchema(validCategoryIds: string[]) {
       }),
     suggestedPriority: z.enum(PRIORITY_VALUES),
     suggestedResponse: z.string().min(1),
-    confidence: z.number().min(0).max(1),
+    confidence: z.number().min(0).max(1).nullable().optional().default(null),
   })
 }
 
