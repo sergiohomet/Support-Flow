@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/core/supabase/client'
 import { parseRpcError } from '@/core/utils/parseRpcError'
 import { mapTicketsByCategory } from '../schemas'
@@ -37,6 +37,10 @@ export function useReportsTicketsByCategory(
   const [data, setData] = useState<TicketsByCategory[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Track the latest refetch across renders so the realtime effect can call
+  // it without re-subscribing every time the function identity changes.
+  const refetchRef = useRef<() => Promise<void>>(undefined)
 
   const refetch = async (): Promise<void> => {
     setIsLoading(true)
@@ -80,6 +84,38 @@ export function useReportsTicketsByCategory(
       cancelled = true
     }
   }, [dateFrom, dateTo])
+
+  useEffect(() => {
+    refetchRef.current = refetch
+  })
+
+  // This RPC is admin-only and authorizes server-side (SECURITY DEFINER), so
+  // there is no client-side filter to apply here — the subscription is just
+  // a "something changed, refetch" signal. Subscribes once for the hook's
+  // lifetime, independent of dateFrom/dateTo.
+  useEffect(() => {
+    const channel = supabase
+      .channel('reports-tickets-by-category')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'tickets' },
+        () => {
+          void refetchRef.current?.()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'tickets' },
+        () => {
+          void refetchRef.current?.()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [])
 
   return { data, isLoading, error, refetch }
 }
