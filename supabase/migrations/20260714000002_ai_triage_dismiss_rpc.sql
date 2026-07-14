@@ -6,7 +6,7 @@
 -- generated once, for the ticket's original description — it's not
 -- re-triaged as new comments come in, so once the agent has acted on it
 -- (ignored it, or sent a reply based on it) it should never reappear,
--- not even after a page reload. Adds accept_ai_triage_dismiss(), mirroring
+-- not even after a page reload. Adds dismiss_ai_triage(), mirroring
 -- accept_ai_triage_category/priority's role-gate and REVOKE/GRANT
 -- discipline exactly (see 20260713000001_ai_triage_accept_rpcs.sql).
 --
