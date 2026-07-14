@@ -40,8 +40,7 @@ export interface TriageResult {
 /**
  * Builds the zod schema for a single triage result, constrained to the
  * real category ids fetched from `public.categories` for this call — a
- * syntactically valid UUID that names a category NOT in that list is
- * still rejected.
+ * string that names a category NOT in that list is still rejected.
  *
  * `confidence` is optional/nullable with a `null` default — live-verified
  * against the real openai/gpt-oss-20b:free endpoint: it does not always
