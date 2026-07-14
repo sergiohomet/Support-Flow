@@ -43,6 +43,8 @@ interface RenderOptions {
   comments?: TicketComment[]
   statusLog?: StatusLogEntry[]
   ticketClientId?: string
+  prefillContent?: string
+  onPrefillConsumed?: () => void
 }
 
 function renderComments(ticketStatus: TicketStatus, overrides: RenderOptions = {}) {
@@ -55,6 +57,8 @@ function renderComments(ticketStatus: TicketStatus, overrides: RenderOptions = {
       isLoading={overrides.isLoading ?? false}
       error={overrides.error ?? null}
       ticketStatus={ticketStatus}
+      prefillContent={overrides.prefillContent}
+      onPrefillConsumed={overrides.onPrefillConsumed}
     />,
   )
 }
@@ -148,6 +152,27 @@ describe('TicketComments', () => {
     it('shows no activity message when both comments and statusLog are empty', () => {
       renderComments('abierto', { comments: [], statusLog: [], ticketClientId: CLIENT_ID })
       expect(screen.getByText('No hay actividad aún.')).toBeInTheDocument()
+    })
+  })
+
+  describe('prefillContent', () => {
+    it('populates the textarea when prefillContent is provided', () => {
+      renderComments('abierto', { prefillContent: 'Respuesta sugerida por IA' })
+      expect(screen.getByLabelText('Nuevo comentario')).toHaveValue('Respuesta sugerida por IA')
+    })
+
+    it('calls onPrefillConsumed after applying the prefill', () => {
+      const mockOnPrefillConsumed = vi.fn()
+      renderComments('abierto', {
+        prefillContent: 'Respuesta sugerida por IA',
+        onPrefillConsumed: mockOnPrefillConsumed,
+      })
+      expect(mockOnPrefillConsumed).toHaveBeenCalledOnce()
+    })
+
+    it('leaves the textarea untouched when prefillContent is not provided', () => {
+      renderComments('abierto')
+      expect(screen.getByLabelText('Nuevo comentario')).toHaveValue('')
     })
   })
 })

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { TicketComment, StatusLogEntry, TicketStatus } from '@/modules/tickets/schemas'
 import { StatusBadge } from '@/ui/StatusBadge'
 
@@ -12,6 +12,12 @@ interface TicketCommentsProps {
   isLoading: boolean
   error: string | null
   ticketStatus: TicketStatus
+  // Optional prefill lifted from a parent (e.g. AITriagePanel's "Usar como
+  // respuesta"). When set, the textarea is populated and the parent is
+  // notified via onPrefillConsumed so it can clear its own state — this
+  // allows a second identical prefill later to still trigger a re-populate.
+  prefillContent?: string
+  onPrefillConsumed?: () => void
 }
 
 type FeedItem =
@@ -40,12 +46,30 @@ export function TicketComments({
   isLoading,
   error,
   ticketStatus,
+  prefillContent,
+  onPrefillConsumed,
 }: TicketCommentsProps): React.JSX.Element {
   const [content, setContent] = useState('')
   const isResolved = ticketStatus === 'resuelto'
   const canComment =
     currentUserId !== null &&
     (currentUserId === ticketClientId || currentUserId === ticketAgentId)
+
+  // See useTicketList.ts (src/modules/tickets/hooks) for why the state
+  // update is wrapped in a locally-defined function invoked from within the
+  // effect instead of calling setContent directly at the effect's top level
+  // — react-hooks/set-state-in-effect flags the latter.
+  useEffect(() => {
+    if (!prefillContent) return
+
+    function applyPrefill(): void {
+      setContent(prefillContent as string)
+      onPrefillConsumed?.()
+    }
+
+    applyPrefill()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillContent])
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()

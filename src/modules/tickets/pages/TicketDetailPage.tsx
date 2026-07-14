@@ -5,10 +5,13 @@ import { useTicketDetail } from '@/modules/tickets/hooks/useTicketDetail'
 import { useUpdateTicketStatus } from '@/modules/tickets/hooks/useUpdateTicketStatus'
 import { useAddComment } from '@/modules/tickets/hooks/useAddComment'
 import { useAgentList } from '@/modules/tickets/hooks/useAgentList'
+import { useAcceptAiTriage } from '@/modules/tickets/hooks/useAcceptAiTriage'
+import { useCategoryList } from '@/modules/tickets/hooks/useCategoryList'
 import { TicketComments } from '@/modules/tickets/components/TicketComments'
 import { TicketStatusLog } from '@/modules/tickets/components/TicketStatusLog'
 import { TicketActions } from '@/modules/tickets/components/TicketActions'
 import { ReassignTicketModal } from '@/modules/tickets/components/ReassignTicketModal'
+import { AITriagePanel } from '@/modules/tickets/components/AITriagePanel'
 import { StatusBadge } from '@/ui/StatusBadge'
 import { PriorityBadge } from '@/ui/PriorityBadge'
 import { Spinner } from '@/ui/Spinner'
@@ -27,9 +30,19 @@ export function TicketDetailPage(): React.ReactElement {
   const { execute: unassignTicket, isLoading: unassignLoading, error: unassignError } = useUnassignTicket()
   const { execute: addComment, isLoading: commentLoading, error: commentError } = useAddComment()
   const { loadAgents } = useAgentList()
+  const {
+    acceptCategory,
+    acceptPriority,
+    isAcceptingCategory,
+    isAcceptingPriority,
+  } = useAcceptAiTriage()
+  useCategoryList()
+
+  const [prefillContent, setPrefillContent] = useState<string | undefined>(undefined)
 
   const user = useStore((s) => s.user)
   const agents = useStore((s) => s.agents)
+  const categories = useStore((s) => s.categories)
 
   useEffect(() => {
     void loadAgents()
@@ -51,6 +64,27 @@ export function TicketDetailPage(): React.ReactElement {
     if (!id) return
     await addComment(id, content)
     void fetchDetail()
+  }
+
+  const handleAcceptCategory = async (): Promise<void> => {
+    if (!ticket?.aiTriage) return
+    const ok = await acceptCategory(ticket.id, ticket.aiTriage.suggestedCategoryId)
+    if (ok) void fetchDetail()
+  }
+
+  const handleAcceptPriority = async (): Promise<void> => {
+    if (!ticket?.aiTriage) return
+    const ok = await acceptPriority(ticket.id, ticket.aiTriage.suggestedPriority)
+    if (ok) void fetchDetail()
+  }
+
+  const handleUseAsResponse = (): void => {
+    if (!ticket?.aiTriage) return
+    setPrefillContent(ticket.aiTriage.suggestedResponse)
+  }
+
+  const handlePrefillConsumed = (): void => {
+    setPrefillContent(undefined)
   }
 
   const isAgentOrAdmin = user?.role === 'agent' || user?.role === 'admin'
@@ -138,11 +172,28 @@ export function TicketDetailPage(): React.ReactElement {
                 isLoading={commentLoading}
                 error={commentError}
                 ticketStatus={ticket.status}
+                prefillContent={prefillContent}
+                onPrefillConsumed={handlePrefillConsumed}
               />
             </div>
 
             {/* Sidebar — 35% */}
             <div className="flex-[0_0_35%] min-w-0 flex flex-col gap-5">
+              {/* Sugerencias IA — agent/admin only */}
+              {isAgentOrAdmin && ticket.aiTriage && (
+                <AITriagePanel
+                  aiTriage={ticket.aiTriage}
+                  currentCategoryId={ticket.categoryId}
+                  currentPriority={ticket.priority}
+                  categoryName={categories.find((c) => c.id === ticket.aiTriage?.suggestedCategoryId)?.name ?? null}
+                  onAcceptCategory={() => void handleAcceptCategory()}
+                  onAcceptPriority={() => void handleAcceptPriority()}
+                  onUseAsResponse={handleUseAsResponse}
+                  isAcceptingCategory={isAcceptingCategory}
+                  isAcceptingPriority={isAcceptingPriority}
+                />
+              )}
+
               {/* Detalles */}
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <h3 className="text-base font-semibold text-gray-900 mb-4">Detalles</h3>
