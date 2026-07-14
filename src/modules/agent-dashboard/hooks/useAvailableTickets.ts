@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/core/supabase/client'
 import { parseRpcError } from '@/core/utils/parseRpcError'
 import { mapAgentDashboardTicket } from '../schemas'
@@ -52,6 +52,10 @@ export function useAvailableTickets(
   const [error, setError] = useState<string | null>(null)
   const [claimError, setClaimError] = useState<string | null>(null)
 
+  // Track the latest refetch across renders so the realtime effect can call
+  // it without re-subscribing every time the function identity changes.
+  const refetchRef = useRef<() => Promise<void>>(undefined)
+
   const refetch = async (): Promise<void> => {
     if (!categoryId) return
     setIsLoading(true)
@@ -96,6 +100,49 @@ export function useAvailableTickets(
     void run()
     return () => {
       cancelled = true
+    }
+  }, [categoryId])
+
+  useEffect(() => {
+    refetchRef.current = refetch
+  })
+
+  // Mirrors the "no category assigned" guard above: no categoryId means no
+  // query and no subscription either.
+  useEffect(() => {
+    if (!categoryId) return
+    const currentCategoryId = categoryId
+
+    const channel = supabase
+      .channel(`available-tickets-${currentCategoryId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'tickets',
+          filter: `category_id=eq.${currentCategoryId}`,
+        },
+        () => {
+          void refetchRef.current?.()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tickets',
+          filter: `category_id=eq.${currentCategoryId}`,
+        },
+        () => {
+          void refetchRef.current?.()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
     }
   }, [categoryId])
 

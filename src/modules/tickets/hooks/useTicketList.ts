@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/core/supabase/client'
 import { useStore } from '@/store'
 import type { TicketFilters } from '@/store/ticketsSlice'
@@ -64,6 +64,10 @@ export function useTicketList(enabled = false): UseTicketListResult {
   const status = useStore((s) => s.filters.status)
   const page = useStore((s) => s.filters.page)
 
+  // Track the latest fetch across renders so the realtime effect can call
+  // it without re-subscribing every time the function identity changes.
+  const fetchRef = useRef<() => Promise<void>>(undefined)
+
   const fetch = async (): Promise<void> => {
     setIsFetching(true)
     setError(null)
@@ -114,6 +118,40 @@ export function useTicketList(enabled = false): UseTicketListResult {
       cancelled = true
     }
   }, [status, page, enabled, setTickets])
+
+  useEffect(() => {
+    fetchRef.current = fetch
+  })
+
+  // No client-side filter here — a matching row could belong to any page or
+  // filter combination, so we subscribe unfiltered and let `fetch()` read
+  // the live filters from the store (see fetchTickets/useStore.getState()
+  // above). Only active while `enabled`, mirroring the auto-fetch effect.
+  useEffect(() => {
+    if (!enabled) return
+
+    const channel = supabase
+      .channel('tickets-list')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'tickets' },
+        () => {
+          void fetchRef.current?.()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'tickets' },
+        () => {
+          void fetchRef.current?.()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [enabled])
 
   return { isFetching, error, fetch }
 }

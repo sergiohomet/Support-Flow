@@ -2,8 +2,17 @@ import { renderHook, act } from '@testing-library/react'
 import { useTicketList } from '../useTicketList'
 
 const mockRpc = vi.fn()
+const mockOn = vi.fn()
+const mockSubscribe = vi.fn()
+const mockChannel = vi.fn()
+const mockRemoveChannel = vi.fn()
+
 vi.mock('@/core/supabase/client', () => ({
-  supabase: { rpc: (...args: unknown[]) => mockRpc(...args) },
+  supabase: {
+    rpc: (...args: unknown[]) => mockRpc(...args),
+    channel: (...args: unknown[]) => mockChannel(...args),
+    removeChannel: (...args: unknown[]) => mockRemoveChannel(...args),
+  },
 }))
 
 const mockSetTickets = vi.fn()
@@ -48,6 +57,15 @@ describe('useTicketList', () => {
       setTickets: mockSetTickets,
       filters: { status: null, priority: null, categoryId: null, agentId: null, page: 1, pageSize: 10 },
     }
+
+    mockOn.mockReset()
+    mockSubscribe.mockReset()
+    mockChannel.mockReset()
+    mockRemoveChannel.mockReset()
+
+    mockOn.mockReturnValue({ on: mockOn, subscribe: mockSubscribe })
+    mockSubscribe.mockReturnValue({ unsubscribe: vi.fn() })
+    mockChannel.mockReturnValue({ on: mockOn })
   })
 
   describe('fetch() (manual call, enabled defaults to false)', () => {
@@ -207,6 +225,70 @@ describe('useTicketList', () => {
       })
 
       expect(mockRpc).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('realtime subscription', () => {
+    it('subscribes to unfiltered tickets INSERT/UPDATE events when enabled', async () => {
+      renderHook(() => useTicketList(true))
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      expect(mockChannel).toHaveBeenCalledWith('tickets-list')
+      expect(mockOn).toHaveBeenCalledWith(
+        'postgres_changes',
+        expect.objectContaining({ event: 'INSERT', schema: 'public', table: 'tickets' }),
+        expect.any(Function)
+      )
+      expect(mockOn).toHaveBeenCalledWith(
+        'postgres_changes',
+        expect.objectContaining({ event: 'UPDATE', schema: 'public', table: 'tickets' }),
+        expect.any(Function)
+      )
+      expect(mockSubscribe).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not subscribe when enabled is false', async () => {
+      renderHook(() => useTicketList(false))
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      expect(mockChannel).not.toHaveBeenCalled()
+    })
+
+    it('removes the channel on unmount', async () => {
+      const { unmount } = renderHook(() => useTicketList(true))
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      unmount()
+
+      expect(mockRemoveChannel).toHaveBeenCalledTimes(1)
+    })
+
+    it('a postgres_changes event calls fetch() with the LATEST filters, not the ones captured at mount', async () => {
+      mockRpc.mockResolvedValue({ data: [], error: null })
+      renderHook(() => useTicketList(true))
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      // Mutate filters after mount, without re-rendering the hook — the
+      // realtime handler must read live state via the ref, not a stale
+      // closure captured when the channel was created.
+      mockState = { ...mockState, filters: { ...mockState.filters, page: 2 } }
+
+      mockRpc.mockClear()
+      const insertHandler = mockOn.mock.calls[0][2] as () => void
+      await act(async () => {
+        insertHandler()
+        await Promise.resolve()
+      })
+
+      expect(mockRpc).toHaveBeenCalledWith('get_tickets', expect.objectContaining({ p_page: 2 }))
     })
   })
 })
