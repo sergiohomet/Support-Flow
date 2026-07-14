@@ -51,7 +51,18 @@ import {
   type CategoryOption,
 } from './triage-logic.ts'
 
-const OPENROUTER_TIMEOUT_MS = 10_000
+// 45s: live-verified against the real openai/gpt-oss-20b:free endpoint
+// across several calls — this model does visible internal "reasoning"
+// before emitting its structured JSON output, and observed latency
+// varied significantly call-to-call (~13s on one attempt, still not
+// complete at 25s on another). 10s and then 25s both got aborted before
+// the response finished downloading, silently discarding an otherwise
+// successful triage result (the AbortError falls into the same no-op
+// path as any other failure, so this was invisible until tested live
+// multiple times). 45s gives real headroom for this free-tier model's
+// variance while still well within Supabase Edge Functions' execution
+// limits.
+const OPENROUTER_TIMEOUT_MS = 45_000
 
 Deno.serve(async (req: Request) => {
   try {
