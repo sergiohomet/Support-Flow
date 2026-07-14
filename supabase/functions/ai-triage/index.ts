@@ -51,7 +51,14 @@ import {
   type CategoryOption,
 } from './triage-logic.ts'
 
-const OPENROUTER_TIMEOUT_MS = 10_000
+// 25s, not 10s: live-verified against the real openai/gpt-oss-20b:free
+// endpoint — this model does visible internal "reasoning" before emitting
+// its structured JSON output, and observed call latency was ~13s even for
+// a short ticket. A 10s timeout aborted every real call before it could
+// finish, silently discarding every triage result (the AbortError falls
+// into the same no-op path as any other failure, so this was invisible
+// until tested live).
+const OPENROUTER_TIMEOUT_MS = 25_000
 
 Deno.serve(async (req: Request) => {
   try {
