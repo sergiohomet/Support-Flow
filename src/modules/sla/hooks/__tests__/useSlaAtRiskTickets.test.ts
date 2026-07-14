@@ -2,8 +2,17 @@ import { renderHook, act } from '@testing-library/react'
 import { useSlaAtRiskTickets } from '../useSlaAtRiskTickets'
 
 const mockRpc = vi.fn()
+const mockOn = vi.fn()
+const mockSubscribe = vi.fn()
+const mockChannel = vi.fn()
+const mockRemoveChannel = vi.fn()
+
 vi.mock('@/core/supabase/client', () => ({
-  supabase: { rpc: (...args: unknown[]) => mockRpc(...args) },
+  supabase: {
+    rpc: (...args: unknown[]) => mockRpc(...args),
+    channel: (...args: unknown[]) => mockChannel(...args),
+    removeChannel: (...args: unknown[]) => mockRemoveChannel(...args),
+  },
 }))
 
 const fakeAtRiskRow = {
@@ -18,6 +27,15 @@ describe('useSlaAtRiskTickets', () => {
   beforeEach(() => {
     mockRpc.mockReset()
     mockRpc.mockResolvedValue({ data: [], error: null })
+
+    mockOn.mockReset()
+    mockSubscribe.mockReset()
+    mockChannel.mockReset()
+    mockRemoveChannel.mockReset()
+
+    mockOn.mockReturnValue({ on: mockOn, subscribe: mockSubscribe })
+    mockSubscribe.mockReturnValue({ unsubscribe: vi.fn() })
+    mockChannel.mockReturnValue({ on: mockOn })
   })
 
   it('calls rpc("admin_get_sla_at_risk_tickets") with default limit on mount', async () => {
@@ -128,5 +146,64 @@ describe('useSlaAtRiskTickets', () => {
     })
 
     expect(mockRpc).toHaveBeenCalledTimes(2)
+  })
+
+  describe('realtime subscription', () => {
+    it('subscribes to unfiltered tickets INSERT/UPDATE events on mount', async () => {
+      renderHook(() => useSlaAtRiskTickets())
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      expect(mockChannel).toHaveBeenCalledWith('sla-at-risk-tickets')
+      expect(mockOn).toHaveBeenCalledWith(
+        'postgres_changes',
+        expect.objectContaining({ event: 'INSERT', schema: 'public', table: 'tickets' }),
+        expect.any(Function)
+      )
+      expect(mockOn).toHaveBeenCalledWith(
+        'postgres_changes',
+        expect.objectContaining({ event: 'UPDATE', schema: 'public', table: 'tickets' }),
+        expect.any(Function)
+      )
+      expect(mockSubscribe).toHaveBeenCalledTimes(1)
+    })
+
+    it('removes the channel on unmount', async () => {
+      const { unmount } = renderHook(() => useSlaAtRiskTickets())
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      unmount()
+
+      expect(mockRemoveChannel).toHaveBeenCalledTimes(1)
+    })
+
+    it('a postgres_changes event calls the RPC with the LATEST limit, not the one captured at mount', async () => {
+      mockRpc.mockResolvedValue({ data: [fakeAtRiskRow], error: null })
+      const { rerender } = renderHook(({ limit }) => useSlaAtRiskTickets(limit), {
+        initialProps: { limit: 10 },
+      })
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      rerender({ limit: 20 })
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      expect(mockChannel).toHaveBeenCalledTimes(1)
+
+      mockRpc.mockClear()
+      const insertHandler = mockOn.mock.calls[0][2] as () => void
+      await act(async () => {
+        insertHandler()
+        await Promise.resolve()
+      })
+
+      expect(mockRpc).toHaveBeenCalledWith('admin_get_sla_at_risk_tickets', { p_limit: 20 })
+    })
   })
 })

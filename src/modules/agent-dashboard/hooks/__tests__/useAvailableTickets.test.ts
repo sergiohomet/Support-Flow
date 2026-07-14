@@ -2,8 +2,17 @@ import { renderHook, act } from '@testing-library/react'
 import { useAvailableTickets } from '../useAvailableTickets'
 
 const mockRpc = vi.fn()
+const mockOn = vi.fn()
+const mockSubscribe = vi.fn()
+const mockChannel = vi.fn()
+const mockRemoveChannel = vi.fn()
+
 vi.mock('@/core/supabase/client', () => ({
-  supabase: { rpc: (...args: unknown[]) => mockRpc(...args) },
+  supabase: {
+    rpc: (...args: unknown[]) => mockRpc(...args),
+    channel: (...args: unknown[]) => mockChannel(...args),
+    removeChannel: (...args: unknown[]) => mockRemoveChannel(...args),
+  },
 }))
 
 const fakeTicketRow = {
@@ -26,6 +35,15 @@ describe('useAvailableTickets', () => {
   beforeEach(() => {
     mockRpc.mockReset()
     mockRpc.mockResolvedValue({ data: [], error: null })
+
+    mockOn.mockReset()
+    mockSubscribe.mockReset()
+    mockChannel.mockReset()
+    mockRemoveChannel.mockReset()
+
+    mockOn.mockReturnValue({ on: mockOn, subscribe: mockSubscribe })
+    mockSubscribe.mockReturnValue({ unsubscribe: vi.fn() })
+    mockChannel.mockReturnValue({ on: mockOn })
   })
 
   it('does not call rpc when categoryId is null', async () => {
@@ -170,5 +188,90 @@ describe('useAvailableTickets', () => {
 
     expect(claimResult).toBe(false)
     expect(result.current.claimError).toBe('Ya asignado')
+  })
+
+  describe('realtime subscription', () => {
+    it('subscribes to tickets INSERT/UPDATE events scoped to categoryId', async () => {
+      renderHook(() => useAvailableTickets('cat-1', 'agent-1'))
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      expect(mockChannel).toHaveBeenCalledWith('available-tickets-cat-1')
+      expect(mockOn).toHaveBeenCalledWith(
+        'postgres_changes',
+        expect.objectContaining({
+          event: 'INSERT',
+          schema: 'public',
+          table: 'tickets',
+          filter: 'category_id=eq.cat-1',
+        }),
+        expect.any(Function)
+      )
+      expect(mockOn).toHaveBeenCalledWith(
+        'postgres_changes',
+        expect.objectContaining({
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tickets',
+          filter: 'category_id=eq.cat-1',
+        }),
+        expect.any(Function)
+      )
+      expect(mockSubscribe).toHaveBeenCalledTimes(1)
+    })
+
+    it('does NOT subscribe when categoryId is null', async () => {
+      renderHook(() => useAvailableTickets(null, 'agent-1'))
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      expect(mockChannel).not.toHaveBeenCalled()
+    })
+
+    it('removes the channel on unmount', async () => {
+      const { unmount } = renderHook(() => useAvailableTickets('cat-1', 'agent-1'))
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      unmount()
+
+      expect(mockRemoveChannel).toHaveBeenCalledTimes(1)
+    })
+
+    it('re-subscribes scoped to the new categoryId when categoryId changes, and a matching event refetches for the NEW category (not the one captured at mount)', async () => {
+      mockRpc.mockResolvedValue({ data: [], error: null })
+      const { rerender } = renderHook(
+        ({ categoryId }) => useAvailableTickets(categoryId, 'agent-1'),
+        { initialProps: { categoryId: 'cat-1' as string | null } }
+      )
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      mockOn.mockClear()
+      mockChannel.mockClear()
+      mockRpc.mockClear()
+
+      rerender({ categoryId: 'cat-2' })
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0))
+      })
+
+      expect(mockChannel).toHaveBeenCalledWith('available-tickets-cat-2')
+
+      const insertHandler = mockOn.mock.calls[0][2] as () => void
+      await act(async () => {
+        insertHandler()
+        await Promise.resolve()
+      })
+
+      expect(mockRpc).toHaveBeenCalledWith(
+        'get_tickets',
+        expect.objectContaining({ p_category_id: 'cat-2' })
+      )
+    })
   })
 })
