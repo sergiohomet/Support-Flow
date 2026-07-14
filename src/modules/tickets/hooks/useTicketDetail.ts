@@ -54,7 +54,7 @@ async function fetchTicketDetail(ticketId: string): Promise<FetchResult> {
     clientFullName: row.client_full_name,
     agentId: row.agent_id ?? null,
     agentFullName: row.agent_full_name ?? null,
-    aiTriage: row.ai_triage ?? null,
+    aiTriage: (row.ai_triage as TicketDetail['aiTriage']) ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     escalatedAt: row.escalated_at ?? null,
@@ -169,6 +169,22 @@ export function useTicketDetail(ticketId: string | undefined): UseTicketDetailRe
           // handleAddComment in TicketDetailPage — skip here to avoid a
           // redundant back-to-back refetch.
           if (payload.new.user_id === currentUserId) return
+          void refetchRef.current?.()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tickets',
+          filter: `id=eq.${currentTicketId}`,
+        },
+        (payload: { new: { id: string } }) => {
+          // The row-level filter above already scopes delivery to this
+          // ticket, but re-check defensively (mirrors the INSERT handler's
+          // own-user guard) in case the filter semantics ever change.
+          if (payload.new.id !== currentTicketId) return
           void refetchRef.current?.()
         }
       )

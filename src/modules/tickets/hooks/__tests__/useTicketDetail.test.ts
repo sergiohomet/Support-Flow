@@ -78,7 +78,10 @@ describe('useTicketDetail', () => {
     mockChannel.mockReset()
     mockRemoveChannel.mockReset()
 
-    mockOn.mockReturnValue({ subscribe: mockSubscribe })
+    // The hook chains two .on(...) calls on the SAME channel (ticket_comments
+    // INSERT + tickets UPDATE), so .on() must itself be chainable before the
+    // final .subscribe().
+    mockOn.mockReturnValue({ on: mockOn, subscribe: mockSubscribe })
     mockSubscribe.mockReturnValue({ unsubscribe: vi.fn() })
     mockChannel.mockReturnValue({ on: mockOn })
   })
@@ -288,6 +291,61 @@ describe('useTicketDetail', () => {
 
       await act(async () => {
         insertHandler({ new: { user_id: 'current-user' } })
+        await Promise.resolve()
+      })
+
+      expect(mockRpc).not.toHaveBeenCalled()
+    })
+
+    it('also subscribes to tickets UPDATE events scoped to the ticket id, on the same channel', async () => {
+      renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
+
+      expect(mockChannel).toHaveBeenCalledTimes(1)
+      expect(mockChannel).toHaveBeenCalledWith('ticket-comments-ticket-1')
+      expect(mockOn).toHaveBeenCalledWith(
+        'postgres_changes',
+        expect.objectContaining({
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tickets',
+          filter: 'id=eq.ticket-1',
+        }),
+        expect.any(Function)
+      )
+      expect(mockSubscribe).toHaveBeenCalledTimes(1)
+    })
+
+    it('triggers a refetch when a tickets UPDATE event fires for the current ticket id', async () => {
+      renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
+
+      mockRpc.mockClear()
+      const updateCall = mockOn.mock.calls.find(
+        (call) => (call[1] as { table: string }).table === 'tickets'
+      )
+      const updateHandler = updateCall?.[2] as (payload: { new: { id: string } }) => void
+
+      await act(async () => {
+        updateHandler({ new: { id: 'ticket-1' } })
+        await Promise.resolve()
+      })
+
+      expect(mockRpc).toHaveBeenCalled()
+    })
+
+    it('does NOT trigger a refetch for a tickets UPDATE event on a different ticket id', async () => {
+      renderHook(() => useTicketDetail('ticket-1'))
+      await flush()
+
+      mockRpc.mockClear()
+      const updateCall = mockOn.mock.calls.find(
+        (call) => (call[1] as { table: string }).table === 'tickets'
+      )
+      const updateHandler = updateCall?.[2] as (payload: { new: { id: string } }) => void
+
+      await act(async () => {
+        updateHandler({ new: { id: 'ticket-2' } })
         await Promise.resolve()
       })
 

@@ -23,6 +23,24 @@ export const ticketListItemSchema = z.object({
   commentCount: z.number(),
 })
 
+// AI triage suggestion (maps the ai_triage JSONB column, written by the
+// ai-triage Edge Function). suggestedCategoryId is intentionally a plain
+// z.string() — NOT z.string().uuid() — because this project's real
+// categories.id values (e.g. 11111111-1111-1111-1111-111111111111) fail
+// Zod's strict RFC 4122 format check on version/variant nibbles, exactly as
+// found and fixed server-side in supabase/functions/ai-triage/triage-logic.ts.
+// confidence is nullable because the model sometimes omits it entirely
+// (already defaulted to null server-side in that case).
+export const aiTriageSchema = z.object({
+  suggestedCategoryId: z.string(),
+  suggestedPriority: ticketPrioritySchema,
+  suggestedResponse: z.string().min(1),
+  confidence: z.number().min(0).max(1).nullable(),
+  generatedAt: z.string(),
+})
+
+export type AiTriage = z.infer<typeof aiTriageSchema>
+
 // Detail (maps get_ticket_detail row)
 export const ticketDetailSchema = z.object({
   id: z.string(),
@@ -37,7 +55,7 @@ export const ticketDetailSchema = z.object({
   clientFullName: z.string(),
   agentId: z.string().nullable(),
   agentFullName: z.string().nullable(),
-  aiTriage: z.unknown().nullable(),
+  aiTriage: aiTriageSchema.nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
   escalatedAt: z.string().nullable(),
