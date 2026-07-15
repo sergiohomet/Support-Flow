@@ -3,6 +3,7 @@ import { supabase } from '@/core/supabase/client'
 import { useStore } from '@/store'
 import type { UserRole } from '@/store/authSlice'
 import { getInitials } from '@/core/utils/getInitials'
+import { useHasUnreadNotifications } from '@/modules/notifications/hooks/useHasUnreadNotifications'
 
 interface NavItem {
   label: string
@@ -51,6 +52,7 @@ function getRoleLabel(role: UserRole): string {
 export function AppSidebar() {
   const user = useStore((s) => s.user)
   const navigate = useNavigate()
+  const { hasUnread } = useHasUnreadNotifications()
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -87,11 +89,20 @@ export function AppSidebar() {
           >
             {({ isActive }) => (
               <>
-                <span
-                  className="material-icons text-[20px] shrink-0"
-                  style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
-                >
-                  {item.icon}
+                <span className="relative shrink-0">
+                  <span
+                    className="material-icons text-[20px]"
+                    style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                  >
+                    {item.icon}
+                  </span>
+                  {item.to === '/notifications' && hasUnread && (
+                    <span
+                      data-testid="notifications-unread-badge"
+                      aria-hidden="true"
+                      className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"
+                    />
+                  )}
                 </span>
                 <span className="whitespace-nowrap">{item.label}</span>
               </>

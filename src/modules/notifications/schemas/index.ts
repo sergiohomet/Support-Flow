@@ -9,6 +9,7 @@ export const notificationTypeSchema = z.enum([
   'sla_escalation',
   'reassignment',
   'new_comment',
+  'new_ticket',
 ])
 
 export type NotificationType = z.infer<typeof notificationTypeSchema>
