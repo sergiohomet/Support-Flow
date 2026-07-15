@@ -720,6 +720,10 @@ export type Database = {
           updated_at: string
         }[]
       }
+      has_unread_notifications: {
+        Args: never
+        Returns: boolean
+      }
       internal_sync_sla_service_role_secret: {
         Args: { p_value: string }
         Returns: undefined
@@ -771,6 +775,7 @@ export type Database = {
         | "sla_escalation"
         | "reassignment"
         | "new_comment"
+        | "new_ticket"
       ticket_priority: "baja" | "media" | "alta" | "critica"
       ticket_status: "abierto" | "en_proceso" | "resuelto" | "reabierto"
       user_role: "client" | "agent" | "admin"
@@ -906,6 +911,7 @@ export const Constants = {
         "sla_escalation",
         "reassignment",
         "new_comment",
+        "new_ticket",
       ],
       ticket_priority: ["baja", "media", "alta", "critica"],
       ticket_status: ["abierto", "en_proceso", "resuelto", "reabierto"],

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/core/supabase/client'
+import { useStore } from '@/store'
 import { parseRpcError } from '@/core/utils/parseRpcError'
 import { mapNotification } from '../schemas'
 import type { NotificationFilter, NotificationRow } from '../schemas'
@@ -43,6 +44,11 @@ export function useListNotifications(filter: NotificationFilter): UseListNotific
   // local override is the simplest way to reflect the optimistic read state
   // on top of whatever the last fetch returned.
   const [locallyReadIds, setLocallyReadIds] = useState<Set<string>>(new Set())
+  const currentUserId = useStore((s) => s.user?.id ?? null)
+
+  // Track the latest refetch across renders so the realtime effect can call
+  // it without re-subscribing every time the function identity changes.
+  const refetchRef = useRef<() => Promise<void>>(undefined)
 
   const refetch = async (): Promise<void> => {
     setIsLoading(true)
@@ -83,6 +89,36 @@ export function useListNotifications(filter: NotificationFilter): UseListNotific
       cancelled = true
     }
   }, [filter])
+
+  useEffect(() => {
+    refetchRef.current = refetch
+  })
+
+  // Only subscribe once the current user id is known — no user id means no
+  // filtered subscription to create.
+  useEffect(() => {
+    if (!currentUserId) return
+
+    const channel = supabase
+      .channel(`notifications-${currentUserId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${currentUserId}`,
+        },
+        () => {
+          void refetchRef.current?.()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [currentUserId])
 
   const markLocallyRead = (notificationId: string): void => {
     setLocallyReadIds((prev) => new Set(prev).add(notificationId))

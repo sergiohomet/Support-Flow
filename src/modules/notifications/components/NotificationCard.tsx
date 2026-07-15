@@ -11,6 +11,7 @@ const BORDER_COLOR: Record<NotificationType, string> = {
   status_change: 'border-l-blue-600',
   reassignment: 'border-l-purple-600',
   new_comment: 'border-l-emerald-600',
+  new_ticket: 'border-l-indigo-600',
 }
 
 const ICON_COLOR: Record<NotificationType, string> = {
@@ -18,6 +19,7 @@ const ICON_COLOR: Record<NotificationType, string> = {
   status_change: 'text-blue-600',
   reassignment: 'text-purple-600',
   new_comment: 'text-emerald-600',
+  new_ticket: 'text-indigo-600',
 }
 
 const ICON_NAME: Record<NotificationType, string> = {
@@ -28,6 +30,9 @@ const ICON_NAME: Record<NotificationType, string> = {
   // class, so no fallback to swap_horiz is needed here.
   reassignment: 'person_add',
   new_comment: 'chat',
+  // confirmation_number matches the ticket icon already used for "Mis
+  // Tickets" in AppSidebar.tsx — consistent iconography for a new ticket.
+  new_ticket: 'confirmation_number',
 }
 
 export function NotificationCard({
