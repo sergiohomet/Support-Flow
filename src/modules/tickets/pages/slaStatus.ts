@@ -1,12 +1,5 @@
 import type { TicketStatus } from '@/modules/tickets/schemas'
-
-export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
-}
+import { formatDateOnly } from '@/core/utils/format'
 
 export interface SlaStatus {
   label: string
@@ -26,7 +19,7 @@ export function getSlaStatus(ticket: {
   if (ticket.escalatedAt) {
     return {
       label: 'SLA incumplido',
-      detail: `Escalado el ${formatDate(ticket.escalatedAt)}`,
+      detail: `Escalado el ${formatDateOnly(ticket.escalatedAt)}`,
       boxClass: 'bg-red-50 border-red-200',
       iconClass: 'text-red-600',
       textClass: 'text-red-700',

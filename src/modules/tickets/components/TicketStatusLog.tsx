@@ -1,16 +1,9 @@
 import type { StatusLogEntry } from '@/modules/tickets/schemas'
 import { StatusBadge } from '@/ui/StatusBadge'
+import { formatDateOnly } from '@/core/utils/format'
 
 interface TicketStatusLogProps {
   statusLog: StatusLogEntry[]
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
 }
 
 export function TicketStatusLog({ statusLog }: TicketStatusLogProps): React.JSX.Element {
@@ -55,7 +48,7 @@ export function TicketStatusLog({ statusLog }: TicketStatusLogProps): React.JSX.
                 </svg>
                 <StatusBadge status={entry.toStatus} />
               </div>
-              <span className="text-xs text-gray-400">{formatDate(entry.changedAt)}</span>
+              <span className="text-xs text-gray-400">{formatDateOnly(entry.changedAt)}</span>
             </div>
           </li>
         ))}
