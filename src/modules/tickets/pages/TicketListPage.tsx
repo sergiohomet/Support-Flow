@@ -1,9 +1,11 @@
-import React, { useRef, useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/store'
+import { useDebounce } from '@/core/hooks/useDebounce'
 import { useTicketList } from '@/modules/tickets/hooks/useTicketList'
 import { TicketTable } from '@/modules/tickets/components/TicketTable'
 import { TicketFilters } from '@/modules/tickets/components/TicketFilters'
+import { filterVisibleTickets } from './filterVisibleTickets'
 import type { TicketStatus } from '@/modules/tickets/schemas'
 
 export function TicketListPage(): React.JSX.Element {
@@ -18,17 +20,12 @@ export function TicketListPage(): React.JSX.Element {
 
   const [statusTab, setStatusTab] = useState<TicketStatus | '' | null>(null)
   const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
 
   const hasActiveFilters = statusTab !== null || debouncedSearch.trim() !== ''
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const handleSearchChange = (value: string): void => {
     setSearch(value)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      setDebouncedSearch(value)
-    }, 300)
   }
 
   const handleTabChange = (status: TicketStatus | ''): void => {
@@ -39,7 +36,6 @@ export function TicketListPage(): React.JSX.Element {
   const handleReset = (): void => {
     setStatusTab(null)
     setSearch('')
-    setDebouncedSearch('')
     resetFilters()
   }
 
@@ -49,15 +45,7 @@ export function TicketListPage(): React.JSX.Element {
 
   const { isFetching } = useTicketList(hasActiveFilters)
 
-  const visibleTickets = useMemo(() => {
-    const term = debouncedSearch.trim().toLowerCase()
-    if (!term) return tickets
-    return tickets.filter(
-      (t) =>
-        t.title.toLowerCase().includes(term) ||
-        t.id.slice(0, 8).toLowerCase().includes(term.replace(/^#/, ''))
-    )
-  }, [tickets, debouncedSearch])
+  const visibleTickets = filterVisibleTickets(tickets, debouncedSearch)
 
   const handleTicketClick = (id: string): void => {
     navigate('/tickets/' + id)

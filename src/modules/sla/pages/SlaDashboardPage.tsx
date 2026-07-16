@@ -6,24 +6,15 @@ import { DateRangeFilter } from '@/modules/sla/components/DateRangeFilter'
 import { SummaryCard } from '@/modules/sla/components/SummaryCard'
 import { CategoryComplianceDonut } from '@/modules/sla/components/CategoryComplianceDonut'
 import { AtRiskTicketsTable } from '@/modules/sla/components/AtRiskTicketsTable'
+import { computeSlaDateRange } from '@/modules/sla/components/dateRange'
 import { Spinner } from '@/ui/Spinner'
-
-function computeDateRange(days: number): { dateFrom: string; dateTo: string } {
-  const now = new Date()
-  const from = new Date(now)
-  from.setDate(from.getDate() - days)
-  // Send full timestamps, not date-only strings — a date-only "dateTo" is
-  // parsed by Postgres as midnight UTC, which excludes everything created
-  // later today from the BETWEEN filter in the SLA RPCs.
-  return { dateFrom: from.toISOString(), dateTo: now.toISOString() }
-}
 
 export function SlaDashboardPage(): React.JSX.Element {
   const [days, setDays] = useState(7)
   // Compute the range once per `days` change — recomputing on every render
   // would produce a new millisecond-precision timestamp each time, which
   // kept re-triggering the fetch effects below in an infinite loop.
-  const { dateFrom, dateTo } = useMemo(() => computeDateRange(days), [days])
+  const { dateFrom, dateTo } = useMemo(() => computeSlaDateRange(days), [days])
 
   const {
     data: summary,
