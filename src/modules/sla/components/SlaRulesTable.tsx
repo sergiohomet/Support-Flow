@@ -1,15 +1,10 @@
-import { useState } from 'react'
 import type { SlaConfigRow } from '@/modules/sla/schemas'
-import { updateSlaConfigSchema } from '@/modules/sla/schemas'
 import { EmptyState } from '@/ui/EmptyState'
 import { formatDate } from '@/core/utils/format'
-import { parseWithFirstError } from '@/core/hooks/useValidatedSubmit'
+import { useSlaRulesForm } from './useSlaRulesForm'
+import type { SlaConfigChange } from './useSlaRulesForm'
 
-export interface SlaConfigChange {
-  categoryId: string
-  maxResolutionHours: number
-  escalationEnabled: boolean
-}
+export type { SlaConfigChange } from './useSlaRulesForm'
 
 interface SlaRulesTableProps {
   rows: SlaConfigRow[]
@@ -17,23 +12,9 @@ interface SlaRulesTableProps {
   isSaving: boolean
 }
 
-interface RowState {
-  maxResolutionHours: string
-  escalationEnabled: boolean
-}
-
-type RowErrors = Record<string, string | undefined>
-
 export function SlaRulesTable({ rows, onSaveAll, isSaving }: SlaRulesTableProps): React.JSX.Element {
-  const [rowState, setRowState] = useState<Record<string, RowState>>(() =>
-    Object.fromEntries(
-      rows.map((row) => [
-        row.categoryId,
-        { maxResolutionHours: String(row.maxResolutionHours), escalationEnabled: row.escalationEnabled },
-      ])
-    )
-  )
-  const [rowErrors, setRowErrors] = useState<RowErrors>({})
+  const { getRowState, rowErrors, hasDirtyRows, handleHoursChange, handleToggleChange, handleSaveAll } =
+    useSlaRulesForm(rows, onSaveAll)
 
   if (rows.length === 0) {
     return (
@@ -43,80 +24,6 @@ export function SlaRulesTable({ rows, onSaveAll, isSaving }: SlaRulesTableProps)
       />
     )
   }
-
-  const getState = (row: SlaConfigRow): RowState =>
-    rowState[row.categoryId] ?? {
-      maxResolutionHours: String(row.maxResolutionHours),
-      escalationEnabled: row.escalationEnabled,
-    }
-
-  const handleHoursChange = (categoryId: string, value: string): void => {
-    setRowState((prev) => ({
-      ...prev,
-      [categoryId]: { ...getStateFor(prev, categoryId), maxResolutionHours: value },
-    }))
-  }
-
-  const handleToggleChange = (categoryId: string, checked: boolean): void => {
-    setRowState((prev) => ({
-      ...prev,
-      [categoryId]: { ...getStateFor(prev, categoryId), escalationEnabled: checked },
-    }))
-  }
-
-  const getStateFor = (state: Record<string, RowState>, categoryId: string): RowState => {
-    const row = rows.find((r) => r.categoryId === categoryId)
-    return (
-      state[categoryId] ?? {
-        maxResolutionHours: String(row?.maxResolutionHours ?? ''),
-        escalationEnabled: row?.escalationEnabled ?? false,
-      }
-    )
-  }
-
-  const isDirty = (row: SlaConfigRow): boolean => {
-    const state = getState(row)
-    return (
-      state.maxResolutionHours !== String(row.maxResolutionHours) ||
-      state.escalationEnabled !== row.escalationEnabled
-    )
-  }
-
-  const handleSaveAll = (): void => {
-    const dirtyRows = rows.filter(isDirty)
-    if (dirtyRows.length === 0) return
-
-    const nextErrors: RowErrors = {}
-    const changes: SlaConfigChange[] = []
-
-    for (const row of dirtyRows) {
-      const state = getState(row)
-      const result = parseWithFirstError(updateSlaConfigSchema, {
-        maxResolutionHours: Number(state.maxResolutionHours),
-        escalationEnabled: state.escalationEnabled,
-      })
-
-      if (!result.success) {
-        nextErrors[row.categoryId] = result.message
-        continue
-      }
-
-      changes.push({
-        categoryId: row.categoryId,
-        maxResolutionHours: result.data.maxResolutionHours,
-        escalationEnabled: result.data.escalationEnabled,
-      })
-    }
-
-    setRowErrors(nextErrors)
-
-    // All-or-nothing: if any dirty row is invalid, save nothing until it's fixed.
-    if (Object.keys(nextErrors).length > 0) return
-
-    onSaveAll(changes)
-  }
-
-  const hasDirtyRows = rows.some(isDirty)
 
   return (
     <div className="overflow-x-auto rounded-md border border-gray-200">
@@ -151,7 +58,7 @@ export function SlaRulesTable({ rows, onSaveAll, isSaving }: SlaRulesTableProps)
         </thead>
         <tbody className="divide-y divide-gray-100">
           {rows.map((row) => {
-            const state = getState(row)
+            const state = getRowState(row)
             const rowError = rowErrors[row.categoryId]
 
             return (
