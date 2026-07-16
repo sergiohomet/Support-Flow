@@ -16,7 +16,8 @@ import { StatusBadge } from '@/ui/StatusBadge'
 import { PriorityBadge } from '@/ui/PriorityBadge'
 import { Spinner } from '@/ui/Spinner'
 import { useUnassignTicket } from '@/modules/tickets/hooks/useUnassignTicket'
-import { formatDate, getSlaStatus } from './slaStatus'
+import { getSlaStatus } from './slaStatus'
+import { formatDateOnly } from '@/core/utils/format'
 import type { TicketStatus } from '@/modules/tickets/schemas'
 
 export function TicketDetailPage(): React.ReactElement {
@@ -261,11 +262,11 @@ export function TicketDetailPage(): React.ReactElement {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <span className="block text-xs text-gray-400 mb-0.5">Creado</span>
-                      <span className="text-sm text-gray-900">{formatDate(ticket.createdAt)}</span>
+                      <span className="text-sm text-gray-900">{formatDateOnly(ticket.createdAt)}</span>
                     </div>
                     <div>
                       <span className="block text-xs text-gray-400 mb-0.5">Actualizado</span>
-                      <span className="text-sm text-gray-900">{formatDate(ticket.updatedAt)}</span>
+                      <span className="text-sm text-gray-900">{formatDateOnly(ticket.updatedAt)}</span>
                     </div>
                   </div>
 

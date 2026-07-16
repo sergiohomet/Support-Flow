@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { TicketComment, StatusLogEntry, TicketStatus } from '@/modules/tickets/schemas'
 import { StatusBadge } from '@/ui/StatusBadge'
+import { formatDateOnly } from '@/core/utils/format'
+import { getInitials } from '@/core/utils/getInitials'
 
 interface TicketCommentsProps {
   comments: TicketComment[]
@@ -23,18 +25,6 @@ interface TicketCommentsProps {
 type FeedItem =
   | { type: 'comment'; data: TicketComment; date: string }
   | { type: 'status'; data: StatusLogEntry; date: string }
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
-}
-
-function getInitial(name: string): string {
-  return name.charAt(0).toUpperCase()
-}
 
 export function TicketComments({
   comments,
@@ -132,7 +122,7 @@ export function TicketComments({
                       className="shrink-0 rounded-full bg-gray-200 text-gray-600 w-9 h-9 flex items-center justify-center text-sm font-medium"
                       aria-hidden="true"
                     >
-                      {getInitial(comment.userFullName)}
+                      {getInitials(comment.userFullName)}
                     </div>
                     <div className="flex-1 flex flex-col gap-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -149,7 +139,7 @@ export function TicketComments({
                           </span>
                         )}
                         <span className="text-xs text-gray-400 ml-auto">
-                          {formatDate(comment.createdAt)}
+                          {formatDateOnly(comment.createdAt)}
                         </span>
                       </div>
                       {/* Burbuja */}
@@ -195,7 +185,7 @@ export function TicketComments({
                         <StatusBadge status={entry.toStatus} />
                       </span>
                       <span className="text-xs text-gray-400 ml-auto">
-                        {formatDate(entry.changedAt)}
+                        {formatDateOnly(entry.changedAt)}
                       </span>
                     </div>
                   </div>

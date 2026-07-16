@@ -8,6 +8,14 @@ export function formatDate(date: string | Date): string {
   }).format(new Date(date))
 }
 
+export function formatDateOnly(date: string | Date): string {
+  return new Date(date).toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
 const relativeTimeFormatter = new Intl.RelativeTimeFormat('es-AR', { numeric: 'auto' })
 
 export function formatRelativeTime(date: string | Date): string {

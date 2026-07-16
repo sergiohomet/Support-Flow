@@ -1,4 +1,16 @@
-import { formatRelativeTime } from '../format'
+import { formatDateOnly, formatRelativeTime } from '../format'
+
+describe('formatDateOnly', () => {
+  it('formats a date as day/month/year, all 2-digit, es-AR locale', () => {
+    const date = new Date('2026-07-02T12:00:00Z')
+
+    expect(formatDateOnly(date)).toBe('02/07/2026')
+  })
+
+  it('accepts a string date input', () => {
+    expect(formatDateOnly('2026-01-05T12:00:00Z')).toBe('05/01/2026')
+  })
+})
 
 describe('formatRelativeTime', () => {
   it('renders "hace unos segundos" for timestamps under a minute old', () => {

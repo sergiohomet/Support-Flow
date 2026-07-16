@@ -1,18 +1,11 @@
 import type { TicketListItem } from '@/modules/tickets/schemas'
 import { StatusBadge } from '@/ui/StatusBadge'
 import { TicketCardShell } from '@/ui/TicketCardShell'
+import { formatDateOnly } from '@/core/utils/format'
 
 interface TicketCardProps {
   ticket: TicketListItem
   onClick: () => void
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
 }
 
 export function TicketCard({ ticket, onClick }: TicketCardProps): React.JSX.Element {
@@ -30,7 +23,7 @@ export function TicketCard({ ticket, onClick }: TicketCardProps): React.JSX.Elem
           <StatusBadge status={ticket.status} />
         </>
       }
-      meta={<span className="text-xs text-gray-400">{formatDate(ticket.createdAt)}</span>}
+      meta={<span className="text-xs text-gray-400">{formatDateOnly(ticket.createdAt)}</span>}
     />
   )
 }
