@@ -114,7 +114,7 @@ export function UserTable({
               const isSelf = user.id === currentUserId
               return (
                 <tr key={user.id} className="hover:bg-gray-50">
-                  {/* Avatar + Name */}
+                  {/* Avatar + Nombre */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <UserAvatar
@@ -133,32 +133,32 @@ export function UserTable({
                     {user.email}
                   </td>
 
-                  {/* Role */}
+                  {/* Rol */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <UserRoleBadge role={user.role} />
                   </td>
 
-                  {/* Specialty */}
+                  {/* Especialidad */}
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                     {user.categoryName || '—'}
                   </td>
 
-                  {/* Status */}
+                  {/* Estado */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <UserStatusBadge isActive={user.isActive} />
                   </td>
 
-                  {/* Created */}
+                  {/* Creado */}
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                     <time dateTime={user.createdAt}>
                       {formatDate(user.createdAt)}
                     </time>
                   </td>
 
-                  {/* Actions */}
+                  {/* Acciones */}
                   <td className="px-4 py-3 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {/* Edit role button */}
+                      {/* Botón editar rol */}
                       <button
                         type="button"
                         onClick={() => onRoleChange(user)}
@@ -169,7 +169,7 @@ export function UserTable({
                         <span className="material-icons text-base">edit</span>
                       </button>
 
-                      {/* Edit specialty button — specialty only applies to agents */}
+                      {/* Botón editar especialidad — la especialidad solo aplica a agentes */}
                       <button
                         type="button"
                         onClick={() => onSpecialtyChange(user)}
@@ -180,7 +180,7 @@ export function UserTable({
                         <span className="material-icons text-base">build</span>
                       </button>
 
-                      {/* Toggle status button */}
+                      {/* Botón alternar estado */}
                       {user.isActive ? (
                         <button
                           type="button"
@@ -211,7 +211,7 @@ export function UserTable({
         </table>
       </div>
 
-      {/* Pagination text + controls */}
+      {/* Texto de paginación + controles */}
       {totalCount > pageSize && (
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">

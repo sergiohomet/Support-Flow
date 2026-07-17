@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
-// ── NotificationRow — maps get_notifications RPC row ──────────────────────
-// Snake_case → camelCase mapping is done via mapNotification below,
-// matching the pattern used in the sla module.
+// ── NotificationRow — mapea la fila del RPC get_notifications ─────────────
+// El mapeo de snake_case → camelCase se hace mediante mapNotification más
+// abajo, siguiendo el mismo patrón usado en el módulo sla.
 
 export const notificationTypeSchema = z.enum([
   'status_change',
@@ -25,7 +25,7 @@ export const notificationRowSchema = z.object({
 
 export type NotificationRow = z.infer<typeof notificationRowSchema>
 
-// ── Mapping helper — snake_case DB row → camelCase NotificationRow ────────
+// ── Helper de mapeo — fila snake_case de la DB → NotificationRow camelCase ─
 
 export function mapNotification(row: {
   id: string
@@ -45,7 +45,7 @@ export function mapNotification(row: {
   }
 }
 
-// ── Filter schema — used by useListNotifications ──────────────────────────
+// ── Schema de filtro — usado por useListNotifications ──────────────────────
 
 export const notificationFilterSchema = z.enum([
   'all',

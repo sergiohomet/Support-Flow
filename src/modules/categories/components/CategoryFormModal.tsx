@@ -49,9 +49,9 @@ export function CategoryFormModal({
         </div>
       )}
 
-      {/* Keyed by the category being edited (or 'new') so switching targets
-          remounts local input state and validation errors instead of needing
-          a manual reset effect. */}
+      {/* Se usa la categoría editada (o 'new') como key para que, al cambiar de
+          destino, se remonte el estado local de inputs y errores de validación
+          en vez de necesitar un efecto manual de reseteo. */}
       <CategoryFormFields
         key={initialData?.id ?? 'new'}
         initialData={initialData}

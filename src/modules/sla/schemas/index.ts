@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
-// ── SlaConfigRow — maps admin_get_sla_config RPC row ─────────────────────────
-// Snake_case → camelCase mapping is done via mapSlaConfig below,
-// matching the pattern used in the categories module.
+// ── SlaConfigRow — mapea la fila de la RPC admin_get_sla_config ─────────────────────────
+// El mapeo de snake_case → camelCase se hace mediante mapSlaConfig más abajo,
+// siguiendo el mismo patrón usado en el módulo de categories.
 
 export const slaConfigRowSchema = z.object({
   categoryId: z.string(),
@@ -14,7 +14,7 @@ export const slaConfigRowSchema = z.object({
 
 export type SlaConfigRow = z.infer<typeof slaConfigRowSchema>
 
-// ── Form schema ────────────────────────────────────────────────────────────
+// ── Schema del formulario ────────────────────────────────────────────────────────────
 
 export const updateSlaConfigSchema = z.object({
   maxResolutionHours: z
@@ -26,7 +26,7 @@ export const updateSlaConfigSchema = z.object({
 
 export type UpdateSlaConfigInput = z.infer<typeof updateSlaConfigSchema>
 
-// ── Mapping helper — snake_case DB row → camelCase SlaConfigRow ──────────────
+// ── Función auxiliar de mapeo — fila de la DB en snake_case → SlaConfigRow en camelCase ──────────────
 
 export function mapSlaConfig(row: {
   category_id: string
@@ -44,7 +44,7 @@ export function mapSlaConfig(row: {
   }
 }
 
-// ── SlaDashboardSummary — maps admin_get_sla_dashboard RPC row ───────────────
+// ── SlaDashboardSummary — mapea la fila de la RPC admin_get_sla_dashboard ───────────────
 
 export const slaDashboardSummarySchema = z.object({
   totalTickets: z.number(),
@@ -66,7 +66,7 @@ export function mapSlaDashboardSummary(row: {
   }
 }
 
-// ── SlaComplianceByCategory — maps admin_get_sla_compliance_by_category row ──
+// ── SlaComplianceByCategory — mapea la fila de admin_get_sla_compliance_by_category ──
 
 export const slaComplianceByCategorySchema = z.object({
   categoryId: z.string(),
@@ -97,7 +97,7 @@ export function mapSlaComplianceByCategory(row: {
   }
 }
 
-// ── AtRiskTicket — maps admin_get_sla_at_risk_tickets RPC row ────────────────
+// ── AtRiskTicket — mapea la fila de la RPC admin_get_sla_at_risk_tickets ────────────────
 
 export const atRiskTicketSchema = z.object({
   id: z.string(),

@@ -20,7 +20,7 @@ export function CategoriesPage(): React.JSX.Element {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
 
   // ---------------------------------------------------------------------------
-  // Handlers
+  // Manejadores
   // ---------------------------------------------------------------------------
 
   const handleCreate = async (name: string, description: string | undefined): Promise<void> => {
@@ -67,7 +67,7 @@ export function CategoriesPage(): React.JSX.Element {
   }
 
   // ---------------------------------------------------------------------------
-  // Derived state
+  // Estado derivado
   // ---------------------------------------------------------------------------
 
   const isFormModalOpen = modalMode === 'create' || modalMode === 'edit'
@@ -83,12 +83,12 @@ export function CategoriesPage(): React.JSX.Element {
   const formError = modalMode === 'create' ? createError : updateError
 
   // ---------------------------------------------------------------------------
-  // Render
+  // Renderizado
   // ---------------------------------------------------------------------------
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Gestión de Categorías</h1>
@@ -106,14 +106,14 @@ export function CategoriesPage(): React.JSX.Element {
         </button>
       </div>
 
-      {/* Error banner */}
+      {/* Banner de error */}
       {error && (
         <div role="alert" className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
-      {/* Table */}
+      {/* Tabla */}
       <CategoryTable
         categories={categories}
         isFetching={isFetching}
@@ -121,7 +121,7 @@ export function CategoriesPage(): React.JSX.Element {
         onToggle={handleOpenToggle}
       />
 
-      {/* Form modal (create + edit) */}
+      {/* Modal de formulario (crear + editar) */}
       <CategoryFormModal
         isOpen={isFormModalOpen}
         isLoading={formIsLoading}
@@ -131,7 +131,7 @@ export function CategoriesPage(): React.JSX.Element {
         onClose={handleCloseModal}
       />
 
-      {/* Toggle confirmation modal */}
+      {/* Modal de confirmación para alternar estado */}
       <ToggleCategoryModal
         isOpen={modalMode === 'toggle'}
         isLoading={isToggling}

@@ -11,9 +11,9 @@ import { Spinner } from '@/ui/Spinner'
 
 export function SlaDashboardPage(): React.JSX.Element {
   const [days, setDays] = useState(7)
-  // Compute the range once per `days` change — recomputing on every render
-  // would produce a new millisecond-precision timestamp each time, which
-  // kept re-triggering the fetch effects below in an infinite loop.
+  // Calcula el rango una sola vez por cada cambio de `days` — recalcularlo en cada render
+  // generaría un nuevo timestamp con precisión de milisegundos cada vez, lo que
+  // seguía disparando los efectos de fetch de abajo en un bucle infinito.
   const { dateFrom, dateTo } = useMemo(() => computeSlaDateRange(days), [days])
 
   const {
@@ -38,7 +38,7 @@ export function SlaDashboardPage(): React.JSX.Element {
 
   return (
     <div className="max-w-[1280px] mx-auto px-4 py-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">Cumplimiento de SLA</h1>
         <div className="flex items-center gap-3">
@@ -69,7 +69,7 @@ export function SlaDashboardPage(): React.JSX.Element {
         </div>
       ) : (
         <div className="flex flex-col gap-8">
-          {/* Section 1: Summary cards */}
+          {/* Sección 1: Tarjetas resumen */}
           <div className="grid grid-cols-3 gap-5">
             <SummaryCard label="Total tickets" value={totalTickets} caption={`últimos ${days} días`} />
             <SummaryCard
@@ -86,7 +86,7 @@ export function SlaDashboardPage(): React.JSX.Element {
             />
           </div>
 
-          {/* Section 2: Compliance by category */}
+          {/* Sección 2: Cumplimiento por categoría */}
           <div className="flex flex-col gap-4">
             <h2 className="text-lg font-semibold text-gray-900">Cumplimiento por Categoría</h2>
             <div className="grid grid-cols-3 gap-5">
@@ -96,7 +96,7 @@ export function SlaDashboardPage(): React.JSX.Element {
             </div>
           </div>
 
-          {/* Section 3: At-risk tickets */}
+          {/* Sección 3: Tickets en riesgo */}
           <div className="flex flex-col gap-4">
             <h2 className="text-lg font-semibold text-gray-900">Tickets en riesgo</h2>
             {isAtRiskLoading && atRiskTickets.length === 0 ? (

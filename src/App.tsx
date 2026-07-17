@@ -65,7 +65,7 @@ export default function App() {
           }
         >
           <Routes>
-            {/* Auth routes */}
+            {/* Rutas de autenticación */}
             <Route
               path="/login"
               element={
@@ -84,7 +84,7 @@ export default function App() {
             />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-            {/* Protected routes */}
+            {/* Rutas protegidas */}
             <Route element={<AppShell />}>
               <Route
                 path="/agent/dashboard"
@@ -159,13 +159,13 @@ export default function App() {
                 }
               />
 
-              {/* Legacy redirect — keep until all bookmarks/links are updated */}
+              {/* Redirección legacy — mantener hasta que se actualicen todos los marcadores/enlaces */}
               <Route
                 path="/admin/users"
                 element={<Navigate to="/admin/configuracion/usuarios" replace />}
               />
 
-              {/* Settings section */}
+              {/* Sección de configuración */}
               <Route path="/admin/configuracion" element={<SettingsLayout />}>
                 <Route
                   path="general"

@@ -15,25 +15,25 @@ interface AITriagePanelProps {
   isDismissing: boolean
 }
 
-// Pure presentational panel for the ai_triage suggestion surfaced on the
-// ticket detail page. Owns zero Supabase calls — accept/use-as-response/
-// dismiss intents are reported upward via callbacks; TicketDetailPage
-// (composition root) wires them to useAcceptAiTriage/useTicketDetail.
+// Panel puramente presentacional para la sugerencia de ai_triage que se muestra en la
+// página de detalle del ticket. No hace ninguna llamada a Supabase — las intenciones de aceptar/usar-como-respuesta/
+// ignorar se reportan hacia arriba mediante callbacks; TicketDetailPage
+// (raíz de composición) las conecta con useAcceptAiTriage/useTicketDetail.
 //
-// "Ignorar" dismisses the WHOLE panel (not just the response section) via
-// onDismiss — the suggestion is generated once from the ticket's original
-// description, never regenerated from later comments, so once the agent
-// has decided to ignore it there's nothing left worth keeping around.
-// Dismissal is persisted server-side (dismiss_ai_triage sets ai_triage
-// back to null), so TicketDetailPage simply stops rendering this
-// component entirely once that succeeds — no local "hide myself" state
-// needed here.
+// "Ignorar" descarta TODO el panel (no solo la sección de respuesta) a través de
+// onDismiss — la sugerencia se genera una sola vez a partir de la descripción original
+// del ticket, nunca se regenera a partir de comentarios posteriores, así que una vez que el agente
+// decidió ignorarla no queda nada que valga la pena conservar.
+// El descarte se persiste del lado del servidor (dismiss_ai_triage vuelve a poner
+// ai_triage en null), así que TicketDetailPage simplemente deja de renderizar este
+// componente por completo una vez que eso se confirma — no hace falta ningún estado
+// local de "ocultarme a mí mismo" acá.
 //
-// Judgment call (not spec-mandated either way): when the suggested
-// category/priority already matches the ticket's current value, the
-// "Aceptar" action for that section is hidden rather than shown-disabled —
-// there is nothing to accept, and a disabled button in that state reads as
-// a bug rather than a no-op, so hiding is the less confusing choice.
+// Decisión de criterio (no está definida por el spec en ningún sentido): cuando la
+// categoría/prioridad sugerida ya coincide con el valor actual del ticket, la
+// acción "Aceptar" de esa sección se oculta en lugar de mostrarse deshabilitada —
+// no hay nada que aceptar, y un botón deshabilitado en ese estado se lee como
+// un bug en vez de un no-op, así que ocultarlo es la opción menos confusa.
 export function AITriagePanel({
   aiTriage,
   currentCategoryId,

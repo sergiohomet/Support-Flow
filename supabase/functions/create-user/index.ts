@@ -1,9 +1,10 @@
 // Edge Function: create-user
-// Creates a new user via Supabase Auth admin API, then patches the role/category
-// because handle_new_user trigger sets role='client' by default.
+// Crea un usuario nuevo vía la Auth admin API de Supabase, y después
+// parchea el role/category porque el trigger handle_new_user setea
+// role='client' por defecto.
 //
-// REQUIRED SECRET: SUPABASE_SERVICE_ROLE_KEY must be set in the Supabase project
-// before deploying this function.
+// SECRETO REQUERIDO: SUPABASE_SERVICE_ROLE_KEY debe estar configurado en
+// el proyecto de Supabase antes de desplegar esta función.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -13,13 +14,13 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
+  // Manejar el preflight de CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // ── 1. Verify the caller is authenticated ────────────────────────────────
+    // ── 1. Verificar que quien llama está autenticado ────────────────────────────────
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -28,20 +29,20 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // Service role client — bypasses RLS for admin operations
+    // Cliente con service role — bypassea RLS para operaciones admin
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    // Caller client — respects RLS, used to verify caller identity
+    // Cliente de quien llama — respeta RLS, se usa para verificar la identidad de quien llama
     const supabaseCaller = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
       { global: { headers: { Authorization: authHeader } } },
     )
 
-    // Get the calling user's identity
+    // Obtener la identidad del usuario que llama
     const { data: { user: callerUser }, error: callerError } = await supabaseCaller.auth.getUser()
     if (callerError || !callerUser) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -50,7 +51,7 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // ── 2. Verify caller is admin ────────────────────────────────────────────
+    // ── 2. Verificar que quien llama es admin ────────────────────────────────────────────
     const { data: callerProfile, error: profileError } = await supabaseAdmin
       .from('users')
       .select('role')
@@ -64,7 +65,7 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // ── 3. Parse and validate request body ──────────────────────────────────
+    // ── 3. Parsear y validar el body del request ──────────────────────────────────
     const body = await req.json() as {
       fullName: string
       email: string
@@ -96,7 +97,7 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // ── 4. Create auth user ──────────────────────────────────────────────────
+    // ── 4. Crear el usuario en auth ──────────────────────────────────────────────────
     const { data: newAuthUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: temporaryPassword,
@@ -113,9 +114,10 @@ Deno.serve(async (req: Request) => {
 
     const newUserId = newAuthUser.user.id
 
-    // ── 5. Patch role + category ─────────────────────────────────────────────
-    // handle_new_user trigger creates the public.users row with role='client'.
-    // We immediately override with the intended role and category.
+    // ── 5. Parchear role + category ─────────────────────────────────────────────
+    // El trigger handle_new_user crea la fila de public.users con
+    // role='client'. Inmediatamente la sobrescribimos con el role y la
+    // category deseados.
     const { error: patchError } = await supabaseAdmin
       .from('users')
       .update({
@@ -125,7 +127,7 @@ Deno.serve(async (req: Request) => {
       .eq('id', newUserId)
 
     if (patchError) {
-      // User was created in auth but profile update failed — log and still return userId
+      // El usuario se creó en auth pero falló la actualización del perfil — logueamos y de todas formas devolvemos userId
       console.error('Failed to patch user role/category:', patchError.message)
     }
 

@@ -22,16 +22,17 @@ async function loadProfile(): Promise<AuthUser | null> {
   }
 }
 
-// Bootstraps auth state on app load: restores the session on mount, keeps
-// the store in sync with Supabase auth events, and redirects to the
-// password-recovery flow when Supabase fires PASSWORD_RECOVERY.
+// Inicializa el estado de autenticación al cargar la app: restablece la
+// sesión al montar, mantiene el store sincronizado con los eventos de auth
+// de Supabase, y redirige al flujo de recuperación de contraseña cuando
+// Supabase dispara PASSWORD_RECOVERY.
 export function useAuthBootstrap(): void {
   const setUser = useStore((s) => s.setUser)
   const setAuthReady = useStore((s) => s.setAuthReady)
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Mount: handle page reload — load profile if a valid session exists
+    // Montaje: maneja el recargado de página — carga el perfil si existe una sesión válida
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       try {
         if (session?.user) {

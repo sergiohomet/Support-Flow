@@ -12,7 +12,7 @@ export function LoginPage(): React.ReactElement {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="w-full max-w-[480px] bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-        {/* Brand */}
+        {/* Marca */}
         <div className="flex flex-col items-center mb-8 text-center">
           <h1 className="text-2xl font-bold text-blue-600 mb-1">SupportFlow</h1>
           <p className="text-sm text-gray-500">Enterprise Support Desk</p>

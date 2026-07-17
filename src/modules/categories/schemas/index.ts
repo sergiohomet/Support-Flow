@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
-// ── Category — maps admin_list_categories RPC row ────────────────────────────
-// Snake_case → camelCase mapping is done in the hook (not here),
-// matching the pattern used in the users module.
+// ── Category — mapea la fila RPC de admin_list_categories ────────────────────
+// El mapeo de snake_case → camelCase se hace en el hook (no acá),
+// siguiendo el mismo patrón usado en el módulo de users.
 
 export const categorySchema = z.object({
   id: z.string().uuid(),
@@ -15,7 +15,7 @@ export const categorySchema = z.object({
 
 export type Category = z.infer<typeof categorySchema>
 
-// ── Form schemas ─────────────────────────────────────────────────────────────
+// ── Schemas de formulario ──────────────────────────────────────────────────
 
 export const createCategorySchema = z.object({
   name: z
@@ -30,7 +30,7 @@ export const updateCategorySchema = createCategorySchema
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>
 
-// ── Mapping helper — snake_case DB row → camelCase Category ──────────────────
+// ── Helper de mapeo — fila de DB en snake_case → Category en camelCase ───────
 
 export function mapCategory(row: {
   id: string

@@ -25,13 +25,13 @@ const ICON_COLOR: Record<NotificationType, string> = {
 const ICON_NAME: Record<NotificationType, string> = {
   sla_escalation: 'warning',
   status_change: 'sync',
-  // person_add is a confirmed-good classic Material Icons ligature in this
-  // project — already rendering in UsersPage.tsx with the same `material-icons`
-  // class, so no fallback to swap_horiz is needed here.
+  // person_add es un ligature clásico de Material Icons confirmado como válido
+  // en este proyecto — ya se usa en UsersPage.tsx con la misma clase
+  // `material-icons`, así que no hace falta un fallback a swap_horiz acá.
   reassignment: 'person_add',
   new_comment: 'chat',
-  // confirmation_number matches the ticket icon already used for "Mis
-  // Tickets" in AppSidebar.tsx — consistent iconography for a new ticket.
+  // confirmation_number coincide con el ícono de ticket ya usado para "Mis
+  // Tickets" en AppSidebar.tsx — iconografía consistente para un ticket nuevo.
   new_ticket: 'confirmation_number',
 }
 

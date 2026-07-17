@@ -9,10 +9,10 @@ export function SlaConfigPage(): React.JSX.Element {
   const { data, isLoading, error, refetch } = useListSlaConfig()
   const { execute: updateSlaConfig, isLoading: isSaving, error: updateError } = useUpdateSlaConfig()
 
-  // Saves each changed row sequentially (single useUpdateSlaConfig instance,
-  // so calls must not overlap) and refetches once at the end, matching
-  // Stitch P12's single "Guardar cambios" footer button that commits every
-  // edited row in one click.
+  // Guarda cada fila modificada de forma secuencial (una única instancia de useUpdateSlaConfig,
+  // por lo que las llamadas no deben solaparse) y vuelve a hacer fetch una sola vez al final, en línea con
+  // el botón único "Guardar cambios" del pie de página de Stitch P12, que confirma cada
+  // fila editada en un solo click.
   const handleSaveAll = async (changes: SlaConfigChange[]): Promise<void> => {
     for (const change of changes) {
       const ok = await updateSlaConfig(change.categoryId, change.maxResolutionHours, change.escalationEnabled)
@@ -23,7 +23,7 @@ export function SlaConfigPage(): React.JSX.Element {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Configuración SLA</h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -31,19 +31,19 @@ export function SlaConfigPage(): React.JSX.Element {
         </p>
       </div>
 
-      {/* Info banner */}
+      {/* Banner informativo */}
       <div className="mb-6">
         <SlaInfoBanner />
       </div>
 
-      {/* Error banner — list fetch error takes precedence over a save error */}
+      {/* Banner de error — el error de fetch de la lista tiene precedencia sobre un error de guardado */}
       {(error ?? updateError) && (
         <div role="alert" className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
           {error ?? updateError}
         </div>
       )}
 
-      {/* Rules table */}
+      {/* Tabla de reglas */}
       {isLoading && data.length === 0 ? (
         <div className="flex justify-center py-12">
           <Spinner size="lg" />

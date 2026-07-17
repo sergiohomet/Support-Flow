@@ -30,10 +30,12 @@ const slaToneClassMap: Record<'normal' | 'warning' | 'danger', string> = {
   danger: 'text-red-600',
 }
 
-// `disabled` is a PARENT-decided warning flag (agent is near/at capacity),
-// NOT a hard-disable of the claim button — per the resolved design decision
-// mirrored from ReassignTicketModal's at-limit UX: warn, don't block. The
-// server-side validate_agent_limit trigger is the real enforcement.
+// `disabled` es un flag de advertencia decidido por el PADRE (el agente
+// está cerca o en el límite de capacidad), NO un hard-disable del botón de
+// tomar ticket — según la decisión de diseño resuelta, reflejando la UX de
+// "al límite" de ReassignTicketModal: advertir, no bloquear. El trigger
+// validate_agent_limit del lado del servidor es la aplicación (enforcement)
+// real.
 export function AvailableTicketCard({
   ticket,
   disabled,

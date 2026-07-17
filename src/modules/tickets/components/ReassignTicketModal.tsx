@@ -69,7 +69,7 @@ export function ReassignTicketModal({
         className="w-full max-w-lg bg-white rounded-lg border border-gray-200 shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {/* Encabezado */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
           <h2 id="reassign-modal-title" className="text-lg font-semibold text-gray-900">
             Reasignar Ticket #{ticketShortId}
@@ -85,9 +85,9 @@ export function ReassignTicketModal({
           </button>
         </div>
 
-        {/* Body */}
+        {/* Cuerpo */}
         <div className="p-6 flex flex-col gap-5">
-          {/* Agent selector */}
+          {/* Selector de agente */}
           <div>
             <label
               htmlFor="agent-select"
@@ -121,7 +121,7 @@ export function ReassignTicketModal({
             )}
           </div>
 
-          {/* Warning — at limit */}
+          {/* Advertencia — al límite */}
           {isAtLimit && (
             <div className="bg-red-50 border-l-4 border-red-500 rounded-r-lg p-4 flex gap-3 items-start">
               <span className="material-icons text-red-600 shrink-0 mt-0.5 text-[20px]">error</span>
@@ -134,14 +134,14 @@ export function ReassignTicketModal({
             </div>
           )}
 
-          {/* Error banner */}
+          {/* Banner de error */}
           {error && (
             <div role="alert" className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
               {error}
             </div>
           )}
 
-          {/* Bitácora preview */}
+          {/* Vista previa de bitácora */}
           {previewText && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-1.5 mb-1.5">
@@ -156,7 +156,7 @@ export function ReassignTicketModal({
           )}
         </div>
 
-        {/* Footer */}
+        {/* Pie */}
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
           <button
             type="button"

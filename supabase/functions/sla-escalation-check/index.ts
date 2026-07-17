@@ -1,23 +1,24 @@
 // Edge Function: sla-escalation-check
-// Invoked every 15 minutes by a pg_cron job (see migration
-// 20260701000008_sla_cron_schedule.sql). Runs the idempotent
-// run_sla_escalation_check() RPC, which escalates any ticket that has
-// breached its SLA deadline (forces priority to 'critica' and notifies
-// all active admins).
+// Invocada cada 15 minutos por un job de pg_cron (ver migración
+// 20260701000008_sla_cron_schedule.sql). Ejecuta el RPC idempotente
+// run_sla_escalation_check(), que escala cualquier ticket que haya
+// incumplido su deadline de SLA (fuerza la prioridad a 'critica' y
+// notifica a todos los admins activos).
 //
-// Unlike create-user, the caller here is pg_cron itself (via
-// net.http_post), not an end user — there is no Supabase Auth session
-// to verify. Instead, the caller must present the project's own
-// service-role key as a bearer token, proving it is a trusted
-// server-side caller (Edge Functions are publicly routable by default,
-// so this check prevents arbitrary public HTTP calls from triggering
-// escalation).
+// A diferencia de create-user, acá quien llama es el propio pg_cron (vía
+// net.http_post), no un usuario final — no hay una sesión de Supabase
+// Auth que verificar. En su lugar, quien llama debe presentar la propia
+// service-role key del proyecto como bearer token, demostrando que es un
+// caller confiable del lado del servidor (las Edge Functions son
+// públicamente enrutables por defecto, así que este chequeo evita que
+// llamadas HTTP públicas arbitrarias disparen el escalamiento).
 //
-// REQUIRED SECRET: SUPABASE_SERVICE_ROLE_KEY is auto-injected by
-// Supabase into every deployed Edge Function — no manual setup needed
-// for this function itself. (The separate manual step is storing that
-// same key in Supabase Vault so the pg_cron job can send it as the
-// Authorization header — see migration 20260701000008.)
+// SECRETO REQUERIDO: SUPABASE_SERVICE_ROLE_KEY es auto-inyectada por
+// Supabase en cada Edge Function desplegada — no hace falta configurar
+// nada manualmente para esta función en sí. (El paso manual aparte es
+// guardar esa misma key en Supabase Vault para que el job de pg_cron
+// pueda enviarla como header Authorization — ver migración
+// 20260701000008.)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 

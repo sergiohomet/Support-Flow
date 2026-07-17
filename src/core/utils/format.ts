@@ -24,8 +24,8 @@ export function formatRelativeTime(date: string | Date): string {
   const diffSecondsAbs = Math.abs(diffSeconds)
 
   if (diffSecondsAbs < 60) {
-    // "hace unos segundos" reads more naturally than a numeric "hace 15 segundos"
-    // for such a short, imprecise window, so it's hardcoded rather than formatted.
+    // "hace unos segundos" suena más natural que un "hace 15 segundos" numérico
+    // para una ventana tan corta e imprecisa, por eso está hardcodeado en vez de formateado.
     return 'hace unos segundos'
   }
 

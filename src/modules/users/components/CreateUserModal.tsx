@@ -49,7 +49,7 @@ export function CreateUserModal({
       email,
       temporaryPassword,
       role,
-      // Specialty only applies to agents — never submit one for other roles.
+      // La especialidad solo aplica a agentes — nunca enviar una para otros roles.
       categoryId: role === 'agent' && categoryId.trim() !== '' ? categoryId.trim() : null,
     })
   }

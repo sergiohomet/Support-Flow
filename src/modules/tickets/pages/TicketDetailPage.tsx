@@ -42,12 +42,12 @@ export function TicketDetailPage(): React.ReactElement {
   useCategoryList()
 
   const [prefillContent, setPrefillContent] = useState<string | undefined>(undefined)
-  // Set the moment "Usar como respuesta" is clicked; consumed (and the
-  // suggestion dismissed) once that reply is actually sent — see
-  // handleAddComment. The suggestion is generated once from the ticket's
-  // original description, never regenerated from later comments, so once
-  // it's been acted on (ignored, or used as the basis for a sent reply) it
-  // must not reappear.
+  // Se setea en el momento en que se hace click en "Usar como respuesta"; se consume (y la
+  // sugerencia se descarta) una vez que esa respuesta efectivamente se envía — ver
+  // handleAddComment. La sugerencia se genera una sola vez a partir de la descripción
+  // original del ticket, nunca se regenera a partir de comentarios posteriores, así que una vez
+  // que se actuó sobre ella (ignorada, o usada como base de una respuesta enviada) no
+  // debe volver a aparecer.
   const [usedSuggestionAsResponse, setUsedSuggestionAsResponse] = useState(false)
 
   const user = useStore((s) => s.user)
@@ -123,7 +123,7 @@ export function TicketDetailPage(): React.ReactElement {
       )}
       {ticket && (
         <>
-          {/* Breadcrumb */}
+          {/* Migas de pan */}
           <nav aria-label="Breadcrumb" className="flex text-xs text-gray-500 mb-5">
             <ol className="inline-flex items-center gap-1">
               <li>
@@ -154,9 +154,9 @@ export function TicketDetailPage(): React.ReactElement {
           )}
 
           <div className="flex gap-6">
-            {/* Main column — 65% */}
+            {/* Columna principal — 65% */}
             <div className="flex-[0_0_65%] min-w-0 flex flex-col gap-5">
-              {/* Header + Descripción — un solo card */}
+              {/* Encabezado + Descripción — un solo card */}
               <div className="bg-white border border-gray-200 rounded-lg p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-2 flex-wrap min-w-0">
@@ -182,7 +182,7 @@ export function TicketDetailPage(): React.ReactElement {
                 </p>
               </div>
 
-              {/* Activity feed */}
+              {/* Feed de actividad */}
               <TicketComments
                 comments={comments}
                 statusLog={statusLog}
@@ -198,9 +198,9 @@ export function TicketDetailPage(): React.ReactElement {
               />
             </div>
 
-            {/* Sidebar — 35% */}
+            {/* Barra lateral — 35% */}
             <div className="flex-[0_0_35%] min-w-0 flex flex-col gap-5">
-              {/* Sugerencias IA — agent/admin only */}
+              {/* Sugerencias IA — solo agente/admin */}
               {isAgentOrAdmin && ticket.aiTriage && (
                 <AITriagePanel
                   aiTriage={ticket.aiTriage}
@@ -316,7 +316,7 @@ export function TicketDetailPage(): React.ReactElement {
                 />
               </div>
 
-              {/* Reasignar agente — admin only */}
+              {/* Reasignar agente — solo admin */}
               {user?.role === 'admin' && (
                 <>
                   <button

@@ -26,8 +26,8 @@ export function ForgotPasswordForm({
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  // Two phases share this component; hooks must be called unconditionally,
-  // so both validators are set up here and the relevant one is used below.
+  // Este componente comparte dos fases; los hooks deben llamarse incondicionalmente,
+  // por eso ambos validadores se configuran acá y más abajo se usa el que corresponda.
   const requestValidator = useValidatedSubmit(forgotPasswordRequestSchema, (data) =>
     onSubmitRequest(data.email),
   )

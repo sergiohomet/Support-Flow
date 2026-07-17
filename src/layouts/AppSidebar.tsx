@@ -71,7 +71,7 @@ export function AppSidebar() {
         <p className="text-xs text-gray-400 mt-0.5">Enterprise Support</p>
       </div>
 
-      {/* Navigation */}
+      {/* Navegación */}
       <nav className="flex-1 px-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
@@ -111,7 +111,7 @@ export function AppSidebar() {
         ))}
       </nav>
 
-      {/* User footer */}
+      {/* Pie del usuario */}
       <div className="px-3 py-4 border-t border-gray-100 space-y-3">
         <div className="flex items-center gap-3 px-2">
           <div className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white text-sm font-semibold shrink-0">

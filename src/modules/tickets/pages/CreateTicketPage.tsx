@@ -20,7 +20,7 @@ export function CreateTicketPage(): React.ReactElement {
 
   return (
     <div className="max-w-[700px] w-full mx-auto py-8 px-6">
-      {/* Breadcrumb + título */}
+      {/* Migas de pan + título */}
       <div className="mb-6">
         <nav aria-label="Breadcrumb" className="flex text-xs text-gray-500 mb-2">
           <ol className="inline-flex items-center gap-1">

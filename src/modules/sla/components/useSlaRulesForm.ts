@@ -26,9 +26,9 @@ export interface UseSlaRulesFormResult {
   handleSaveAll: () => void
 }
 
-// Owns the dirty-row diffing, per-row schema validation, and all-or-nothing
-// save aggregation for SlaRulesTable — kept out of the component so the
-// component stays presentational.
+// Se encarga de detectar filas modificadas, validar el schema fila por fila y agregar
+// el guardado con lógica de todo-o-nada para SlaRulesTable — se mantiene fuera del componente
+// para que este siga siendo presentacional.
 export function useSlaRulesForm(rows: SlaConfigRow[], onSaveAll: (changes: SlaConfigChange[]) => void): UseSlaRulesFormResult {
   const [rowState, setRowState] = useState<Record<string, RowState>>(() =>
     Object.fromEntries(
@@ -106,7 +106,7 @@ export function useSlaRulesForm(rows: SlaConfigRow[], onSaveAll: (changes: SlaCo
 
     setRowErrors(nextErrors)
 
-    // All-or-nothing: if any dirty row is invalid, save nothing until it's fixed.
+    // Todo-o-nada: si alguna fila modificada es inválida, no se guarda nada hasta que se corrija.
     if (Object.keys(nextErrors).length > 0) return
 
     onSaveAll(changes)

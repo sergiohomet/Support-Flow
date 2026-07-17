@@ -47,8 +47,8 @@ export function SpecialtyChangeModal({
         </p>
       )}
 
-      {/* Keyed by the user being edited so switching targets remounts local
-          selection state, instead of needing a manual reset effect. */}
+      {/* Se usa el usuario editado como key para que, al cambiar de destino, se
+          remonte el estado de selección local en vez de necesitar un efecto manual de reseteo. */}
       <SpecialtyChangeFields
         key={user?.id ?? 'none'}
         user={user}

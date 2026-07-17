@@ -36,8 +36,9 @@ export function useReportsSummary(dateFrom: string, dateTo: string): UseReportsS
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Track the latest refetch across renders so the realtime effect can call
-  // it without re-subscribing every time the function identity changes.
+  // Rastrea el refetch más reciente entre renders para que el efecto de
+  // tiempo real pueda invocarlo sin volver a suscribirse cada vez que cambia
+  // la identidad de la función.
   const refetchRef = useRef<() => Promise<void>>(undefined)
 
   const refetch = async (): Promise<void> => {
@@ -54,12 +55,13 @@ export function useReportsSummary(dateFrom: string, dateTo: string): UseReportsS
     }
   }
 
-  // The fetch/mapping/error-parsing logic lives in fetchReportsSummary (a
-  // plain async function, not a closure over setState) on purpose: the
-  // react-hooks/set-state-in-effect rule flags any effect that calls an
-  // outer function which sets state, so state updates are handled directly
-  // here instead. `cancelled` guards against a stale response from a
-  // superseded date range landing after a newer request already resolved.
+  // La lógica de fetch/mapeo/parseo de errores vive en fetchReportsSummary
+  // (una función asíncrona plana, no un closure sobre setState) a propósito:
+  // la regla react-hooks/set-state-in-effect marca cualquier efecto que
+  // llame a una función externa que setee estado, así que las
+  // actualizaciones de estado se manejan directamente acá. `cancelled` evita
+  // que una respuesta obsoleta de un rango de fechas superado llegue después
+  // de que una petición más nueva ya se haya resuelto.
   useEffect(() => {
     let cancelled = false
 
@@ -88,10 +90,11 @@ export function useReportsSummary(dateFrom: string, dateTo: string): UseReportsS
     refetchRef.current = refetch
   })
 
-  // This RPC is admin-only and authorizes server-side (SECURITY DEFINER), so
-  // there is no client-side filter to apply here — the subscription is just
-  // a "something changed, refetch" signal. Subscribes once for the hook's
-  // lifetime, independent of dateFrom/dateTo.
+  // Este RPC es solo para administradores y autoriza del lado del servidor
+  // (SECURITY DEFINER), así que acá no hay ningún filtro del lado del
+  // cliente que aplicar — la suscripción es solo una señal de "algo cambió,
+  // refetch". Se suscribe una sola vez durante todo el ciclo de vida del
+  // hook, independientemente de dateFrom/dateTo.
   useEffect(() => {
     const channel = supabase
       .channel('reports-summary')

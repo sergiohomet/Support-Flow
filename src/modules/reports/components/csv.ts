@@ -1,8 +1,9 @@
-// Uses ';' as the field delimiter and ',' as the decimal separator — the
-// convention Excel expects under Spanish/Argentine regional settings. With a
-// ',' delimiter, Excel in that locale reads the '.' in a decimal number as a
-// thousands separator, turning e.g. "21.194479345763888" into the integer
-// 21194479345763888 and rendering it in scientific notation.
+// Usa ';' como delimitador de campo y ',' como separador decimal — la
+// convención que espera Excel bajo la configuración regional española/
+// argentina. Con un delimitador ',', Excel en esa configuración regional
+// interpreta el '.' de un número decimal como separador de miles,
+// convirtiendo por ejemplo "21.194479345763888" en el entero
+// 21194479345763888 y mostrándolo en notación científica.
 export function escapeCsvField(field: string | number): string {
   const value = typeof field === 'number' ? field.toString().replace('.', ',') : field
   if (value.includes(';') || value.includes('"') || value.includes('\n')) {

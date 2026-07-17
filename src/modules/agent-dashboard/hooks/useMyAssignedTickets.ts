@@ -40,10 +40,11 @@ async function fetchMyAssignedTickets(agentId: string): Promise<FetchResult> {
   }
 }
 
-// `resolve`/`returnToPool` reuse the existing tickets module's
-// useUpdateTicketStatus/useUnassignTicket hooks instead of re-calling the
-// same RPCs directly — same wrapping behavior (loading/error/parseRpcError),
-// no duplicated RPC-calling logic.
+// `resolve`/`returnToPool` reutilizan los hooks
+// useUpdateTicketStatus/useUnassignTicket ya existentes del módulo tickets
+// en lugar de volver a llamar directamente a los mismos RPCs — mismo
+// comportamiento de wrapping (loading/error/parseRpcError), sin lógica de
+// llamada a RPC duplicada.
 export function useMyAssignedTickets(agentId: string | null): UseMyAssignedTicketsResult {
   const [tickets, setTickets] = useState<AgentDashboardTicket[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -66,11 +67,12 @@ export function useMyAssignedTickets(agentId: string | null): UseMyAssignedTicke
     }
   }
 
-  // See src/modules/sla/hooks/useSlaAtRiskTickets.ts for why the fetch logic
-  // is a plain function and the effect wraps it in a locally-defined async
-  // runner instead of calling it directly — react-hooks/set-state-in-effect
-  // flags any effect whose top level calls an outer function (or sets state
-  // directly at its top level) that updates state.
+  // Ver src/modules/sla/hooks/useSlaAtRiskTickets.ts para entender por qué
+  // la lógica de fetch es una función plana y el efecto la envuelve en un
+  // runner async definido localmente en lugar de llamarla directamente —
+  // react-hooks/set-state-in-effect marca cualquier efecto cuyo nivel
+  // superior llame a una función externa (o setee estado directamente en
+  // su nivel superior) que actualice estado.
   useEffect(() => {
     if (!agentId) return
     const currentAgentId = agentId

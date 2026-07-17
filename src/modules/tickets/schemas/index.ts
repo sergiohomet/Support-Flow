@@ -1,10 +1,10 @@
 import { z } from 'zod'
 
-// Primitive schemas
+// Schemas primitivos
 export const ticketStatusSchema = z.enum(['abierto', 'en_proceso', 'resuelto', 'reabierto'])
 export const ticketPrioritySchema = z.enum(['baja', 'media', 'alta', 'critica'])
 
-// List item (maps get_tickets row)
+// Ítem de listado (mapea la fila de get_tickets)
 export const ticketListItemSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -23,14 +23,14 @@ export const ticketListItemSchema = z.object({
   commentCount: z.number(),
 })
 
-// AI triage suggestion (maps the ai_triage JSONB column, written by the
-// ai-triage Edge Function). suggestedCategoryId is intentionally a plain
-// z.string() — NOT z.string().uuid() — because this project's real
-// categories.id values (e.g. 11111111-1111-1111-1111-111111111111) fail
-// Zod's strict RFC 4122 format check on version/variant nibbles, exactly as
-// found and fixed server-side in supabase/functions/ai-triage/triage-logic.ts.
-// confidence is nullable because the model sometimes omits it entirely
-// (already defaulted to null server-side in that case).
+// Sugerencia de triage por IA (mapea la columna JSONB ai_triage, escrita por la
+// Edge Function ai-triage). suggestedCategoryId es intencionalmente un
+// z.string() plano — NO z.string().uuid() — porque los valores reales de
+// categories.id de este proyecto (por ejemplo, 11111111-1111-1111-1111-111111111111) no pasan
+// el chequeo estricto de formato RFC 4122 de Zod en los nibbles de versión/variante, tal
+// como se detectó y corrigió del lado del servidor en supabase/functions/ai-triage/triage-logic.ts.
+// confidence admite null porque el modelo a veces lo omite por completo
+// (en ese caso, ya viene con default null del lado del servidor).
 export const aiTriageSchema = z.object({
   suggestedCategoryId: z.string(),
   suggestedPriority: ticketPrioritySchema,
@@ -41,7 +41,7 @@ export const aiTriageSchema = z.object({
 
 export type AiTriage = z.infer<typeof aiTriageSchema>
 
-// Detail (maps get_ticket_detail row)
+// Detalle (mapea la fila de get_ticket_detail)
 export const ticketDetailSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -62,7 +62,7 @@ export const ticketDetailSchema = z.object({
   slaHours: z.number().nullable(),
 })
 
-// Comment (maps get_ticket_comments row)
+// Comentario (mapea la fila de get_ticket_comments)
 export const ticketCommentSchema = z.object({
   id: z.string(),
   ticketId: z.string(),
@@ -72,7 +72,7 @@ export const ticketCommentSchema = z.object({
   createdAt: z.string(),
 })
 
-// Status log entry (maps get_ticket_status_log row)
+// Entrada del registro de estados (mapea la fila de get_ticket_status_log)
 export const statusLogEntrySchema = z.object({
   id: z.string(),
   ticketId: z.string(),
@@ -83,14 +83,14 @@ export const statusLogEntrySchema = z.object({
   changedAt: z.string(),
 })
 
-// Category
+// Categoría
 export const categorySchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().nullable(),
 })
 
-// Agent
+// Agente
 export const agentSchema = z.object({
   id: z.string(),
   fullName: z.string(),
@@ -99,7 +99,7 @@ export const agentSchema = z.object({
   activeTicketCount: z.number(),
 })
 
-// Create ticket form (user input validation)
+// Formulario de creación de ticket (validación de la entrada del usuario)
 export const createTicketInputSchema = z.object({
   title: z.string().min(5).max(120),
   description: z.string().min(10),
@@ -107,7 +107,7 @@ export const createTicketInputSchema = z.object({
   priority: ticketPrioritySchema.optional().default('media'),
 })
 
-// Named action schemas (spec-required public API)
+// Schemas de acciones con nombre (API pública requerida por el spec)
 export const CreateTicketSchema = z.object({
   title: z.string().min(5, 'El título debe tener al menos 5 caracteres.').max(120, 'El título no puede superar los 120 caracteres.'),
   description: z.string().min(10, 'La descripción debe tener al menos 10 caracteres.'),
@@ -124,7 +124,7 @@ export const AddCommentSchema = z.object({
   content: z.string().min(1, 'El comentario no puede estar vacío.').max(2000, 'El comentario no puede superar los 2000 caracteres.'),
 })
 
-// Inferred types
+// Tipos inferidos
 export type TicketStatus = z.infer<typeof ticketStatusSchema>
 export type TicketPriority = z.infer<typeof ticketPrioritySchema>
 export type TicketListItem = z.infer<typeof ticketListItemSchema>

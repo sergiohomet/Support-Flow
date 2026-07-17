@@ -13,17 +13,19 @@ async function fetchHasUnread(): Promise<boolean> {
   return Boolean(data)
 }
 
-// Powers the sidebar badge. Re-asks the RPC (the source of truth) on every
-// INSERT/UPDATE instead of computing the boolean client-side from partial
-// event payloads — cheap call, and it stays correct regardless of what
-// changed (e.g. mark-as-read UPDATEs).
+// Alimenta el badge de la barra lateral. Vuelve a consultar el RPC (la fuente
+// de verdad) en cada INSERT/UPDATE en lugar de calcular el booleano en el
+// cliente a partir de payloads parciales del evento — es una llamada barata,
+// y se mantiene correcto sin importar qué cambió (p. ej. UPDATEs de
+// marcar-como-leída).
 export function useHasUnreadNotifications(): UseHasUnreadNotificationsResult {
   const [hasUnread, setHasUnread] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const currentUserId = useStore((s) => s.user?.id ?? null)
 
-  // Track the latest refetch across renders so the realtime effect can call
-  // it without re-subscribing every time the function identity changes.
+  // Rastrea el refetch más reciente entre renders para que el efecto de
+  // tiempo real pueda invocarlo sin volver a suscribirse cada vez que cambia
+  // la identidad de la función.
   const refetchRef = useRef<() => Promise<void>>(undefined)
 
   const refetch = async (): Promise<void> => {
@@ -36,12 +38,13 @@ export function useHasUnreadNotifications(): UseHasUnreadNotificationsResult {
     }
   }
 
-  // See useTicketDetail.ts for why the fetch logic is a plain function and
-  // the effect wraps it in a locally-defined async runner instead of calling
-  // it directly — react-hooks/set-state-in-effect flags any effect whose top
-  // level calls an outer function (or sets state directly) that updates
-  // state. `cancelled` guards against a stale response landing after a
-  // superseded user id already resolved.
+  // Ver useTicketDetail.ts para entender por qué la lógica de fetch es una
+  // función plana y el efecto la envuelve en un runner asíncrono definido
+  // localmente en lugar de llamarla directamente — la regla
+  // react-hooks/set-state-in-effect marca cualquier efecto cuyo nivel
+  // superior llame a una función externa (o setee estado directamente) que
+  // actualice estado. `cancelled` evita que una respuesta obsoleta llegue
+  // después de que un user id superado ya se haya resuelto.
   useEffect(() => {
     if (!currentUserId) return
 
@@ -68,8 +71,8 @@ export function useHasUnreadNotifications(): UseHasUnreadNotificationsResult {
     refetchRef.current = refetch
   })
 
-  // Only subscribe once the current user id is known — no user id means no
-  // filtered subscription to create.
+  // Solo se suscribe una vez que se conoce el id del usuario actual — sin id
+  // de usuario no hay suscripción filtrada que crear.
   useEffect(() => {
     if (!currentUserId) return
 

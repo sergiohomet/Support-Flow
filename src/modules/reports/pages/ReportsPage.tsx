@@ -54,7 +54,7 @@ export function ReportsPage(): React.JSX.Element {
 
   return (
     <div className="max-w-[1280px] mx-auto px-4 py-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">Reportes</h1>
         <div className="flex items-center gap-3">
@@ -79,7 +79,7 @@ export function ReportsPage(): React.JSX.Element {
         </div>
       ) : (
         <div className="flex flex-col gap-8">
-          {/* Section 1: Summary cards */}
+          {/* Sección 1: Tarjetas resumen */}
           <div className="grid grid-cols-4 gap-5">
             <SummaryCard label="Total tickets" value={totalTickets} caption="en el rango seleccionado" />
             <SummaryCard
@@ -101,7 +101,7 @@ export function ReportsPage(): React.JSX.Element {
             />
           </div>
 
-          {/* Section 2: Tickets by week / by category */}
+          {/* Sección 2: Tickets por semana / por categoría */}
           <div className="grid grid-cols-2 gap-5">
             <div className="flex flex-col gap-4">
               <h2 className="text-lg font-semibold text-gray-900">Tickets por Semana</h2>
@@ -113,7 +113,7 @@ export function ReportsPage(): React.JSX.Element {
             </div>
           </div>
 
-          {/* Section 3: Agent performance */}
+          {/* Sección 3: Desempeño de agentes */}
           <div className="flex flex-col gap-4">
             <h2 className="text-lg font-semibold text-gray-900">Desempeño de Agentes</h2>
             <AgentPerformanceTable data={agentPerformance} />

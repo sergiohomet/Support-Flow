@@ -83,11 +83,11 @@ async function fetchTicketDetail(ticketId: string): Promise<FetchResult> {
   return { ticket, comments, statusLog, error: null }
 }
 
-// Auto-fetches whenever `ticketId` changes (see useReportsSummary.ts for why
-// the fetch logic is a plain function and the effect wraps it in a locally
-// declared async runner). The realtime subscription effect is unchanged —
-// it keys on `ticket?.id` (the loaded ticket, not the route param), so it
-// still only (re)subscribes once a ticket has actually loaded.
+// Hace fetch automáticamente cada vez que cambia `ticketId` (ver useReportsSummary.ts para entender por qué
+// la lógica de fetch es una función simple y el efecto la envuelve en un runner asíncrono
+// declarado localmente). El efecto de suscripción en tiempo real no cambia —
+// se basa en `ticket?.id` (el ticket ya cargado, no el parámetro de la ruta), por lo que
+// solo se (vuelve a) suscribir una vez que un ticket efectivamente se cargó.
 export function useTicketDetail(ticketId: string | undefined): UseTicketDetailResult {
   const [ticket, setTicket] = useState<TicketDetail | null>(null)
   const [comments, setComments] = useState<TicketComment[]>([])
@@ -96,8 +96,8 @@ export function useTicketDetail(ticketId: string | undefined): UseTicketDetailRe
   const [error, setError] = useState<string | null>(null)
   const currentUserId = useStore((s) => s.user?.id ?? null)
 
-  // Track the latest refetch across renders so the realtime effect can call
-  // it without re-subscribing every time the function identity changes.
+  // Guarda la referencia al refetch más reciente entre renders para que el efecto de realtime pueda
+  // invocarlo sin volver a suscribirse cada vez que cambia la identidad de la función.
   const refetchRef = useRef<() => Promise<void>>(undefined)
 
   const refetch = async (): Promise<void> => {
@@ -165,9 +165,9 @@ export function useTicketDetail(ticketId: string | undefined): UseTicketDetailRe
           filter: `ticket_id=eq.${currentTicketId}`,
         },
         (payload: { new: { user_id: string } }) => {
-          // The current user's own inserts already trigger a refetch via
-          // handleAddComment in TicketDetailPage — skip here to avoid a
-          // redundant back-to-back refetch.
+          // Los inserts propios del usuario actual ya disparan un refetch mediante
+          // handleAddComment en TicketDetailPage — se omite acá para evitar un
+          // refetch redundante inmediatamente después de otro.
           if (payload.new.user_id === currentUserId) return
           void refetchRef.current?.()
         }
@@ -181,9 +181,9 @@ export function useTicketDetail(ticketId: string | undefined): UseTicketDetailRe
           filter: `id=eq.${currentTicketId}`,
         },
         (payload: { new: { id: string } }) => {
-          // The row-level filter above already scopes delivery to this
-          // ticket, but re-check defensively (mirrors the INSERT handler's
-          // own-user guard) in case the filter semantics ever change.
+          // El filtro a nivel de fila de arriba ya limita la entrega a este
+          // ticket, pero se vuelve a chequear de forma defensiva (replicando la guarda de
+          // usuario propio del handler de INSERT) por si la semántica del filtro cambia alguna vez.
           if (payload.new.id !== currentTicketId) return
           void refetchRef.current?.()
         }

@@ -1,4 +1,4 @@
-// Pages
+// Páginas
 export { TicketListPage } from './pages/TicketListPage'
 export { CreateTicketPage } from './pages/CreateTicketPage'
 export { TicketDetailPage } from './pages/TicketDetailPage'
@@ -13,7 +13,7 @@ export { useReassignTicket } from './hooks/useReassignTicket'
 export { useUpdateTicketStatus } from './hooks/useUpdateTicketStatus'
 export { useAddComment } from './hooks/useAddComment'
 
-// Schemas (values)
+// Schemas (valores)
 export {
   ticketStatusSchema,
   ticketPrioritySchema,
@@ -26,7 +26,7 @@ export {
   createTicketInputSchema,
 } from './schemas'
 
-// Schemas (types)
+// Schemas (tipos)
 export type {
   TicketStatus,
   TicketPriority,

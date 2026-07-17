@@ -1,9 +1,11 @@
-// Compact SLA countdown for card-style displays — a smaller sibling of
-// src/modules/tickets/pages/slaStatus.ts (getSlaStatus), which returns richer
-// box/text styling classes meant for a detail-page panel. This one returns
-// only a label/icon/tone triple, small enough to render inline on a ticket
-// card. The urgent threshold (< 120 minutes remaining) matches slaStatus.ts's
-// isUrgent so both surfaces agree on when a ticket is "close to breaching".
+// Countdown de SLA compacto para displays tipo card — un hermano más chico
+// de src/modules/tickets/pages/slaStatus.ts (getSlaStatus), que devuelve
+// clases de estilo box/text más ricas pensadas para un panel de página de
+// detalle. Este solo devuelve una tripleta label/icon/tone, lo
+// suficientemente chica para renderizarse inline en una card de ticket. El
+// umbral de urgencia (< 120 minutos restantes) coincide con el isUrgent de
+// slaStatus.ts, para que ambas superficies coincidan en cuándo un ticket
+// está "cerca de incumplir" (breaching).
 export type SlaCountdownTone = 'normal' | 'warning' | 'danger'
 
 export interface CompactSlaStatus {
@@ -31,8 +33,9 @@ export function getCompactSlaStatus(ticket: {
   const minutesRemaining = Math.round((deadline - Date.now()) / 60000)
 
   if (minutesRemaining < 0) {
-    // Defensive: the escalation job should have set escalatedAt by now, but
-    // handle a not-yet-escalated overdue ticket the same as escalated.
+    // Defensivo: el job de escalamiento debería haber seteado escalatedAt
+    // para este momento, pero manejamos un ticket vencido que todavía no
+    // fue escalado igual que uno escalado.
     return { tone: 'danger', label: 'Vencido', icon: 'error' }
   }
 

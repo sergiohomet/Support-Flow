@@ -1,9 +1,9 @@
 import { z } from 'zod'
 
-// ── Enums re-declared locally (schema-independence convention — see
-// src/modules/sla/schemas/index.ts). This module does NOT import from
-// tickets/schemas, so it stays decoupled even if the tickets module's
-// internal shape changes.
+// ── Enums redeclarados localmente (convención de independencia de schema
+// — ver src/modules/sla/schemas/index.ts). Este módulo NO importa desde
+// tickets/schemas, así que se mantiene desacoplado aunque cambie la forma
+// interna del módulo tickets.
 
 export const agentDashboardTicketStatusSchema = z.enum([
   'abierto',
@@ -16,7 +16,7 @@ export const agentDashboardTicketPrioritySchema = z.enum(['baja', 'media', 'alta
 export type AgentDashboardTicketStatus = z.infer<typeof agentDashboardTicketStatusSchema>
 export type AgentDashboardTicketPriority = z.infer<typeof agentDashboardTicketPrioritySchema>
 
-// ── AgentDashboardTicket — maps get_tickets RPC row ──────────────────────────
+// ── AgentDashboardTicket — mapea la fila del RPC get_tickets ─────────────────
 
 export const agentDashboardTicketSchema = z.object({
   id: z.string(),
@@ -37,7 +37,7 @@ export const agentDashboardTicketSchema = z.object({
 
 export type AgentDashboardTicket = z.infer<typeof agentDashboardTicketSchema>
 
-// ── Mapping helper — snake_case DB row → camelCase AgentDashboardTicket ──────
+// ── Helper de mapeo — fila de DB en snake_case → AgentDashboardTicket en camelCase ──────
 
 export function mapAgentDashboardTicket(row: {
   id: string

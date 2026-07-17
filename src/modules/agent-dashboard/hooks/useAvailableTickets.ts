@@ -39,10 +39,11 @@ async function fetchAvailableTickets(categoryId: string): Promise<FetchResult> {
   }
 }
 
-// Agents with no assigned category (categoryId === null) intentionally never
-// query — an unscoped get_tickets call across all categories would be
-// misleading (an agent could "see" tickets outside their competence). The UI
-// is responsible for showing a distinct "no category assigned" empty state.
+// Los agentes sin categoría asignada (categoryId === null) intencionalmente
+// nunca consultan — una llamada a get_tickets sin acotar por categoría
+// sería engañosa (un agente podría "ver" tickets fuera de su competencia).
+// La UI es responsable de mostrar un estado vacío distintivo de "sin
+// categoría asignada".
 export function useAvailableTickets(
   categoryId: string | null,
   agentId: string | null
@@ -52,8 +53,9 @@ export function useAvailableTickets(
   const [error, setError] = useState<string | null>(null)
   const [claimError, setClaimError] = useState<string | null>(null)
 
-  // Track the latest refetch across renders so the realtime effect can call
-  // it without re-subscribing every time the function identity changes.
+  // Rastreamos el refetch más reciente a través de los renders para que el
+  // efecto de realtime pueda llamarlo sin volver a suscribirse cada vez que
+  // cambia la identidad de la función.
   const refetchRef = useRef<() => Promise<void>>(undefined)
 
   const refetch = async (): Promise<void> => {
@@ -71,11 +73,12 @@ export function useAvailableTickets(
     }
   }
 
-  // See src/modules/sla/hooks/useSlaAtRiskTickets.ts for why the fetch logic
-  // is a plain function and the effect wraps it in a locally-defined async
-  // runner instead of calling it directly — react-hooks/set-state-in-effect
-  // flags any effect whose top level calls an outer function (or sets state
-  // directly at its top level) that updates state.
+  // Ver src/modules/sla/hooks/useSlaAtRiskTickets.ts para entender por qué
+  // la lógica de fetch es una función plana y el efecto la envuelve en un
+  // runner async definido localmente en lugar de llamarla directamente —
+  // react-hooks/set-state-in-effect marca cualquier efecto cuyo nivel
+  // superior llame a una función externa (o setee estado directamente en
+  // su nivel superior) que actualice estado.
   useEffect(() => {
     if (!categoryId) return
     const currentCategoryId = categoryId
@@ -107,8 +110,8 @@ export function useAvailableTickets(
     refetchRef.current = refetch
   })
 
-  // Mirrors the "no category assigned" guard above: no categoryId means no
-  // query and no subscription either.
+  // Refleja el guard de "sin categoría asignada" de arriba: sin categoryId
+  // no hay query ni tampoco suscripción.
   useEffect(() => {
     if (!categoryId) return
     const currentCategoryId = categoryId

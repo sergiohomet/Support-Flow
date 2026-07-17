@@ -47,12 +47,12 @@ export function useListCategories(): UseListCategoriesResult {
     }
   }
 
-  // The fetch/mapping/error-parsing logic lives in fetchCategories (a plain
-  // async function, not a closure over setState) on purpose: the
-  // react-hooks/set-state-in-effect rule flags any effect that calls an
-  // outer function which sets state, so state updates are handled directly
-  // here instead. `cancelled` guards against a stale response landing after
-  // a newer request already resolved.
+  // La lógica de fetch/mapeo/parseo de errores vive intencionalmente en
+  // fetchCategories (una función async plana, no un closure sobre setState):
+  // la regla react-hooks/set-state-in-effect marca cualquier efecto que llame
+  // a una función externa que setee estado, por eso las actualizaciones de
+  // estado se manejan directamente acá. `cancelled` evita que una respuesta
+  // desactualizada se aplique después de que ya se resolvió una petición más nueva.
   useEffect(() => {
     let cancelled = false
 
