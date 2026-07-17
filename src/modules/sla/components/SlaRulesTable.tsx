@@ -1,10 +1,10 @@
 import type { SlaConfigRow } from '@/modules/sla/schemas'
 import { EmptyState } from '@/ui/EmptyState'
 import { formatDate } from '@/core/utils/format'
-import { useSlaRulesForm } from './useSlaRulesForm'
-import type { SlaConfigChange } from './useSlaRulesForm'
+import { useSlaRulesForm } from '../hooks/useSlaRulesForm'
+import type { SlaConfigChange } from '../hooks/useSlaRulesForm'
 
-export type { SlaConfigChange } from './useSlaRulesForm'
+export type { SlaConfigChange } from '../hooks/useSlaRulesForm'
 
 interface SlaRulesTableProps {
   rows: SlaConfigRow[]
