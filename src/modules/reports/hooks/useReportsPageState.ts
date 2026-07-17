@@ -27,21 +27,23 @@ function buildCsvRows(agentPerformance: AgentPerformance[]): (string | number)[]
   ])
 }
 
-// Owns the reports page's non-fetch state: the date-range preset, and the two
-// derivations (escalated %, CSV export shape) that don't come from an RPC.
-// `computeEscalatedPct`/`buildCsvRows` are exposed as plain functions rather
-// than pre-computed values because they need `totalTickets`/`agentPerformance`
-// from the 4 data hooks (useReportsSummary, useReportsAgentPerformance, etc.),
-// which in turn need `dateFrom`/`dateTo` from this hook — computing them
-// eagerly here would create a circular dependency. The page calls these
-// functions once the data hooks have resolved, the same way it already calls
-// each data hook's own `refetch` function.
+// Contiene el estado de la página de reportes que no depende de un fetch: el
+// preset de rango de fechas, y las dos derivaciones (% escalado, forma de
+// exportación CSV) que no vienen de un RPC. `computeEscalatedPct`/
+// `buildCsvRows` se exponen como funciones planas en lugar de valores
+// precalculados porque necesitan `totalTickets`/`agentPerformance` de los 4
+// hooks de datos (useReportsSummary, useReportsAgentPerformance, etc.), que a
+// su vez necesitan `dateFrom`/`dateTo` de este hook — calcularlos acá de
+// forma anticipada crearía una dependencia circular. La página llama a estas
+// funciones una vez que los hooks de datos ya se resolvieron, de la misma
+// forma en que ya llama a la función `refetch` propia de cada hook de datos.
 export function useReportsPageState(): UseReportsPageStateResult {
   const [preset, setPreset] = useState<ReportsRangePreset>('last30')
-  // Compute the range once per `preset` change — recomputing on every render
-  // would produce a new millisecond-precision timestamp each time, which
-  // would re-trigger the fetch effects in the reports data hooks in an
-  // infinite loop (see PR #23 regression on SlaDashboardPage).
+  // Calcula el rango una sola vez por cada cambio de `preset` — recalcularlo
+  // en cada render produciría un timestamp nuevo con precisión de
+  // milisegundos cada vez, lo que volvería a disparar los efectos de fetch
+  // en los hooks de datos de reportes en un loop infinito (ver la regresión
+  // del PR #23 en SlaDashboardPage).
   const { dateFrom, dateTo } = useMemo(() => computeReportsDateRange(preset), [preset])
 
   return {

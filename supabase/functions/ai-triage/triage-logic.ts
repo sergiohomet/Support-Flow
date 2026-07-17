@@ -1,19 +1,21 @@
 // ai-triage / triage-logic.ts
 //
-// Deno-agnostic logic for the ai-triage Edge Function: prompt building,
-// caller authorization, and parsing + validating the OpenRouter
-// `chat/completions` response. Deliberately has ZERO Deno-specific APIs
-// (no Deno.serve, Deno.env, etc.) so it can be imported and unit-tested
-// directly under vitest (this project's real test runner) — see
+// Lógica agnóstica de Deno para la Edge Function ai-triage: construcción
+// del prompt, autorización de quien llama, y parseo + validación de la
+// respuesta `chat/completions` de OpenRouter. Deliberadamente no tiene
+// NINGUNA API específica de Deno (nada de Deno.serve, Deno.env, etc.)
+// para poder importarse y testearse con unit tests directamente bajo
+// vitest (el test runner real de este proyecto) — ver
 // triage-logic.test.ts.
 //
-// The only external dependency is zod, imported the same way the rest of
-// this repo's Edge Functions import third-party packages (esm.sh URL
-// specifier, matching supabase/functions/sla-escalation-check/index.ts and
-// supabase/functions/create-user/index.ts, both of which import
-// '@supabase/supabase-js' from esm.sh). vite.config.ts aliases this exact
-// specifier to the local 'zod' npm package so vitest can resolve it too —
-// see the `resolve.alias` entry there.
+// La única dependencia externa es zod, importada de la misma forma en
+// que el resto de las Edge Functions de este repo importan paquetes de
+// terceros (specifier de URL de esm.sh, igual que
+// supabase/functions/sla-escalation-check/index.ts y
+// supabase/functions/create-user/index.ts, que importan ambas
+// '@supabase/supabase-js' desde esm.sh). vite.config.ts alía este mismo
+// specifier al paquete npm local 'zod' para que vitest también pueda
+// resolverlo — ver la entrada `resolve.alias` ahí.
 import { z } from 'https://esm.sh/zod@4.4.3'
 
 export interface CategoryOption {
@@ -38,35 +40,40 @@ export interface TriageResult {
 }
 
 /**
- * Builds the zod schema for a single triage result, constrained to the
- * real category ids fetched from `public.categories` for this call — a
- * string that names a category NOT in that list is still rejected.
+ * Construye el schema de zod para un resultado de triage individual,
+ * restringido a los ids de categoría reales obtenidos desde
+ * `public.categories` para esta llamada — un string que nombra una
+ * categoría que NO está en esa lista igual se rechaza.
  *
- * `confidence` is optional/nullable with a `null` default — live-verified
- * against the real openai/gpt-oss-20b:free endpoint: it does not always
- * include `confidence` in its structured output despite the schema
- * marking it `required` (a known reliability gap of this free-tier
- * model's strict-mode compliance). Rather than discarding an otherwise
- * complete, usable suggestion (valid category, priority, and response
- * draft) over one missing cosmetic field, `null` means "the model didn't
- * report a confidence" — the review panel simply omits the confidence
- * badge in that case, consistent with how any other missing suggestion
- * field is handled (render only the parts that are present). This is
- * NOT the same as fabricating a fake number when the model gave none.
- * A confidence value that IS present but out of the 0-1 range is still
- * rejected as invalid.
+ * `confidence` es opcional/nullable con un default de `null` —
+ * verificado en vivo contra el endpoint real de openai/gpt-oss-20b:free:
+ * no siempre incluye `confidence` en su salida estructurada a pesar de
+ * que el schema lo marca como `required` (una falencia de confiabilidad
+ * conocida en el cumplimiento del strict-mode de este modelo de nivel
+ * gratuito). En lugar de descartar una sugerencia que por lo demás está
+ * completa y es utilizable (categoría, prioridad y borrador de respuesta
+ * válidos) por un único campo cosmético faltante, `null` significa "el
+ * modelo no reportó una confianza" — el panel de revisión simplemente
+ * omite el badge de confianza en ese caso, de forma consistente con cómo
+ * se maneja cualquier otro campo faltante de la sugerencia (renderizar
+ * solo las partes que están presentes). Esto NO es lo mismo que fabricar
+ * un número falso cuando el modelo no dio ninguno. Un valor de
+ * confidence que SÍ está presente pero fuera del rango 0-1 igual se
+ * rechaza como inválido.
  */
 export function buildTriageResultSchema(validCategoryIds: string[]) {
   return z.object({
-    // Deliberately NOT `.uuid()` — Zod's strict format check enforces the
-    // RFC 4122 version/variant nibbles, but this project's category ids
-    // (e.g. `11111111-1111-1111-1111-111111111111`) don't comply with
-    // that format despite being real, valid rows in `public.categories`.
-    // Live-verified this silently rejected every correct suggestion —
-    // the `.refine()` below (exact membership in the real category id
-    // list fetched for this call) is strictly stronger than any format
-    // check could be anyway, so the format check was redundant on top of
-    // being actively wrong for this project's id shapes.
+    // Deliberadamente NO usa `.uuid()` — el chequeo de formato estricto
+    // de Zod exige los nibbles de versión/variante de RFC 4122, pero los
+    // ids de categoría de este proyecto (p. ej.
+    // `11111111-1111-1111-1111-111111111111`) no cumplen ese formato a
+    // pesar de ser filas reales y válidas en `public.categories`.
+    // Verificado en vivo que esto rechazaba en silencio cada sugerencia
+    // correcta — el `.refine()` de abajo (pertenencia exacta a la lista
+    // real de ids de categoría obtenida para esta llamada) es de por sí
+    // estrictamente más fuerte que cualquier chequeo de formato, así que
+    // el chequeo de formato era redundante además de estar activamente
+    // equivocado para la forma de los ids de este proyecto.
     suggestedCategoryId: z
       .string()
       .refine((id) => validCategoryIds.includes(id), {
@@ -79,10 +86,10 @@ export function buildTriageResultSchema(validCategoryIds: string[]) {
 }
 
 /**
- * Builds the exact prompt string sent as the user message to the
- * OpenRouter `chat/completions` endpoint. Kept here (not inline in
- * index.ts) so it's reviewable and can be referenced verbatim from the
- * PR description.
+ * Construye el string exacto del prompt que se envía como mensaje de
+ * usuario al endpoint `chat/completions` de OpenRouter. Se mantiene acá
+ * (y no inline en index.ts) para que sea revisable y se pueda
+ * referenciar textualmente desde la descripción del PR.
  */
 export function buildTriagePrompt(ticket: TicketForTriage, categories: CategoryOption[]): string {
   const categoryList = categories.map((c) => `- ${c.id}: ${c.name}`).join('\n')
@@ -105,9 +112,10 @@ Devolvé un objeto JSON con estos campos:
 }
 
 /**
- * Validates the caller's Authorization header against the trigger secret.
- * Returns false (never throws) if the secret isn't configured at all —
- * a missing secret must never be treated as "anything goes".
+ * Valida el header Authorization de quien llama contra el secreto de
+ * trigger. Devuelve false (nunca lanza una excepción) si el secreto no
+ * está configurado en absoluto — un secreto faltante nunca debe tratarse
+ * como "todo vale".
  */
 export function isAuthorizedCaller(authHeader: string | null, expectedSecret: string | undefined): boolean {
   if (!expectedSecret) return false
@@ -123,17 +131,18 @@ interface ChatCompletionResponse {
 }
 
 /**
- * Parses an OpenRouter `chat/completions` response (the standard
- * OpenAI-compatible envelope), JSON.parses the inner `choices[0].message.content`
- * string, and validates the result against the triage schema constrained
- * to `validCategoryIds`.
+ * Parsea una respuesta `chat/completions` de OpenRouter (el envelope
+ * estándar compatible con OpenAI), hace JSON.parse del string interno
+ * `choices[0].message.content`, y valida el resultado contra el schema
+ * de triage restringido a `validCategoryIds`.
  *
- * Returns `null` on ANY failure — unexpected top-level shape, missing or
- * empty `choices` array, missing `message`, missing/non-string
- * `message.content`, unparseable JSON, or schema validation failure
- * (including an out-of-range confidence or a category id not in
- * `validCategoryIds`). Never throws — the caller (index.ts) treats `null`
- * as "no triage result produced" and silently no-ops.
+ * Devuelve `null` ante CUALQUIER falla — forma de nivel superior
+ * inesperada, array `choices` faltante o vacío, `message` faltante,
+ * `message.content` faltante o que no sea string, JSON no parseable, o
+ * falla de validación del schema (incluyendo un confidence fuera de
+ * rango o un id de categoría que no esté en `validCategoryIds`). Nunca
+ * lanza una excepción — quien llama (index.ts) trata `null` como "no se
+ * produjo un resultado de triage" y hace no-op en silencio.
  */
 export function parseOpenRouterChatCompletion(
   rawResponse: unknown,

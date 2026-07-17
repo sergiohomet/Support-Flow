@@ -30,9 +30,9 @@ async function fetchCategories(): Promise<FetchResult> {
   return { categories: mapped, error: null }
 }
 
-// Every consumer of this hook wants the same thing on mount — categories
-// loaded into the shared store, fetched once and cached — so the effect
-// lives here instead of being duplicated in each page that needs it.
+// Todo consumidor de este hook quiere lo mismo al montarse — las categorías
+// cargadas en el store compartido, obtenidas una sola vez y cacheadas — por eso el efecto
+// vive acá en lugar de estar duplicado en cada página que lo necesita.
 export function useCategoryList(): UseCategoryListResult {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
   const [error, setError] = useState<string | null>(null)

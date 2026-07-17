@@ -45,14 +45,15 @@ export function TicketCardShell({
   )
 
   if (onClick) {
-    // Nested action buttons (e.g. AssignedTicketCard's "Resolver"/"Devolver al
-    // pool") live inside this clickable area, so this must be a <div
-    // role="button">, not a native <button> — a <button> cannot contain
-    // nested <button> children (invalid HTML). Callers wire
-    // `event.stopPropagation()` on their own nested buttons; this guard only
-    // protects the keyboard path: a keydown on a nested button still bubbles
-    // here even though its own click is stopped, so we ignore keydowns that
-    // didn't originate on this element itself.
+    // Los botones de acción anidados (por ejemplo, "Resolver"/"Devolver al
+    // pool" de AssignedTicketCard) viven dentro de esta área clickeable, por
+    // lo que esto debe ser un <div role="button">, no un <button> nativo — un
+    // <button> no puede contener <button> anidados como hijos (HTML
+    // inválido). Los llamadores configuran `event.stopPropagation()` en sus
+    // propios botones anidados; este guard solo protege el camino del
+    // teclado: un keydown en un botón anidado sigue burbujeando hasta acá
+    // aunque su propio click esté detenido, así que ignoramos los keydowns
+    // que no se originaron en este elemento en sí.
     const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
       if (event.target !== event.currentTarget) return
       if (event.key === 'Enter' || event.key === ' ') {

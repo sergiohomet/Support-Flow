@@ -1,11 +1,13 @@
 export type ReportsRangePreset = 'last30' | 'thisMonth' | 'lastMonth' | 'thisQuarter'
 
-// Calendar-aware date range calculation, kept pure so the caller (ReportsPage)
-// can memoize it with useMemo — recomputing on every render would produce a
-// new millisecond-precision "now" each time and re-trigger fetch effects.
-// Always returns full ISO timestamps, never date-only strings: a date-only
-// "dateTo" is parsed by Postgres as midnight UTC, silently excluding
-// same-day data from the BETWEEN filter in the reports RPCs.
+// Cálculo de rango de fechas con conciencia de calendario, mantenido puro
+// para que quien lo invoca (ReportsPage) pueda memoizarlo con useMemo —
+// recalcularlo en cada render produciría un "now" nuevo con precisión de
+// milisegundos cada vez y volvería a disparar los efectos de fetch.
+// Siempre devuelve timestamps ISO completos, nunca strings de solo fecha: un
+// "dateTo" de solo fecha es parseado por Postgres como medianoche UTC,
+// excluyendo silenciosamente los datos del mismo día del filtro BETWEEN en
+// los RPCs de reportes.
 export function computeReportsDateRange(preset: ReportsRangePreset): { dateFrom: string; dateTo: string } {
   const now = new Date()
 
@@ -21,7 +23,7 @@ export function computeReportsDateRange(preset: ReportsRangePreset): { dateFrom:
     }
     case 'lastMonth': {
       const from = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      // Day 0 of the current month is the last day of the previous month.
+      // El día 0 del mes actual es el último día del mes anterior.
       const to = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
       return { dateFrom: from.toISOString(), dateTo: to.toISOString() }
     }

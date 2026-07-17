@@ -1,12 +1,12 @@
-// Pages
+// Páginas
 export { RegisterPage } from './pages/RegisterPage'
 export { LoginPage } from './pages/LoginPage'
 export { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 
-// Hooks (exported for completeness — pages are the primary public API)
+// Hooks (exportados por completitud — las páginas son la API pública principal)
 export { useRegister } from './hooks/useRegister'
 export { useLogin } from './hooks/useLogin'
 export { useForgotPassword } from './hooks/useForgotPassword'
 
-// Utils
+// Utilidades
 export { mapAuthError } from './utils/authErrors'

@@ -28,9 +28,10 @@ export function useValidatedSubmit<T extends z.ZodTypeAny>(
 }
 
 /**
- * Non-hook validation primitive for callers that can't use `useValidatedSubmit`
- * directly — e.g. validating one row at a time inside a batch/per-row submit
- * loop, where errors are keyed by row id rather than by schema field.
+ * Primitiva de validación sin hook para llamadores que no pueden usar
+ * `useValidatedSubmit` directamente — por ejemplo, validar una fila a la vez
+ * dentro de un loop de envío por lote/por fila, donde los errores se
+ * indexan por id de fila en vez de por campo del schema.
  */
 export function parseWithFirstError<T extends z.ZodTypeAny>(
   schema: T,

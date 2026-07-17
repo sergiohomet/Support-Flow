@@ -12,10 +12,11 @@ interface AssignedTicketCardProps {
   onReturnToPool: () => void
 }
 
-// There is no dedicated "assigned_at" timestamp on the get_tickets row —
-// updatedAt is the closest available proxy (assign_ticket touches
-// updated_at), so "hace X" is relative to the last update, not the exact
-// claim moment. Flagged as a deviation in the apply report.
+// No hay un timestamp dedicado "assigned_at" en la fila de get_tickets —
+// updatedAt es el proxy disponible más cercano (assign_ticket toca
+// updated_at), así que "hace X" es relativo a la última actualización, no
+// al momento exacto de la asignación (claim). Marcado como una desviación
+// en el apply report.
 function formatRelativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime()
   const diffMinutes = Math.floor(diffMs / 60000)
@@ -40,10 +41,11 @@ export function AssignedTicketCard({
   const canResolve = AGENT_TRANSITIONS[ticket.status].includes('resuelto')
   const navigate = useNavigate()
 
-  // Navigation lives locally in this leaf component (rather than being lifted
-  // to a prop plumbed through AgentDashboardPage, as TicketCard/TicketListPage
-  // do) because AgentDashboardPage has no existing click-routing wiring for
-  // this card and adding one here is simpler. Flagged as a deviation.
+  // La navegación vive localmente en este componente hoja (en lugar de
+  // elevarse a una prop pasada a través de AgentDashboardPage, como hacen
+  // TicketCard/TicketListPage) porque AgentDashboardPage no tiene un
+  // cableado de enrutamiento por click existente para esta card y agregar
+  // uno acá es más simple. Marcado como una desviación.
   const handleNavigate = (): void => {
     navigate(`/tickets/${ticket.id}`)
   }

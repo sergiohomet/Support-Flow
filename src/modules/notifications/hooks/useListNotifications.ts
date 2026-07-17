@@ -38,16 +38,18 @@ export function useListNotifications(filter: NotificationFilter): UseListNotific
   const [rawData, setRawData] = useState<NotificationRow[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // Tracks ids marked read during this session so the card can flip to "read"
-  // immediately on click, without waiting for a refetch — the list is only
-  // refetched explicitly (e.g. after "Marcar todas como leídas"), so this
-  // local override is the simplest way to reflect the optimistic read state
-  // on top of whatever the last fetch returned.
+  // Rastrea los ids marcados como leídos durante esta sesión para que la
+  // tarjeta pase a "leída" de inmediato al hacer clic, sin esperar un
+  // refetch — la lista solo se refetchea explícitamente (p. ej. después de
+  // "Marcar todas como leídas"), así que este override local es la forma más
+  // simple de reflejar el estado optimista de lectura sobre lo que haya
+  // devuelto el último fetch.
   const [locallyReadIds, setLocallyReadIds] = useState<Set<string>>(new Set())
   const currentUserId = useStore((s) => s.user?.id ?? null)
 
-  // Track the latest refetch across renders so the realtime effect can call
-  // it without re-subscribing every time the function identity changes.
+  // Rastrea el refetch más reciente entre renders para que el efecto de
+  // tiempo real pueda invocarlo sin volver a suscribirse cada vez que cambia
+  // la identidad de la función.
   const refetchRef = useRef<() => Promise<void>>(undefined)
 
   const refetch = async (): Promise<void> => {
@@ -62,12 +64,13 @@ export function useListNotifications(filter: NotificationFilter): UseListNotific
     }
   }
 
-  // The fetch/mapping/error-parsing logic lives in fetchNotifications (a
-  // plain async function, not a closure over setState) on purpose: the
-  // react-hooks/set-state-in-effect rule flags any effect that calls an
-  // outer function which sets state, so state updates are handled directly
-  // here instead. `cancelled` guards against a stale response from a
-  // superseded filter landing after a newer request already resolved.
+  // La lógica de fetch/mapeo/parseo de errores vive en fetchNotifications
+  // (una función asíncrona plana, no un closure sobre setState) a propósito:
+  // la regla react-hooks/set-state-in-effect marca cualquier efecto que
+  // llame a una función externa que setee estado, así que las actualizaciones
+  // de estado se manejan directamente acá. `cancelled` evita que una
+  // respuesta obsoleta de un filtro superado llegue después de que una
+  // petición más nueva ya se haya resuelto.
   useEffect(() => {
     let cancelled = false
 
@@ -94,8 +97,8 @@ export function useListNotifications(filter: NotificationFilter): UseListNotific
     refetchRef.current = refetch
   })
 
-  // Only subscribe once the current user id is known — no user id means no
-  // filtered subscription to create.
+  // Solo se suscribe una vez que se conoce el id del usuario actual — sin id
+  // de usuario no hay suscripción filtrada que crear.
   useEffect(() => {
     if (!currentUserId) return
 

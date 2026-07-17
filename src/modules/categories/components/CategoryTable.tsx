@@ -77,12 +77,12 @@ export function CategoryTable({
                 .filter(Boolean)
                 .join(' ')}
             >
-              {/* Name */}
+              {/* Nombre */}
               <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                 {category.name}
               </td>
 
-              {/* Description */}
+              {/* Descripción */}
               <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
                 {category.description || '—'}
               </td>
@@ -92,7 +92,7 @@ export function CategoryTable({
                 {category.maxResolutionHours != null ? `${category.maxResolutionHours}h` : '—'}
               </td>
 
-              {/* Status badge */}
+              {/* Badge de estado */}
               <td className="px-4 py-3 whitespace-nowrap">
                 {category.isActive ? (
                   <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
@@ -105,7 +105,7 @@ export function CategoryTable({
                 )}
               </td>
 
-              {/* Actions */}
+              {/* Acciones */}
               <td className="px-4 py-3 whitespace-nowrap text-right">
                 <div className="flex items-center justify-end gap-2">
                   <button

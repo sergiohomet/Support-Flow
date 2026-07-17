@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-// ── Role constants (no TypeScript enums) ─────────────────────────────────────
+// ── Constantes de rol (sin enums de TypeScript) ───────────────────────────────
 
 export const USER_ROLE = {
   client: 'client',
@@ -12,7 +12,7 @@ export type UserRole = (typeof USER_ROLE)[keyof typeof USER_ROLE]
 
 export const userRoleSchema = z.enum(['client', 'agent', 'admin'])
 
-// ── AdminUser — maps snake_case RPC rows to camelCase ─────────────────────────
+// ── AdminUser — mapea filas RPC en snake_case a camelCase ─────────────────────
 
 export const adminUserSchema = z.object({
   id: z.string(),
@@ -28,12 +28,12 @@ export const adminUserSchema = z.object({
 
 export type AdminUser = z.infer<typeof adminUserSchema>
 
-// ── CreateUserInput — used by Edge Function ───────────────────────────────────
+// ── CreateUserInput — usado por la Edge Function ───────────────────────────────
 
 /**
- * Single source of truth for the "agent requires a category" business rule.
- * Shared by createUserInputSchema's refine and by UI components that need to
- * derive a valid/disabled state without duplicating the rule inline.
+ * Fuente única de verdad para la regla de negocio "un agente requiere una categoría".
+ * Compartida entre el refine de createUserInputSchema y los componentes de UI que
+ * necesitan derivar un estado válido/deshabilitado sin duplicar la regla en línea.
  */
 export function isAgentCategoryValid(role: 'agent' | 'admin', categoryId: string | null): boolean {
   return role !== 'agent' || (categoryId !== null && categoryId !== '')
@@ -54,7 +54,7 @@ export const createUserInputSchema = z
 
 export type CreateUserInput = z.infer<typeof createUserInputSchema>
 
-// ── RPC param schemas ─────────────────────────────────────────────────────────
+// ── Schemas de parámetros RPC ──────────────────────────────────────────────────
 
 export const UpdateUserRoleParamsSchema = z.object({
   userId: z.string(),

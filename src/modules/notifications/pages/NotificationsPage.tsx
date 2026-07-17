@@ -18,7 +18,7 @@ export function NotificationsPage(): React.JSX.Element {
   const handleNotificationClick = (notification: NotificationRow): void => {
     markLocallyRead(notification.id)
     navigate('/tickets/' + notification.ticketId)
-    // Fire-and-forget: navigation must not block on the mark-as-read call.
+    // Fire-and-forget: la navegación no debe bloquearse esperando la llamada de marcar como leído.
     void markNotificationRead(notification.id)
   }
 

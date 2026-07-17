@@ -17,7 +17,7 @@ export function TicketStatusLog({ statusLog }: TicketStatusLogProps): React.JSX.
       <ul className="flex flex-col gap-3">
         {statusLog.map((entry) => (
           <li key={entry.id} className="flex items-start gap-3">
-            {/* Timeline dot */}
+            {/* Punto de la línea de tiempo */}
             <span className="mt-1 h-3 w-3 rounded-full bg-blue-400 border-2 border-blue-200 shrink-0" />
 
             <div className="flex flex-col gap-1">

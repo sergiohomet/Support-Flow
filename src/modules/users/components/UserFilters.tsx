@@ -32,7 +32,7 @@ export function UserFilters({
 
   return (
     <div className="flex flex-wrap gap-3 items-center py-3">
-      {/* Search */}
+      {/* Búsqueda */}
       <div className="relative flex items-center flex-1 min-w-[240px]">
         <span className="material-icons absolute left-2 text-gray-400 text-base pointer-events-none">
           search
@@ -52,7 +52,7 @@ export function UserFilters({
         />
       </div>
 
-      {/* Combined filter */}
+      {/* Filtro combinado */}
       <div className="flex items-center gap-2 ml-auto">
         <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Filtros:</span>
         <select
@@ -71,7 +71,7 @@ export function UserFilters({
         </select>
       </div>
 
-      {/* Reset — solo visible cuando hay filtros activos */}
+      {/* Restablecer — solo visible cuando hay filtros activos */}
       {hasActiveFilters && (
         <button
           type="button"

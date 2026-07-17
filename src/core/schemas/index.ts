@@ -20,5 +20,5 @@ export const RegisterSchema = z.object({
 
 export type RegisterInput = z.infer<typeof RegisterSchema>
 
-// Ticket action schemas (re-exported from module — do NOT move them here)
+// Schemas de acciones de tickets (reexportados desde el módulo — NO moverlos acá)
 export { CreateTicketSchema, UpdateStatusSchema, AddCommentSchema } from '@/modules/tickets/schemas'

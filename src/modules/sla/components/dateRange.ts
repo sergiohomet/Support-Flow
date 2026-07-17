@@ -1,9 +1,9 @@
-// Days-based date range calculation, kept pure so the caller (SlaDashboardPage)
-// can memoize it with useMemo — recomputing on every render would produce a
-// new millisecond-precision "now" each time and re-trigger fetch effects.
-// Always returns full ISO timestamps, never date-only strings: a date-only
-// "dateTo" is parsed by Postgres as midnight UTC, silently excluding
-// same-day data from the BETWEEN filter in the SLA RPCs.
+// Cálculo del rango de fechas basado en días, mantenido puro para que quien lo invoca (SlaDashboardPage)
+// pueda memoizarlo con useMemo — recalcularlo en cada render generaría un
+// nuevo "now" con precisión de milisegundos cada vez y volvería a disparar los efectos de fetch.
+// Siempre devuelve timestamps ISO completos, nunca strings de solo fecha: un
+// "dateTo" de solo fecha es interpretado por Postgres como medianoche UTC, excluyendo
+// silenciosamente los datos del mismo día del filtro BETWEEN en las RPCs de SLA.
 export function computeSlaDateRange(days: number): { dateFrom: string; dateTo: string } {
   const now = new Date()
   const from = new Date(now)

@@ -14,10 +14,10 @@ interface TicketCommentsProps {
   isLoading: boolean
   error: string | null
   ticketStatus: TicketStatus
-  // Optional prefill lifted from a parent (e.g. AITriagePanel's "Usar como
-  // respuesta"). When set, the textarea is populated and the parent is
-  // notified via onPrefillConsumed so it can clear its own state — this
-  // allows a second identical prefill later to still trigger a re-populate.
+  // Prellenado opcional que llega desde un componente padre (por ejemplo, "Usar como
+  // respuesta" de AITriagePanel). Cuando se setea, el textarea se completa y se
+  // notifica al padre mediante onPrefillConsumed para que pueda limpiar su propio estado — esto
+  // permite que un segundo prellenado idéntico más adelante también dispare un nuevo llenado.
   prefillContent?: string
   onPrefillConsumed?: () => void
 }
@@ -46,10 +46,10 @@ export function TicketComments({
     currentUserId !== null &&
     (currentUserId === ticketClientId || currentUserId === ticketAgentId)
 
-  // See useTicketList.ts (src/modules/tickets/hooks) for why the state
-  // update is wrapped in a locally-defined function invoked from within the
-  // effect instead of calling setContent directly at the effect's top level
-  // — react-hooks/set-state-in-effect flags the latter.
+  // Ver useTicketList.ts (src/modules/tickets/hooks) para entender por qué la actualización
+  // de estado está envuelta en una función definida localmente e invocada desde dentro del
+  // efecto en lugar de llamar a setContent directamente en el nivel superior del efecto
+  // — react-hooks/set-state-in-effect marca esto último.
   useEffect(() => {
     if (!prefillContent) return
 
@@ -62,18 +62,18 @@ export function TicketComments({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefillContent])
 
-  // Auto-grow the textarea to fit its content instead of scrolling
-  // internally. Runs on every content change, including a one-shot
-  // prefill (e.g. a long AI-suggested response), not just per keystroke.
+  // Hace crecer automáticamente el textarea para ajustarse a su contenido en lugar de hacer scroll
+  // internamente. Se ejecuta en cada cambio de contenido, incluyendo un prellenado
+  // de una sola vez (por ejemplo, una respuesta larga sugerida por IA), no solo por cada tecla presionada.
   //
-  // When content is empty (initial mount, or right after submitting —
-  // handleSubmit resets content to ''), clear any inline height override
-  // instead of measuring scrollHeight: measuring an empty box on mount is
-  // unreliable (layout/webfonts may not be fully settled yet at that
-  // point), and live-testing showed it can bake in a wrong, oversized
-  // height that then never corrects itself since the effect never reruns
-  // until content next changes. Clearing lets the rows={3} CSS default
-  // take over, which is always correct for an empty box.
+  // Cuando el contenido está vacío (montaje inicial, o justo después de enviar —
+  // handleSubmit resetea content a ''), se limpia cualquier override de altura inline
+  // en lugar de medir scrollHeight: medir una caja vacía en el montaje es
+  // poco confiable (el layout/las webfonts pueden no haberse asentado del todo en ese
+  // momento), y las pruebas en vivo mostraron que puede quedar fijada una altura
+  // incorrecta y sobredimensionada que después nunca se corrige, ya que el efecto no se vuelve a ejecutar
+  // hasta el próximo cambio de content. Limpiarla permite que el valor por defecto de CSS rows={3}
+  // tome el control, lo cual siempre es correcto para una caja vacía.
   useEffect(() => {
     const el = textareaRef.current
     if (!el) return
@@ -100,12 +100,12 @@ export function TicketComments({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg flex flex-col">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
         <h3 className="text-base font-semibold text-gray-900">Actividad</h3>
       </div>
 
-      {/* Feed */}
+      {/* Feed de actividad */}
       <div className="flex-1 p-4">
         {feed.length === 0 ? (
           <p className="text-sm text-gray-400">No hay actividad aún.</p>
@@ -158,7 +158,7 @@ export function TicketComments({
                 )
               }
 
-              // Status entry
+              // Entrada de cambio de estado
               const entry = item.data
               return (
                 <li key={`status-${entry.id}`} className="flex gap-3 items-start">
@@ -206,7 +206,7 @@ export function TicketComments({
         </div>
       )}
 
-      {/* Input area */}
+      {/* Área de entrada */}
       <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
         {isResolved ? (
           <div className="rounded-md bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-700">

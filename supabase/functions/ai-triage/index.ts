@@ -1,48 +1,54 @@
 // Edge Function: ai-triage
 //
-// PR2 of the "ai-triage" change. Given a ticketId, fetches the ticket and
-// the full category list, asks an LLM (via OpenRouter) for a structured
-// triage suggestion (category, priority, first-response draft,
-// confidence), and — only on full success — writes the validated result
-// to tickets.ai_triage.
+// PR2 del change "ai-triage". Dado un ticketId, obtiene el ticket y la
+// lista completa de categorías, le pide a un LLM (vía OpenRouter) una
+// sugerencia de triage estructurada (categoría, prioridad, borrador de
+// primera respuesta, confianza), y — solo si todo tiene éxito — escribe
+// el resultado validado en tickets.ai_triage.
 //
-// Standalone/manually-invocable for now: nothing calls this function
-// automatically yet. PR3 adds the AFTER INSERT trigger that invokes it
-// on every new ticket; PR4/PR5 add the frontend UI to accept/reject the
-// suggestion. This function does not depend on the trigger existing.
+// Por ahora es independiente/invocable manualmente: todavía nada llama a
+// esta función automáticamente. PR3 agrega el trigger AFTER INSERT que la
+// invoca en cada ticket nuevo; PR4/PR5 agregan la UI de frontend para
+// aceptar/rechazar la sugerencia. Esta función no depende de que el
+// trigger exista.
 //
-// AUTH: mirrors the shared-secret pattern used by sla-escalation-check,
-// but with its OWN dedicated secret (AI_TRIAGE_TRIGGER_SECRET) rather
-// than reusing SUPABASE_SERVICE_ROLE_KEY — see the PR description for why
-// (this repo already hit a real incident, documented in migration
-// 20260701000009, where a Vault-stored copy of a secret drifted out of
-// sync with the value Supabase auto-injects; giving ai-triage its own
-// single-purpose secret with a single source of truth avoids that class
-// of bug entirely).
+// AUTH: refleja el patrón de secreto compartido usado por
+// sla-escalation-check, pero con su PROPIO secreto dedicado
+// (AI_TRIAGE_TRIGGER_SECRET) en lugar de reutilizar
+// SUPABASE_SERVICE_ROLE_KEY — ver la descripción del PR para el porqué
+// (este repo ya tuvo un incidente real, documentado en la migración
+// 20260701000009, donde una copia de un secreto guardada en Vault se
+// desincronizó del valor que Supabase auto-inyecta; darle a ai-triage su
+// propio secreto de propósito único con una única fuente de verdad evita
+// por completo esa clase de bug).
 //
-// LLM PROVIDER: uses OpenRouter (model `openai/gpt-oss-20b:free`) rather
-// than Google Gemini directly. This PR originally targeted Gemini's
-// `/v1beta/interactions` endpoint, but Google AI Studio now gates new
-// accounts behind prepaid billing, which blocked provisioning a working
-// key. OpenRouter's `chat/completions` endpoint is the standard
-// OpenAI-compatible API (well-documented, stable structured-output
-// support via `response_format.json_schema`) and requires no prepaid
-// billing for this free-tier model. If you see references to Gemini in
-// git history/blame, that's why — the code below never called it in a
-// deployed/working state.
+// PROVEEDOR DE LLM: usa OpenRouter (modelo `openai/gpt-oss-20b:free`) en
+// lugar de Google Gemini directamente. Este PR originalmente apuntaba al
+// endpoint `/v1beta/interactions` de Gemini, pero Google AI Studio ahora
+// bloquea las cuentas nuevas detrás de facturación prepaga, lo cual
+// impidió aprovisionar una key funcional. El endpoint `chat/completions`
+// de OpenRouter es la API estándar compatible con OpenAI (bien
+// documentada, con soporte estable de structured-output vía
+// `response_format.json_schema`) y no requiere facturación prepaga para
+// este modelo de nivel gratuito. Si ves referencias a Gemini en el
+// git history/blame, es por eso — el código de abajo nunca llegó a
+// llamarlo en un estado desplegado/funcionando.
 //
-// REQUIRED SECRETS (see PR description for the exact live commands
-// needed — none of these can be set from this repo):
-//   - AI_TRIAGE_TRIGGER_SECRET: shared secret the (future, PR3) DB
-//     trigger presents as `Authorization: Bearer <secret>`. Also stored
-//     in Supabase Vault (as 'ai_triage_trigger_secret') so PR3's trigger
-//     can read it via `vault.decrypted_secrets` the same way the SLA cron
-//     job does (see migration 20260701000008).
-//   - OPENROUTER_API_KEY: function-only, read directly via Deno.env.get,
-//     no Vault copy — nothing else in this project ever needs it.
-//   - SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY: auto-injected by Supabase
-//     into every deployed Edge Function, same as the other two functions
-//     in this repo.
+// SECRETOS REQUERIDOS (ver la descripción del PR para los comandos
+// exactos que hay que correr en vivo — ninguno de estos se puede
+// configurar desde este repo):
+//   - AI_TRIAGE_TRIGGER_SECRET: secreto compartido que el (futuro, PR3)
+//     trigger de la DB presenta como `Authorization: Bearer <secret>`.
+//     También se guarda en Supabase Vault (como 'ai_triage_trigger_secret')
+//     para que el trigger del PR3 pueda leerlo vía
+//     `vault.decrypted_secrets`, de la misma forma que lo hace el cron
+//     job de SLA (ver migración 20260701000008).
+//   - OPENROUTER_API_KEY: exclusivo de esta función, se lee directamente
+//     vía Deno.env.get, sin copia en Vault — nada más en este proyecto lo
+//     necesita.
+//   - SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY: auto-inyectadas por
+//     Supabase en cada Edge Function desplegada, igual que en las otras
+//     dos funciones de este repo.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import {
   buildTriagePrompt,
@@ -51,22 +57,24 @@ import {
   type CategoryOption,
 } from './triage-logic.ts'
 
-// 45s: live-verified against the real openai/gpt-oss-20b:free endpoint
-// across several calls — this model does visible internal "reasoning"
-// before emitting its structured JSON output, and observed latency
-// varied significantly call-to-call (~13s on one attempt, still not
-// complete at 25s on another). 10s and then 25s both got aborted before
-// the response finished downloading, silently discarding an otherwise
-// successful triage result (the AbortError falls into the same no-op
-// path as any other failure, so this was invisible until tested live
-// multiple times). 45s gives real headroom for this free-tier model's
-// variance while still well within Supabase Edge Functions' execution
-// limits.
+// 45s: verificado en vivo contra el endpoint real de
+// openai/gpt-oss-20b:free a través de varias llamadas — este modelo hace
+// un "razonamiento" interno visible antes de emitir su salida JSON
+// estructurada, y la latencia observada varió significativamente de
+// llamada a llamada (~13s en un intento, todavía sin terminar a los 25s
+// en otro). Tanto 10s como después 25s se abortaron antes de que
+// terminara de descargarse la respuesta, descartando en silencio un
+// resultado de triage que en realidad había sido exitoso (el AbortError
+// cae en el mismo camino de no-op que cualquier otra falla, así que esto
+// fue invisible hasta probarlo en vivo varias veces). 45s da margen real
+// para la variabilidad de este modelo de nivel gratuito, mientras se
+// mantiene bien dentro de los límites de ejecución de las Supabase Edge
+// Functions.
 const OPENROUTER_TIMEOUT_MS = 45_000
 
 Deno.serve(async (req: Request) => {
   try {
-    // ── 1. Verify the caller presents the shared trigger secret ─────────
+    // ── 1. Verificar que quien llama presenta el secreto de trigger compartido ─────────
     const authHeader = req.headers.get('Authorization')
     const triggerSecret = Deno.env.get('AI_TRIAGE_TRIGGER_SECRET')
 
@@ -77,7 +85,7 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // ── 2. Parse the request body ────────────────────────────────────────
+    // ── 2. Parsear el body del request ────────────────────────────────────────
     const body = (await req.json()) as { ticketId?: string }
     const ticketId = body?.ticketId
 
@@ -93,12 +101,13 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    // Triage itself is best-effort and must NEVER surface a failure to
-    // whoever called this function (the future fire-and-forget trigger,
-    // or a manual invocation) — any error anywhere in fetch/OpenRouter
-    // call/parse/validate collapses to a silent no-op below.
+    // El triage en sí es best-effort y NUNCA debe exponer una falla a
+    // quien haya llamado a esta función (el futuro trigger
+    // fire-and-forget, o una invocación manual) — cualquier error en
+    // cualquier punto de fetch/llamada a OpenRouter/parseo/validación
+    // colapsa a un no-op silencioso más abajo.
     try {
-      // ── 3. Fetch the ticket + the full category list ──────────────────
+      // ── 3. Obtener el ticket + la lista completa de categorías ──────────────────
       const { data: ticket, error: ticketError } = await supabaseAdmin
         .from('tickets')
         .select('title, description')
@@ -120,7 +129,7 @@ Deno.serve(async (req: Request) => {
       const categoryOptions = categories as CategoryOption[]
       const validCategoryIds = categoryOptions.map((c) => c.id)
 
-      // ── 4. Call OpenRouter with a timeout ───────────────────────────────
+      // ── 4. Llamar a OpenRouter con un timeout ───────────────────────────────
       const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY')
       if (!openRouterApiKey) {
         throw new Error('OPENROUTER_API_KEY is not configured')
@@ -173,14 +182,14 @@ Deno.serve(async (req: Request) => {
         clearTimeout(timeout)
       }
 
-      // ── 5. Parse + zod-validate the structured result ──────────────────
+      // ── 5. Parsear + validar con zod el resultado estructurado ──────────────────
       const triageResult = parseOpenRouterChatCompletion(openRouterJson, validCategoryIds)
 
       if (!triageResult) {
         throw new Error('OpenRouter response failed parsing/validation — see parseOpenRouterChatCompletion')
       }
 
-      // ── 6. Persist on full success only ────────────────────────────────
+      // ── 6. Persistir solo si todo tuvo éxito ────────────────────────────────
       const { error: updateError } = await supabaseAdmin
         .from('tickets')
         .update({
@@ -195,21 +204,24 @@ Deno.serve(async (req: Request) => {
         throw new Error(`Failed to persist ai_triage: ${updateError.message}`)
       }
     } catch (triageError) {
-      // Silent no-op: log server-side for debuggability, write nothing,
-      // never retry, never surface this failure to the caller.
+      // No-op silencioso: loguear del lado del servidor para poder
+      // debuggear, no escribir nada, nunca reintentar, nunca exponer esta
+      // falla a quien llamó.
       const message = triageError instanceof Error ? triageError.message : 'Unknown triage failure'
       console.error(`[ai-triage] Triage did not complete for ticket ${ticketId}: ${message}`)
     }
 
-    // The fire-and-forget call itself always "succeeds" from the
-    // caller's point of view, whether or not triage produced a result.
+    // La llamada fire-and-forget en sí siempre "tiene éxito" desde el
+    // punto de vista de quien llama, haya producido o no un resultado el
+    // triage.
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (err) {
-    // Only truly unexpected errors (bad JSON body, missing env vars for
-    // the admin client itself, etc.) reach this outer catch.
+    // A este catch externo solo llegan errores verdaderamente inesperados
+    // (body JSON inválido, env vars faltantes para el propio cliente
+    // admin, etc.).
     const message = err instanceof Error ? err.message : 'Internal server error'
     return new Response(JSON.stringify({ error: message }), {
       status: 500,

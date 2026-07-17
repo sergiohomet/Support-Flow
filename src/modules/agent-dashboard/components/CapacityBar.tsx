@@ -3,9 +3,10 @@ interface CapacityBarProps {
   max: number
 }
 
-// Same warning-color convention as ReassignTicketModal's at-limit banner
-// (amber for "near capacity", used here instead of red since this bar is a
-// passive status indicator, not a blocking error state).
+// Misma convención de color de advertencia que el banner de "al límite" de
+// ReassignTicketModal (ámbar para "cerca de la capacidad", usado acá en
+// lugar de rojo ya que esta barra es un indicador de estado pasivo, no un
+// estado de error bloqueante).
 export function CapacityBar({ current, max }: CapacityBarProps): React.JSX.Element {
   const isNearCapacity = current >= max - 1
   const pct = max > 0 ? Math.min(100, Math.round((current / max) * 100)) : 0

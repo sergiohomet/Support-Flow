@@ -10,9 +10,9 @@ async function hasRecoverySession(): Promise<boolean> {
   return session?.user != null
 }
 
-// Starts on 'request' and flips to 'reset' if the user already has a
-// recovery session (arrived via email link) or once Supabase fires
-// PASSWORD_RECOVERY while processing the URL token.
+// Arranca en 'request' y pasa a 'reset' si el usuario ya tiene una
+// sesión de recuperación (llegó por el enlace del email) o cuando
+// Supabase dispara PASSWORD_RECOVERY al procesar el token de la URL.
 export function useRecoveryPhase(): RecoveryPhase {
   const [phase, setPhase] = useState<RecoveryPhase>('request')
 

@@ -52,11 +52,11 @@ async function fetchTickets(filters: TicketFilters): Promise<FetchResult> {
   return { tickets: mapped, totalCount, error: null }
 }
 
-// `enabled` lets the caller gate auto-fetching on its own "is there an active
-// filter" condition (TicketListPage only wants to query once the user has
-// selected a status tab or typed a search term). The hook re-fetches
-// whenever `filters.status`/`filters.page` change in the store — those are
-// the only two fields TicketListPage's UI actually mutates today.
+// `enabled` le permite a quien invoca condicionar el auto-fetch a su propia condición de
+// "hay algún filtro activo" (TicketListPage solo quiere consultar una vez que el usuario
+// seleccionó una pestaña de estado o escribió un término de búsqueda). El hook vuelve a hacer fetch
+// cada vez que cambian `filters.status`/`filters.page` en el store — esos son
+// los únicos dos campos que la UI de TicketListPage realmente modifica hoy en día.
 export function useTicketList(enabled = false): UseTicketListResult {
   const [isFetching, setIsFetching] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -64,8 +64,8 @@ export function useTicketList(enabled = false): UseTicketListResult {
   const status = useStore((s) => s.filters.status)
   const page = useStore((s) => s.filters.page)
 
-  // Track the latest fetch across renders so the realtime effect can call
-  // it without re-subscribing every time the function identity changes.
+  // Guarda la referencia al fetch más reciente entre renders para que el efecto de realtime pueda
+  // invocarlo sin volver a suscribirse cada vez que cambia la identidad de la función.
   const fetchRef = useRef<() => Promise<void>>(undefined)
 
   const fetch = async (): Promise<void> => {
@@ -85,11 +85,11 @@ export function useTicketList(enabled = false): UseTicketListResult {
     }
   }
 
-  // See useReportsSummary.ts (src/modules/reports/hooks) for why the fetch
-  // logic is a plain function and the effect wraps it in a locally-defined
-  // async runner instead of calling it directly — react-hooks/set-state-in-effect
-  // flags any effect whose top level calls an outer function (or sets state
-  // directly at its top level) that updates state.
+  // Ver useReportsSummary.ts (src/modules/reports/hooks) para entender por qué la lógica
+  // de fetch es una función simple y el efecto la envuelve en un runner asíncrono
+  // definido localmente en lugar de llamarla directamente — react-hooks/set-state-in-effect
+  // marca cualquier efecto cuyo nivel superior llame a una función externa (o actualice el estado
+  // directamente en su nivel superior) que termine actualizando el estado.
   useEffect(() => {
     if (!enabled) return
 
@@ -123,10 +123,10 @@ export function useTicketList(enabled = false): UseTicketListResult {
     fetchRef.current = fetch
   })
 
-  // No client-side filter here — a matching row could belong to any page or
-  // filter combination, so we subscribe unfiltered and let `fetch()` read
-  // the live filters from the store (see fetchTickets/useStore.getState()
-  // above). Only active while `enabled`, mirroring the auto-fetch effect.
+  // Acá no hay ningún filtro del lado del cliente — una fila que coincida podría pertenecer a cualquier página o
+  // combinación de filtros, así que nos suscribimos sin filtrar y dejamos que `fetch()` lea
+  // los filtros vigentes desde el store (ver fetchTickets/useStore.getState()
+  // arriba). Solo está activo mientras `enabled` sea true, replicando el efecto de auto-fetch.
   useEffect(() => {
     if (!enabled) return
 

@@ -46,12 +46,12 @@ export function useListSlaConfig(): UseListSlaConfigResult {
     }
   }
 
-  // See src/modules/reports/hooks/useReportsSummary.ts for why the fetch
-  // logic is a plain function and the effect wraps it in a locally-defined
-  // async runner instead of calling it directly —
-  // react-hooks/set-state-in-effect flags any effect whose top level calls
-  // an outer function (or sets state directly at its top level) that
-  // updates state.
+  // Ver src/modules/reports/hooks/useReportsSummary.ts para entender por qué la lógica
+  // de fetch es una función simple y el efecto la envuelve en un runner asíncrono
+  // definido localmente en lugar de llamarla directamente —
+  // react-hooks/set-state-in-effect marca cualquier efecto cuyo nivel superior llame
+  // a una función externa (o actualice el estado directamente en su nivel superior) que
+  // termine actualizando el estado.
   useEffect(() => {
     let cancelled = false
 

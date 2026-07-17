@@ -20,29 +20,29 @@ import type { AdminUser, UserRole, CreateUserInput } from '@/modules/users/schem
 const PAGE_SIZE = 10
 
 // ---------------------------------------------------------------------------
-// Component
+// Componente
 // ---------------------------------------------------------------------------
 
 export function UsersPage(): React.JSX.Element {
-  // Auth
+  // Autenticación
   const currentUserId = useStore((s) => s.user?.id ?? '')
   const categories = useStore((s) => s.categories)
 
-  // Filter state
+  // Estado de filtros
   const [search, setSearch] = useState('')
   const [combinedFilter, setCombinedFilter] = useState<CombinedFilter>('')
   const [page, setPage] = useState(1)
 
-  // Modal state
+  // Estado de modales
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [pendingRoleChange, setPendingRoleChange] = useState<{ user: AdminUser; selectedRole: 'agent' | 'admin' } | null>(null)
   const [pendingSpecialtyChange, setPendingSpecialtyChange] = useState<AdminUser | null>(null)
   const [pendingStatusToggle, setPendingStatusToggle] = useState<AdminUser | null>(null)
 
-  // Derived filter params
+  // Parámetros de filtro derivados
   const { role, isActive } = filterToParams(combinedFilter)
 
-  // Debounced search value
+  // Valor de búsqueda con debounce
   const debouncedSearch = useDebounce(search, 300)
 
   // Hay filtro activo cuando el usuario escribió algo o eligió una opción del dropdown
@@ -63,7 +63,7 @@ export function UsersPage(): React.JSX.Element {
   const { execute: toggleStatus, isLoading: isTogglingStatus } = useToggleUserStatus()
   useCategoryList()
 
-  // Reset page when filters change (not when page itself changes)
+  // Reinicia la página cuando cambian los filtros (no cuando cambia la página en sí)
   const handleFilterChange = (value: CombinedFilter): void => {
     setCombinedFilter(value)
     setPage(1)
@@ -81,7 +81,7 @@ export function UsersPage(): React.JSX.Element {
   }
 
   // ---------------------------------------------------------------------------
-  // Create user
+  // Crear usuario
   // ---------------------------------------------------------------------------
 
   const handleCreateUser = async (input: CreateUserInput): Promise<void> => {
@@ -93,7 +93,7 @@ export function UsersPage(): React.JSX.Element {
   }
 
   // ---------------------------------------------------------------------------
-  // Role change
+  // Cambio de rol
   // ---------------------------------------------------------------------------
 
   const handleRoleChange = (user: AdminUser): void => {
@@ -111,7 +111,7 @@ export function UsersPage(): React.JSX.Element {
   }
 
   // ---------------------------------------------------------------------------
-  // Specialty change
+  // Cambio de especialidad
   // ---------------------------------------------------------------------------
 
   const handleSpecialtyChange = (user: AdminUser): void => {
@@ -128,7 +128,7 @@ export function UsersPage(): React.JSX.Element {
   }
 
   // ---------------------------------------------------------------------------
-  // Status toggle
+  // Alternar estado
   // ---------------------------------------------------------------------------
 
   const handleStatusToggle = (user: AdminUser): void => {
@@ -145,12 +145,12 @@ export function UsersPage(): React.JSX.Element {
   }
 
   // ---------------------------------------------------------------------------
-  // Render
+  // Renderizado
   // ---------------------------------------------------------------------------
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Usuarios</h1>
@@ -168,14 +168,14 @@ export function UsersPage(): React.JSX.Element {
         </button>
       </div>
 
-      {/* Error banner */}
+      {/* Banner de error */}
       {error && (
         <div role="alert" className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
-      {/* Filters */}
+      {/* Filtros */}
       <UserFilters
         search={search}
         combinedFilter={combinedFilter}
@@ -186,7 +186,7 @@ export function UsersPage(): React.JSX.Element {
         onReset={handleReset}
       />
 
-      {/* Table o empty state */}
+      {/* Tabla o estado vacío */}
       {hasActiveFilters ? (
         <UserTable
           users={users}
@@ -209,7 +209,7 @@ export function UsersPage(): React.JSX.Element {
         </div>
       )}
 
-      {/* Create user modal */}
+      {/* Modal de creación de usuario */}
       <CreateUserModal
         isOpen={isCreateModalOpen}
         isLoading={isCreating}
@@ -219,7 +219,7 @@ export function UsersPage(): React.JSX.Element {
         onClose={() => setIsCreateModalOpen(false)}
       />
 
-      {/* Role change modal */}
+      {/* Modal de cambio de rol */}
       <RoleChangeModal
         isOpen={!!pendingRoleChange}
         user={pendingRoleChange ? { id: pendingRoleChange.user.id, fullName: pendingRoleChange.user.fullName, role: pendingRoleChange.user.role } : null}
@@ -230,7 +230,7 @@ export function UsersPage(): React.JSX.Element {
         onClose={() => setPendingRoleChange(null)}
       />
 
-      {/* Specialty change modal */}
+      {/* Modal de cambio de especialidad */}
       <SpecialtyChangeModal
         isOpen={!!pendingSpecialtyChange}
         user={pendingSpecialtyChange ? { id: pendingSpecialtyChange.id, fullName: pendingSpecialtyChange.fullName, categoryId: pendingSpecialtyChange.categoryId } : null}
@@ -241,7 +241,7 @@ export function UsersPage(): React.JSX.Element {
         onClose={() => setPendingSpecialtyChange(null)}
       />
 
-      {/* Confirm status toggle modal */}
+      {/* Modal de confirmación para alternar estado */}
       <ConfirmModal
         isOpen={!!pendingStatusToggle}
         title={pendingStatusToggle?.isActive ? 'Desactivar usuario' : 'Reactivar usuario'}

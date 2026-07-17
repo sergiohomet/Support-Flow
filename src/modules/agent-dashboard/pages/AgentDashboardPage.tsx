@@ -19,17 +19,20 @@ export function AgentDashboardPage(): React.JSX.Element {
   const [resolvingId, setResolvingId] = useState<string | null>(null)
   const [returningId, setReturningId] = useState<string | null>(null)
 
-  // Warning-only state, per the resolved design decision (mirrors
-  // ReassignTicketModal's at-limit UX): the claim button stays enabled even
-  // when the agent is near capacity — the DB's validate_agent_limit trigger
-  // is the actual enforcement, this is just a heads-up.
+  // Estado de solo advertencia, según la decisión de diseño resuelta
+  // (refleja la UX de "al límite" de ReassignTicketModal): el botón de
+  // tomar ticket se mantiene habilitado aunque el agente esté cerca de la
+  // capacidad — el trigger validate_agent_limit de la base de datos es la
+  // aplicación (enforcement) real, esto es solo un aviso.
   const isAtCapacity = isAgentAtCapacityLimit({ activeTicketCount: assigned.tickets.length })
 
-  // `available.claim()` / `assigned.returnToPool()` already refetch their OWN
-  // list internally on success. Neither refetches the OTHER hook's list, so
-  // without this the ticket vanishes from one panel but never appears (or
-  // disappears) in the other, nor does the CapacityBar update, until a
-  // manual page reload. Only refetch the sibling list on a confirmed success.
+  // `available.claim()` / `assigned.returnToPool()` ya vuelven a hacer
+  // refetch de su PROPIA lista internamente cuando tienen éxito. Ninguno de
+  // los dos hace refetch de la lista del OTRO hook, así que sin esto el
+  // ticket desaparece de un panel pero nunca aparece (o desaparece) en el
+  // otro, ni tampoco se actualiza el CapacityBar, hasta un reload manual de
+  // la página. Solo hacemos refetch de la lista hermana cuando hay un éxito
+  // confirmado.
   const handleClaim = async (ticketId: string): Promise<void> => {
     setClaimingId(ticketId)
     try {
@@ -77,7 +80,7 @@ export function AgentDashboardPage(): React.JSX.Element {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left column — available tickets */}
+        {/* Columna izquierda — tickets disponibles */}
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
             Tickets Disponibles
@@ -106,7 +109,7 @@ export function AgentDashboardPage(): React.JSX.Element {
           )}
         </section>
 
-        {/* Right column — assigned tickets + capacity */}
+        {/* Columna derecha — tickets asignados + capacidad */}
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">

@@ -61,13 +61,14 @@ async function fetchUsers(params: Omit<UseListUsersParams, 'enabled'>): Promise<
   }
 }
 
-// Auto-fetches on [search, role, isActive, page, pageSize] change, gated by
-// `enabled` (the page only wants to query once a search/filter is active —
-// see UsersPage's hasActiveFilters). Mirrors the reports/sla hooks' shape:
-// the RPC call + mapping lives in a plain function outside the hook, and the
-// effect wraps state updates in a locally-declared async runner, because
-// react-hooks/set-state-in-effect flags any effect whose top level calls an
-// outer function (or sets state directly) that updates state.
+// Se refresca automáticamente al cambiar [search, role, isActive, page, pageSize],
+// controlado por `enabled` (la página solo quiere consultar una vez que hay una
+// búsqueda/filtro activo — ver hasActiveFilters de UsersPage). Sigue la misma
+// forma que los hooks de reports/sla: la llamada RPC + el mapeo viven en una
+// función plana fuera del hook, y el efecto envuelve las actualizaciones de
+// estado en un runner async declarado localmente, porque react-hooks/set-state-in-effect
+// marca cualquier efecto cuyo nivel superior llame a una función externa
+// (o setee estado directamente) que actualice estado.
 export function useListUsers(params: UseListUsersParams): UseListUsersResult {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [totalCount, setTotalCount] = useState(0)

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-// ── ReportsSummary — maps admin_get_reports_summary RPC row ──────────────────
+// ── ReportsSummary — mapea la fila del RPC admin_get_reports_summary ─────────
 
 export const reportsSummarySchema = z.object({
   totalTickets: z.number(),
@@ -25,7 +25,7 @@ export function mapReportsSummary(row: {
   }
 }
 
-// ── TicketsByCategory — maps admin_get_reports_tickets_by_category row ───────
+// ── TicketsByCategory — mapea la fila de admin_get_reports_tickets_by_category ─
 
 export const ticketsByCategorySchema = z.object({
   categoryId: z.string(),
@@ -47,7 +47,7 @@ export function mapTicketsByCategory(row: {
   }
 }
 
-// ── TicketsByWeek — maps admin_get_reports_tickets_by_week RPC row ───────────
+// ── TicketsByWeek — mapea la fila del RPC admin_get_reports_tickets_by_week ──
 
 export const ticketsByWeekSchema = z.object({
   weekStart: z.string(),
@@ -63,7 +63,7 @@ export function mapTicketsByWeek(row: { week_start: string; ticket_count: number
   }
 }
 
-// ── AgentPerformance — maps admin_get_reports_agent_performance row ──────────
+// ── AgentPerformance — mapea la fila de admin_get_reports_agent_performance ──
 
 export const agentPerformanceSchema = z.object({
   agentId: z.string(),

@@ -15,7 +15,7 @@ const SETTINGS_TABS: SettingsTab[] = [
 export function SettingsLayout() {
   return (
     <div className="flex flex-col h-full">
-      {/* Tab navigation */}
+      {/* Navegación de pestañas */}
       <div className="border-b border-gray-200 bg-white px-6">
         <nav className="flex gap-0" aria-label="Settings tabs">
           {SETTINGS_TABS.map((tab) => (
@@ -38,7 +38,7 @@ export function SettingsLayout() {
         </nav>
       </div>
 
-      {/* Page content */}
+      {/* Contenido de la página */}
       <div className="flex-1 overflow-y-auto">
         <Outlet />
       </div>

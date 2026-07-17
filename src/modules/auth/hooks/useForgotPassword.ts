@@ -35,7 +35,7 @@ export function useForgotPassword(): UseForgotPasswordResult {
           setError(mapAuthError(supabaseError))
           return
         }
-        // Non-rate-limit errors (including user not found) → silent success (anti-enumeration)
+        // Errores que no son de rate-limit (incluyendo usuario no encontrado) → éxito silencioso (anti-enumeración)
       }
 
       setSent(true)

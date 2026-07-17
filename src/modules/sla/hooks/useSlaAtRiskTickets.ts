@@ -34,8 +34,8 @@ export function useSlaAtRiskTickets(limit = 10): UseSlaAtRiskTicketsResult {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Track the latest refetch across renders so the realtime effect can call
-  // it without re-subscribing every time the function identity changes.
+  // Guarda la referencia al refetch más reciente entre renders para que el efecto de realtime pueda
+  // invocarlo sin volver a suscribirse cada vez que cambia la identidad de la función.
   const refetchRef = useRef<() => Promise<void>>(undefined)
 
   const refetch = async (): Promise<void> => {
@@ -52,12 +52,12 @@ export function useSlaAtRiskTickets(limit = 10): UseSlaAtRiskTicketsResult {
     }
   }
 
-  // See src/modules/reports/hooks/useReportsSummary.ts for why the fetch
-  // logic is a plain function and the effect wraps it in a locally-defined
-  // async runner instead of calling it directly —
-  // react-hooks/set-state-in-effect flags any effect whose top level calls
-  // an outer function (or sets state directly at its top level) that
-  // updates state.
+  // Ver src/modules/reports/hooks/useReportsSummary.ts para entender por qué la lógica
+  // de fetch es una función simple y el efecto la envuelve en un runner asíncrono
+  // definido localmente en lugar de llamarla directamente —
+  // react-hooks/set-state-in-effect marca cualquier efecto cuyo nivel superior llame
+  // a una función externa (o actualice el estado directamente en su nivel superior) que
+  // termine actualizando el estado.
   useEffect(() => {
     let cancelled = false
 
@@ -86,10 +86,10 @@ export function useSlaAtRiskTickets(limit = 10): UseSlaAtRiskTicketsResult {
     refetchRef.current = refetch
   })
 
-  // This RPC is admin-only and authorizes server-side (SECURITY DEFINER), so
-  // there is no client-side filter to apply here — the subscription is just
-  // a "something changed, refetch" signal. Subscribes once for the hook's
-  // lifetime, independent of `limit`.
+  // Esta RPC es solo para administradores y autoriza del lado del servidor (SECURITY DEFINER), por lo que
+  // no hay ningún filtro del lado del cliente que aplicar acá — la suscripción es simplemente
+  // una señal de "algo cambió, volver a hacer fetch". Se suscribe una sola vez durante toda la
+  // vida del hook, independientemente de `limit`.
   useEffect(() => {
     const channel = supabase
       .channel('sla-at-risk-tickets')

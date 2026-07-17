@@ -15,15 +15,15 @@ interface UseAcceptAiTriageResult {
   dismissError: string | null
 }
 
-// Owns both ai_triage "accept" actions (accept_ai_triage_category and
-// accept_ai_triage_priority). They are independent actions — a caller could
-// plausibly trigger both from the same suggestion card in quick succession
-// (e.g. "accept everything") — so loading/error state is tracked per-action
-// rather than as a single shared isAccepting/error pair. A shared pair would
-// make one action's in-flight state block/overwrite the other's, and would
-// let a later success silently clear an earlier, unrelated error. Whether
-// the UI (PR5) surfaces both flags separately or combines them into one
-// "isAccepting" boolean is a presentation decision left to that layer.
+// Maneja las dos acciones de "aceptar" de ai_triage (accept_ai_triage_category y
+// accept_ai_triage_priority). Son acciones independientes — quien las invoca podría
+// plausiblemente disparar ambas desde la misma tarjeta de sugerencia en rápida sucesión
+// (por ejemplo, "aceptar todo") — por eso el estado de carga/error se rastrea por acción
+// en lugar de usar un único par compartido isAccepting/error. Un par compartido
+// haría que el estado en curso de una acción bloquee/sobrescriba el de la otra, y
+// permitiría que un éxito posterior borre silenciosamente un error anterior no relacionado. Si
+// la UI (PR5) muestra ambos flags por separado o los combina en un único booleano
+// "isAccepting" es una decisión de presentación que queda para esa capa.
 export function useAcceptAiTriage(): UseAcceptAiTriageResult {
   const [isAcceptingCategory, setIsAcceptingCategory] = useState(false)
   const [isAcceptingPriority, setIsAcceptingPriority] = useState(false)
@@ -74,13 +74,13 @@ export function useAcceptAiTriage(): UseAcceptAiTriageResult {
     }
   }
 
-  // Permanently discards the suggestion (agent ignored it, or already used
-  // it as the basis for their reply) — the ai_triage suggestion is
-  // generated once from the ticket's original description and is never
-  // regenerated from later comments, so once acted on it must not
-  // reappear, including after a reload. Sets tickets.ai_triage back to
-  // null server-side; the panel's own render-gate ("show only when
-  // ai_triage is non-null") makes that sufficient to hide it for good.
+  // Descarta la sugerencia de forma permanente (el agente la ignoró, o ya la usó
+  // como base para su respuesta) — la sugerencia de ai_triage se
+  // genera una sola vez a partir de la descripción original del ticket y nunca se
+  // regenera a partir de comentarios posteriores, así que una vez que se actuó sobre ella no debe
+  // volver a aparecer, ni siquiera después de recargar la página. Vuelve a poner tickets.ai_triage en
+  // null del lado del servidor; el propio filtro de renderizado del panel ("mostrar solo cuando
+  // ai_triage no es null") es suficiente para ocultarlo definitivamente.
   const dismissTriage = async (ticketId: string): Promise<boolean> => {
     setIsDismissing(true)
     setDismissError(null)
