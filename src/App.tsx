@@ -165,19 +165,23 @@ export default function App() {
                 element={<Navigate to="/admin/configuracion/usuarios" replace />}
               />
 
+              {/* Usuarios se accede directo desde el sidebar, no desde la
+                  sección de Configuración — no lleva el tab bar de
+                  General/Roles/Integraciones. */}
+              <Route
+                path="/admin/configuracion/usuarios"
+                element={
+                  <RoleGuard allowedRoles={['admin']}>
+                    <UsersPage />
+                  </RoleGuard>
+                }
+              />
+
               {/* Sección de configuración */}
               <Route path="/admin/configuracion" element={<SettingsLayout />}>
                 <Route
                   path="general"
                   element={<div>General — próximamente</div>}
-                />
-                <Route
-                  path="usuarios"
-                  element={
-                    <RoleGuard allowedRoles={['admin']}>
-                      <UsersPage />
-                    </RoleGuard>
-                  }
                 />
                 <Route
                   path="roles"
