@@ -7,7 +7,6 @@ interface SettingsTab {
 
 const SETTINGS_TABS: SettingsTab[] = [
   { label: 'General', to: '/admin/configuracion/general' },
-  { label: 'Usuarios', to: '/admin/configuracion/usuarios' },
   { label: 'Roles y Permisos', to: '/admin/configuracion/roles' },
   { label: 'Integraciones', to: '/admin/configuracion/integraciones' },
 ]
