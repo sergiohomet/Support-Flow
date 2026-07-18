@@ -55,8 +55,9 @@ function buildCategorySection(ticketsByCategory: TicketsByCategory[]): ReportSec
   }
 }
 
-// Misma forma de fila que `buildCsvRows` en `useReportsPageState` (ahora
-// removida): null -> string vacío, `avgWorkingHours` redondeado a 1 decimal.
+// Mismo fallback "Sin datos" que usa `AgentPerformanceTable` (formatHours/
+// formatPercent) para valores null — la exportación debe mostrar lo mismo
+// que la pantalla, no un string vacío sin explicación.
 function buildAgentSection(agentPerformance: AgentPerformance[]): ReportSection {
   return {
     title: 'Desempeño de Agentes',
@@ -64,8 +65,8 @@ function buildAgentSection(agentPerformance: AgentPerformance[]): ReportSection 
     rows: agentPerformance.map((agent) => [
       agent.agentFullName,
       agent.resolvedCount,
-      agent.avgWorkingHours !== null ? Math.round(agent.avgWorkingHours * 10) / 10 : '',
-      agent.slaCompliancePct ?? '',
+      agent.avgWorkingHours !== null ? Math.round(agent.avgWorkingHours * 10) / 10 : 'Sin datos',
+      agent.slaCompliancePct ?? 'Sin datos',
     ]),
   }
 }
