@@ -1,42 +1,27 @@
 import { useMemo, useState } from 'react'
 import { computeReportsDateRange, type ReportsRangePreset } from '@/modules/reports/components/dateRange'
-import type { AgentPerformance } from '@/modules/reports/schemas'
-
-const CSV_HEADERS = ['Agente', 'Tickets resueltos', 'Tiempo prom. (horas)', 'SLA cumplido (%)']
 
 export interface UseReportsPageStateResult {
   preset: ReportsRangePreset
   setPreset: (preset: ReportsRangePreset) => void
   dateFrom: string
   dateTo: string
-  csvHeaders: string[]
   computeEscalatedPct: (totalTickets: number, escalatedCount: number) => number
-  buildCsvRows: (agentPerformance: AgentPerformance[]) => (string | number)[][]
 }
 
 function computeEscalatedPct(totalTickets: number, escalatedCount: number): number {
   return totalTickets > 0 ? Math.round((escalatedCount / totalTickets) * 100) : 0
 }
 
-function buildCsvRows(agentPerformance: AgentPerformance[]): (string | number)[][] {
-  return agentPerformance.map((agent) => [
-    agent.agentFullName,
-    agent.resolvedCount,
-    agent.avgWorkingHours !== null ? Math.round(agent.avgWorkingHours * 10) / 10 : '',
-    agent.slaCompliancePct ?? '',
-  ])
-}
-
 // Contiene el estado de la página de reportes que no depende de un fetch: el
-// preset de rango de fechas, y las dos derivaciones (% escalado, forma de
-// exportación CSV) que no vienen de un RPC. `computeEscalatedPct`/
-// `buildCsvRows` se exponen como funciones planas en lugar de valores
-// precalculados porque necesitan `totalTickets`/`agentPerformance` de los 4
-// hooks de datos (useReportsSummary, useReportsAgentPerformance, etc.), que a
-// su vez necesitan `dateFrom`/`dateTo` de este hook — calcularlos acá de
-// forma anticipada crearía una dependencia circular. La página llama a estas
-// funciones una vez que los hooks de datos ya se resolvieron, de la misma
-// forma en que ya llama a la función `refetch` propia de cada hook de datos.
+// preset de rango de fechas, y `computeEscalatedPct`, la única derivación que
+// no viene de un RPC. Se expone como función plana en lugar de un valor
+// precalculado porque necesita `totalTickets`/`escalatedCount` de
+// useReportsSummary, que a su vez necesita `dateFrom`/`dateTo` de este hook —
+// calcularlo acá de forma anticipada crearía una dependencia circular. La
+// página llama a esta función una vez que los hooks de datos ya se
+// resolvieron, de la misma forma en que ya llama a la función `refetch`
+// propia de cada hook de datos.
 export function useReportsPageState(): UseReportsPageStateResult {
   const [preset, setPreset] = useState<ReportsRangePreset>('last30')
   // Calcula el rango una sola vez por cada cambio de `preset` — recalcularlo
@@ -51,8 +36,6 @@ export function useReportsPageState(): UseReportsPageStateResult {
     setPreset,
     dateFrom,
     dateTo,
-    csvHeaders: CSV_HEADERS,
     computeEscalatedPct,
-    buildCsvRows,
   }
 }

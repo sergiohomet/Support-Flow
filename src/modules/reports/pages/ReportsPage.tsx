@@ -7,7 +7,8 @@ import { ReportsDateRangeFilter } from '@/modules/reports/components/ReportsDate
 import { TicketsByWeekChart } from '@/modules/reports/components/TicketsByWeekChart'
 import { TicketsByCategoryBreakdown } from '@/modules/reports/components/TicketsByCategoryBreakdown'
 import { AgentPerformanceTable } from '@/modules/reports/components/AgentPerformanceTable'
-import { ExportCsvButton } from '@/modules/reports/components/ExportCsvButton'
+import { buildReportSections } from '@/modules/reports/reportSections'
+import { ExportMenu } from '@/core/reportExport/ExportMenu'
 import { SummaryCard } from '@/modules/sla/components/SummaryCard'
 import { Spinner } from '@/ui/Spinner'
 
@@ -16,8 +17,7 @@ function round(value: number): number {
 }
 
 export function ReportsPage(): React.JSX.Element {
-  const { preset, setPreset, dateFrom, dateTo, csvHeaders, computeEscalatedPct, buildCsvRows } =
-    useReportsPageState()
+  const { preset, setPreset, dateFrom, dateTo, computeEscalatedPct } = useReportsPageState()
 
   const { data: summary, isLoading: isSummaryLoading, error: summaryError } = useReportsSummary(
     dateFrom,
@@ -50,7 +50,7 @@ export function ReportsPage(): React.JSX.Element {
     (isWeekLoading && ticketsByWeek.length === 0) ||
     (isAgentLoading && agentPerformance.length === 0)
 
-  const csvRows = buildCsvRows(agentPerformance)
+  const sections = buildReportSections(summary, ticketsByCategory, ticketsByWeek, agentPerformance, escalatedPct)
 
   return (
     <div className="max-w-[1280px] mx-auto px-4 py-6">
@@ -59,11 +59,7 @@ export function ReportsPage(): React.JSX.Element {
         <h1 className="text-2xl font-semibold text-gray-900">Reportes</h1>
         <div className="flex items-center gap-3">
           <ReportsDateRangeFilter value={preset} onChange={setPreset} />
-          <ExportCsvButton
-            filename="desempeno-agentes-reportes.csv"
-            headers={csvHeaders}
-            rows={csvRows}
-          />
+          <ExportMenu sections={sections} dateFrom={dateFrom} dateTo={dateTo} pageSlug="reportes" />
         </div>
       </div>
 
