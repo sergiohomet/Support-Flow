@@ -80,18 +80,18 @@ describe('buildReportSections', () => {
   })
 
   describe('Tickets por Semana section', () => {
-    it('maps one row per week entry', () => {
+    it('maps one row per week entry, formatting weekStart as dd/mm/yyyy like the on-screen chart', () => {
       const ticketsByWeek: TicketsByWeek[] = [
-        { weekStart: '2026-06-29T00:00:00Z', ticketCount: 4 },
-        { weekStart: '2026-07-06T00:00:00Z', ticketCount: 9 },
+        { weekStart: '2026-06-29T12:00:00Z', ticketCount: 4 },
+        { weekStart: '2026-07-06T12:00:00Z', ticketCount: 9 },
       ]
 
       const [, weekSection] = buildReportSections(fullSummary, [], ticketsByWeek, [], 0)
 
       expect(weekSection.headers).toEqual(['Semana', 'Cantidad de tickets'])
       expect(weekSection.rows).toEqual([
-        ['2026-06-29T00:00:00Z', 4],
-        ['2026-07-06T00:00:00Z', 9],
+        ['29/06/2026', 4],
+        ['06/07/2026', 9],
       ])
     })
 
