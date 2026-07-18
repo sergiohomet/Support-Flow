@@ -1,5 +1,6 @@
 import type { ReportSection } from '@/core/reportExport/types'
 import type { AgentPerformance, ReportsSummary, TicketsByCategory, TicketsByWeek } from '@/modules/reports/schemas'
+import { formatDateOnly } from '@/core/utils/format'
 
 function round(value: number): number {
   return Math.round(value)
@@ -25,11 +26,14 @@ function buildKpiSection(summary: ReportsSummary | null | undefined, escalatedPc
   }
 }
 
+// Misma fecha que ve el usuario en pantalla (formatDateOnly, dd/mm/yyyy) — el
+// weekStart crudo es un timestamp ISO completo, ilegible en un archivo
+// exportado que se guarda sin el contexto del resto de la página.
 function buildWeekSection(ticketsByWeek: TicketsByWeek[]): ReportSection {
   return {
     title: 'Tickets por Semana',
     headers: ['Semana', 'Cantidad de tickets'],
-    rows: ticketsByWeek.map((week) => [week.weekStart, week.ticketCount]),
+    rows: ticketsByWeek.map((week) => [formatDateOnly(week.weekStart), week.ticketCount]),
   }
 }
 
