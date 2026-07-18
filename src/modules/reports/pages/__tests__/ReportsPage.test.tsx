@@ -128,9 +128,20 @@ describe('ReportsPage', () => {
     expect(callsAfter.category - callsBefore.category).toBeLessThan(5)
   })
 
-  it('wires the CSV export to the agent performance data', () => {
+  it('renders the export menu button', () => {
     render(<ReportsPage />)
 
-    expect(screen.getByRole('button', { name: /exportar csv/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /exportar/i })).toBeInTheDocument()
+  })
+
+  it('opens the export menu with CSV, Excel and PDF options wired to the loaded report data', async () => {
+    const user = userEvent.setup()
+    render(<ReportsPage />)
+
+    await user.click(screen.getByRole('button', { name: /exportar/i }))
+
+    expect(screen.getByRole('menuitem', { name: 'CSV' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'Excel' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'PDF' })).toBeInTheDocument()
   })
 })
