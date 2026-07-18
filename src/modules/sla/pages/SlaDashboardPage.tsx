@@ -7,6 +7,8 @@ import { SummaryCard } from '@/modules/sla/components/SummaryCard'
 import { CategoryComplianceDonut } from '@/modules/sla/components/CategoryComplianceDonut'
 import { AtRiskTicketsTable } from '@/modules/sla/components/AtRiskTicketsTable'
 import { computeSlaDateRange } from '@/modules/sla/components/dateRange'
+import { buildSlaSections } from '@/modules/sla/slaSections'
+import { ExportMenu } from '@/core/reportExport/ExportMenu'
 import { Spinner } from '@/ui/Spinner'
 
 export function SlaDashboardPage(): React.JSX.Element {
@@ -32,6 +34,8 @@ export function SlaDashboardPage(): React.JSX.Element {
 
   const totalTickets = summary?.totalTickets ?? 0
 
+  const sections = buildSlaSections(summary, categoryCompliance, atRiskTickets, resolvedPct, escalatedPct, days)
+
   const error = summaryError ?? categoryError ?? atRiskError
   const isInitialLoading =
     (isSummaryLoading && !summary) || (isCategoryLoading && categoryCompliance.length === 0)
@@ -43,17 +47,7 @@ export function SlaDashboardPage(): React.JSX.Element {
         <h1 className="text-2xl font-semibold text-gray-900">Cumplimiento de SLA</h1>
         <div className="flex items-center gap-3">
           <DateRangeFilter value={days} onChange={setDays} />
-          <button
-            type="button"
-            disabled
-            title="Exportar no disponible todavía"
-            className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-400 cursor-not-allowed"
-          >
-            <span className="material-icons text-[18px]" aria-hidden="true">
-              download
-            </span>
-            Exportar
-          </button>
+          <ExportMenu sections={sections} dateFrom={dateFrom} dateTo={dateTo} pageSlug="sla" />
         </div>
       </div>
 
