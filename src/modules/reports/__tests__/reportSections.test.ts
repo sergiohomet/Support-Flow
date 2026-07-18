@@ -165,7 +165,7 @@ describe('buildReportSections', () => {
       ])
       expect(agentSection.rows).toEqual([
         ['Sergio Hardware', 12, 3.4, 88],
-        ['Ana Soporte', 5, '', ''],
+        ['Ana Soporte', 5, 'Sin datos', 'Sin datos'],
       ])
     })
 
