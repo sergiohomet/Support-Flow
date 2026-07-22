@@ -12,7 +12,7 @@ export function PublicOnlyGuard({ children }: PublicOnlyGuardProps) {
   if (!isAuthReady) return null
 
   if (user) {
-    return <Navigate to={user.role === 'admin' ? '/admin' : '/tickets'} replace />
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>
