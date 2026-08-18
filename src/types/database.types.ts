@@ -404,6 +404,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      agent_get_my_metrics: {
+        Args: { p_agent_id: string }
+        Returns: {
+          assigned_count: number
+          avg_resolution_hours: number
+          resolved_this_month: number
+          sla_compliance_pct: number
+        }[]
+      }
       admin_create_category: {
         Args: { p_description?: string; p_name: string }
         Returns: {

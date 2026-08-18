@@ -8,6 +8,7 @@ interface NotificationFilterPillsProps {
 const FILTERS: Array<{ value: NotificationFilter; label: string }> = [
   { value: 'all', label: 'Todas' },
   { value: 'unread', label: 'No leídas' },
+  { value: 'new_ticket', label: 'Tickets nuevos' },
   { value: 'status_change', label: 'Cambios de estado' },
   { value: 'sla_escalation', label: 'Escalamientos SLA' },
   { value: 'reassignment', label: 'Reasignaciones' },

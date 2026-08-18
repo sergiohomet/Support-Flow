@@ -6,6 +6,7 @@ import type { AgentDashboardTicket } from '../schemas'
 
 interface AssignedTicketCardProps {
   ticket: AgentDashboardTicket
+  currentUserId: string | null
   isResolving: boolean
   isReturning: boolean
   onResolve: () => void
@@ -33,12 +34,17 @@ function formatRelativeTime(iso: string): string {
 
 export function AssignedTicketCard({
   ticket,
+  currentUserId,
   isResolving,
   isReturning,
   onResolve,
   onReturnToPool,
 }: AssignedTicketCardProps): React.JSX.Element {
   const canResolve = AGENT_TRANSITIONS[ticket.status].includes('resuelto')
+  const canReturnToPool =
+    ticket.agentId === currentUserId &&
+    ticket.agentId !== null &&
+    ticket.status !== 'resuelto'
   const navigate = useNavigate()
 
   // La navegación vive localmente en este componente hoja (en lugar de
@@ -69,19 +75,21 @@ export function AssignedTicketCard({
       badges={<StatusBadge status={ticket.status} />}
       meta={<span className="text-xs text-gray-400">{formatRelativeTime(ticket.updatedAt)}</span>}
     >
-      <button
-        type="button"
-        onClick={handleReturnToPoolClick}
-        disabled={isReturning}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isReturning && (
-          <span className="material-icons text-[14px] animate-spin" aria-hidden="true">
-            refresh
-          </span>
-        )}
-        Devolver al pool
-      </button>
+      {canReturnToPool && (
+        <button
+          type="button"
+          onClick={handleReturnToPoolClick}
+          disabled={isReturning}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isReturning && (
+            <span className="material-icons text-[14px] animate-spin" aria-hidden="true">
+              refresh
+            </span>
+          )}
+          Devolver al pool
+        </button>
+      )}
 
       {canResolve && (
         <button

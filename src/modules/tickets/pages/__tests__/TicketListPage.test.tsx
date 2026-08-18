@@ -124,9 +124,9 @@ describe('TicketListPage', () => {
       expect(screen.queryByText('Ver detalle →')).not.toBeInTheDocument()
     })
 
-    it('renders the heading "Mis Tickets"', () => {
+    it('renders the heading "Tickets"', () => {
       renderPage()
-      expect(screen.getByRole('heading', { name: 'Mis Tickets' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Tickets' })).toBeInTheDocument()
     })
 
     it('renders all status tabs', () => {

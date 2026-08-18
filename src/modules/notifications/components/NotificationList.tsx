@@ -1,3 +1,4 @@
+import { Pagination } from '@/ui/Pagination'
 import { EmptyState } from '@/ui/EmptyState'
 import { Spinner } from '@/ui/Spinner'
 import { NotificationCard } from './NotificationCard'
@@ -7,12 +8,20 @@ interface NotificationListProps {
   notifications: NotificationRow[]
   isLoading: boolean
   onNotificationClick: (notification: NotificationRow) => void
+  page: number
+  totalPages: number
+  onPageChange: (page: number) => void
+  totalCount: number
 }
 
 export function NotificationList({
   notifications,
   isLoading,
   onNotificationClick,
+  page,
+  totalPages,
+  onPageChange,
+  totalCount,
 }: NotificationListProps): React.JSX.Element {
   if (isLoading) {
     return (
@@ -27,10 +36,19 @@ export function NotificationList({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      {notifications.map((notification) => (
-        <NotificationCard key={notification.id} notification={notification} onClick={onNotificationClick} />
-      ))}
-    </div>
+    <>
+      <div className="flex flex-col gap-2">
+        {notifications.map((notification) => (
+          <NotificationCard key={notification.id} notification={notification} onClick={onNotificationClick} />
+        ))}
+      </div>
+      <Pagination
+        currentPage={page}
+        totalCount={totalCount}
+        pageSize={20}
+        onPageChange={onPageChange}
+        className="mt-4"
+      />
+    </>
   )
 }

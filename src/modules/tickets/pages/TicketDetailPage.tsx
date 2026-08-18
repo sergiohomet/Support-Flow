@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { supabase } from '@/core/supabase/client'
 import { useStore } from '@/store'
 import { useTicketDetail } from '@/modules/tickets/hooks/useTicketDetail'
 import { useUpdateTicketStatus } from '@/modules/tickets/hooks/useUpdateTicketStatus'
@@ -18,6 +19,7 @@ import { Spinner } from '@/ui/Spinner'
 import { useUnassignTicket } from '@/modules/tickets/hooks/useUnassignTicket'
 import { getSlaStatus } from './slaStatus'
 import { formatDateOnly } from '@/core/utils/format'
+import { parseRpcError } from '@/core/utils/parseRpcError'
 import type { TicketStatus } from '@/modules/tickets/schemas'
 
 export function TicketDetailPage(): React.ReactElement {
@@ -108,8 +110,38 @@ export function TicketDetailPage(): React.ReactElement {
     if (ok) void fetchDetail()
   }
 
+  const [isClaiming, setIsClaiming] = useState(false)
+  const [claimError, setClaimError] = useState<string | null>(null)
+
+  const handleClaim = async (): Promise<void> => {
+    if (!id || !user) return
+    setIsClaiming(true)
+    setClaimError(null)
+    try {
+      const { error: rpcError } = await supabase.rpc('assign_ticket', {
+        p_ticket_id: id,
+        p_agent_id: user.id,
+      })
+      if (rpcError) {
+        setClaimError(parseRpcError(rpcError.message))
+        return
+      }
+      void fetchDetail()
+    } catch (err) {
+      setClaimError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setIsClaiming(false)
+    }
+  }
+
   const isAgentOrAdmin = user?.role === 'agent' || user?.role === 'admin'
+  const isAdmin = user?.role === 'admin'
   const isClient = user?.role === 'client'
+  const canClaim =
+    user?.role === 'agent' &&
+    ticket !== null &&
+    ticket.agentId === null &&
+    ticket.status !== 'resuelto'
 
   return (
     <div className="max-w-[1280px] mx-auto px-6 py-6">
@@ -132,7 +164,7 @@ export function TicketDetailPage(): React.ReactElement {
                   onClick={() => navigate(-1)}
                   className="hover:text-blue-600 transition-colors"
                 >
-                  Mis Tickets
+                  Tickets
                 </button>
               </li>
               <li>
@@ -289,6 +321,41 @@ export function TicketDetailPage(): React.ReactElement {
                 </div>
               </div>
 
+              {/* Tomar ticket — agente, sin asignar */}
+              {canClaim && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800 mb-3">
+                    Este ticket no tiene agente asignado. ¿Lo tomás?
+                  </p>
+                  {claimError && (
+                    <div
+                      role="alert"
+                      className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700 mb-3"
+                    >
+                      {claimError}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void handleClaim()}
+                    disabled={isClaiming}
+                    className="w-full rounded-lg bg-blue-600 text-white px-4 py-2.5 text-sm font-medium hover:bg-blue-700 transition-colors flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isClaiming ? (
+                      <>
+                        <span className="material-icons text-[18px] animate-spin">refresh</span>
+                        Asignando...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-icons text-[18px]">person_add</span>
+                        Tomar ticket
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
               {/* Acciones */}
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <h3 className="text-base font-semibold text-gray-900 mb-4">Acciones</h3>
@@ -307,7 +374,9 @@ export function TicketDetailPage(): React.ReactElement {
                   categoryIsActive={ticket.categoryIsActive}
                   agentId={ticket.agentId}
                   isAgentOrAdmin={isAgentOrAdmin}
+                  isAdmin={isAdmin}
                   isClient={isClient}
+                  currentUserId={user?.id ?? null}
                   statusLoading={statusLoading}
                   unassignLoading={unassignLoading}
                   onResolve={() => void handleStatusUpdate('resuelto')}

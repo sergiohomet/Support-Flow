@@ -6,7 +6,9 @@ interface TicketActionsProps {
   categoryIsActive: boolean
   agentId: string | null
   isAgentOrAdmin: boolean
+  isAdmin: boolean
   isClient: boolean
+  currentUserId: string | null
   statusLoading: boolean
   unassignLoading: boolean
   onResolve: () => void
@@ -19,7 +21,9 @@ export function TicketActions({
   categoryIsActive,
   agentId,
   isAgentOrAdmin,
+  isAdmin,
   isClient,
+  currentUserId,
   statusLoading,
   unassignLoading,
   onResolve,
@@ -31,7 +35,11 @@ export function TicketActions({
   if (isAgentOrAdmin) {
     const allowed = AGENT_TRANSITIONS[status]
 
-    if (allowed.includes('resuelto')) {
+    // Admins can resolve any ticket; agents only their own assigned tickets
+    const canResolve =
+      isAdmin || (isAgentOrAdmin && agentId === currentUserId)
+
+    if (canResolve && allowed.includes('resuelto')) {
       actions.push(
         <button
           key="resolver"
@@ -46,7 +54,12 @@ export function TicketActions({
       )
     }
 
-    if (agentId !== null) {
+    // Only the assigned agent (or admin) can return to pool; never when resuelto
+    if (
+      agentId === currentUserId &&
+      agentId !== null &&
+      status !== 'resuelto'
+    ) {
       actions.push(
         <button
           key="pool"

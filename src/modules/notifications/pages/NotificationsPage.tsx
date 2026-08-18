@@ -10,7 +10,17 @@ import type { NotificationFilter, NotificationRow } from '@/modules/notification
 export function NotificationsPage(): React.JSX.Element {
   const [filter, setFilter] = useState<NotificationFilter>('unread')
 
-  const { data: notifications, isLoading, refetch, markLocallyRead } = useListNotifications(filter)
+  const {
+    data: notifications,
+    isLoading,
+    refetch,
+    markLocallyRead,
+    page,
+    totalPages,
+    setPage,
+    totalCount,
+  } = useListNotifications(filter)
+
   const { execute: markNotificationRead } = useMarkNotificationRead()
   const { execute: markAllNotificationsRead } = useMarkAllNotificationsRead()
   const navigate = useNavigate()
@@ -54,6 +64,10 @@ export function NotificationsPage(): React.JSX.Element {
         notifications={notifications}
         isLoading={isLoading}
         onNotificationClick={handleNotificationClick}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        totalCount={totalCount}
       />
     </div>
   )

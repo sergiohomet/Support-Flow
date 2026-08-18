@@ -22,7 +22,9 @@ export function TicketListPage(): React.JSX.Element {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 300)
 
-  const hasActiveFilters = statusTab !== null || debouncedSearch.trim() !== ''
+  // ── Assigned mode (existing behavior) ──────────────────────────────────
+  const hasActiveFilters =
+    statusTab !== null || debouncedSearch.trim() !== ''
 
   const handleSearchChange = (value: string): void => {
     setSearch(value)
@@ -54,7 +56,7 @@ export function TicketListPage(): React.JSX.Element {
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold text-gray-900">Mis Tickets</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Tickets</h1>
         {user?.role === 'client' && (
           <button
             onClick={() => navigate('/tickets/new')}

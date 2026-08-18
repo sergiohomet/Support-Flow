@@ -54,6 +54,7 @@ export const notificationFilterSchema = z.enum([
   'sla_escalation',
   'reassignment',
   'new_comment',
+  'new_ticket',
 ])
 
 export type NotificationFilter = z.infer<typeof notificationFilterSchema>

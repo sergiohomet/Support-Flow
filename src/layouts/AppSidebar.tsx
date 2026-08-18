@@ -13,13 +13,13 @@ interface NavItem {
 
 function getNavItems(role: UserRole): NavItem[] {
   const common: NavItem[] = [
-    { label: 'Mis Tickets', to: '/tickets', icon: 'confirmation_number' },
+    { label: 'Tickets', to: '/tickets', icon: 'confirmation_number' },
     { label: 'Notificaciones', to: '/notifications', icon: 'notifications' },
   ]
 
   if (role === 'client') {
     return [
-      { label: 'Mis Tickets', to: '/tickets', icon: 'confirmation_number' },
+      { label: 'Tickets', to: '/tickets', icon: 'confirmation_number' },
       { label: 'Crear Ticket', to: '/tickets/new', icon: 'add_circle' },
       { label: 'Notificaciones', to: '/notifications', icon: 'notifications' },
     ]
