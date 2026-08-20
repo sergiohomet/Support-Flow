@@ -45,7 +45,7 @@ export function NotificationList({
       <Pagination
         currentPage={page}
         totalCount={totalCount}
-        pageSize={20}
+        pageSize={7}
         onPageChange={onPageChange}
         className="mt-4"
       />

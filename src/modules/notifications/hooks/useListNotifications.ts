@@ -5,7 +5,7 @@ import { parseRpcError } from '@/core/utils/parseRpcError'
 import { mapNotification } from '../schemas'
 import type { NotificationFilter, NotificationRow } from '../schemas'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 7
 
 interface UseListNotificationsResult {
   data: NotificationRow[]

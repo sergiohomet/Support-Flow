@@ -79,7 +79,7 @@ Deno.serve(async (req: Request) => {
     const triggerSecret = Deno.env.get('AI_TRIAGE_TRIGGER_SECRET')
 
     if (!isAuthorizedCaller(authHeader, triggerSecret)) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: 'No autorizado' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -90,7 +90,7 @@ Deno.serve(async (req: Request) => {
     const ticketId = body?.ticketId
 
     if (!ticketId) {
-      return new Response(JSON.stringify({ error: 'Missing ticketId' }), {
+      return new Response(JSON.stringify({ error: 'Falta el ticketId' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -115,7 +115,7 @@ Deno.serve(async (req: Request) => {
         .single()
 
       if (ticketError || !ticket) {
-        throw new Error(`Failed to load ticket ${ticketId}: ${ticketError?.message ?? 'not found'}`)
+        throw new Error(`Error al cargar el ticket ${ticketId}: ${ticketError?.message ?? 'No encontrado'}`)
       }
 
       const { data: categories, error: categoriesError } = await supabaseAdmin
@@ -123,7 +123,7 @@ Deno.serve(async (req: Request) => {
         .select('id, name')
 
       if (categoriesError || !categories || categories.length === 0) {
-        throw new Error(`Failed to load categories: ${categoriesError?.message ?? 'empty list'}`)
+        throw new Error(`Error al cargar las categorias: ${categoriesError?.message ?? 'Lista vacia'}`)
       }
 
       const categoryOptions = categories as CategoryOption[]
@@ -132,7 +132,7 @@ Deno.serve(async (req: Request) => {
       // ── 4. Llamar a OpenRouter con un timeout ───────────────────────────────
       const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY')
       if (!openRouterApiKey) {
-        throw new Error('OPENROUTER_API_KEY is not configured')
+        throw new Error('OPENROUTER_API_KEY no esta configurada')
       }
 
       const prompt = buildTriagePrompt({ title: ticket.title, description: ticket.description }, categoryOptions)
@@ -174,7 +174,7 @@ Deno.serve(async (req: Request) => {
         })
 
         if (!openRouterResponse.ok) {
-          throw new Error(`OpenRouter responded with non-2xx status ${openRouterResponse.status}`)
+          throw new Error(`OpenRouter respondió con un estado no-2xx: ${openRouterResponse.status}`)
         }
 
         openRouterJson = await openRouterResponse.json()
@@ -186,7 +186,7 @@ Deno.serve(async (req: Request) => {
       const triageResult = parseOpenRouterChatCompletion(openRouterJson, validCategoryIds)
 
       if (!triageResult) {
-        throw new Error('OpenRouter response failed parsing/validation — see parseOpenRouterChatCompletion')
+        throw new Error('OpenRouter falló parsing/validation')
       }
 
       // ── 6. Persistir solo si todo tuvo éxito ────────────────────────────────
@@ -201,14 +201,14 @@ Deno.serve(async (req: Request) => {
         .eq('id', ticketId)
 
       if (updateError) {
-        throw new Error(`Failed to persist ai_triage: ${updateError.message}`)
+        throw new Error(`Error al persistir ai_triage: ${updateError.message}`)
       }
     } catch (triageError) {
       // No-op silencioso: loguear del lado del servidor para poder
       // debuggear, no escribir nada, nunca reintentar, nunca exponer esta
       // falla a quien llamó.
-      const message = triageError instanceof Error ? triageError.message : 'Unknown triage failure'
-      console.error(`[ai-triage] Triage did not complete for ticket ${ticketId}: ${message}`)
+      const message = triageError instanceof Error ? triageError.message : 'Fallo desconocido en el triage'
+      console.error(`[ai-triage] El triage no se completó para el ticket ${ticketId}: ${message}`)
     }
 
     // La llamada fire-and-forget en sí siempre "tiene éxito" desde el
@@ -222,7 +222,7 @@ Deno.serve(async (req: Request) => {
     // A este catch externo solo llegan errores verdaderamente inesperados
     // (body JSON inválido, env vars faltantes para el propio cliente
     // admin, etc.).
-    const message = err instanceof Error ? err.message : 'Internal server error'
+    const message = err instanceof Error ? err.message : 'Error interno del servidor'
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

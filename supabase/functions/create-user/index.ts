@@ -23,7 +23,7 @@ Deno.serve(async (req: Request) => {
     // ── 1. Verificar que quien llama está autenticado ────────────────────────────────
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: 'No autorizado' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -45,7 +45,7 @@ Deno.serve(async (req: Request) => {
     // Obtener la identidad del usuario que llama
     const { data: { user: callerUser }, error: callerError } = await supabaseCaller.auth.getUser()
     if (callerError || !callerUser) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: 'No autorizado' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (profileError || !callerProfile || callerProfile.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Forbidden: caller is not an admin' }), {
+      return new Response(JSON.stringify({ error: 'Prohibido: el usuario no es administrador' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -77,21 +77,21 @@ Deno.serve(async (req: Request) => {
     const { fullName, email, temporaryPassword, role, categoryId } = body
 
     if (!fullName || !email || !temporaryPassword || !role) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+      return new Response(JSON.stringify({ error: 'Faltan campos obligatorios' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     if (!['agent', 'admin'].includes(role)) {
-      return new Response(JSON.stringify({ error: 'Invalid role. Must be agent or admin.' }), {
+      return new Response(JSON.stringify({ error: 'Rol inválido. Debe ser agente o administrador.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     if (role === 'agent' && !categoryId) {
-      return new Response(JSON.stringify({ error: 'categoryId is required when role is agent' }), {
+      return new Response(JSON.stringify({ error: 'La categoría es obligatoria cuando el rol es agente' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -106,7 +106,7 @@ Deno.serve(async (req: Request) => {
     })
 
     if (createError || !newAuthUser?.user) {
-      return new Response(JSON.stringify({ error: createError?.message ?? 'Failed to create user' }), {
+      return new Response(JSON.stringify({ error: createError?.message ?? 'Error al crear el usuario' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -128,7 +128,7 @@ Deno.serve(async (req: Request) => {
 
     if (patchError) {
       // El usuario se creó en auth pero falló la actualización del perfil — logueamos y de todas formas devolvemos userId
-      console.error('Failed to patch user role/category:', patchError.message)
+      console.error('Error al actualizar el rol/categoría del usuario:', patchError.message)
     }
 
     return new Response(JSON.stringify({ userId: newUserId }), {
@@ -136,7 +136,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Internal server error'
+    const message = err instanceof Error ? err.message : 'Error interno del servidor'
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
