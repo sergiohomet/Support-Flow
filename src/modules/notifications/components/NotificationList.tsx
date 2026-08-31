@@ -19,7 +19,6 @@ export function NotificationList({
   isLoading,
   onNotificationClick,
   page,
-  totalPages,
   onPageChange,
   totalCount,
 }: NotificationListProps): React.JSX.Element {
